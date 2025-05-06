@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Orden de Entrada</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/orden.css') }}">
+</head>
+<body>
+    <h1>Formulario de Orden de Entrada</h1>
+    <form action="/submit" method="post" enctype="multipart/form-data">
+        <label>Nombre: <input type="text" name="nombre" required></label><br>
+        <label>Teléfono: <input type="text" name="telefono" required></label><br>
+        <label>Correo: <input type="email" name="correo" required></label><br>
+
+        <label>Tipo:
+            <select name="tipo" id="tipo-select" required>
+                <option value="">Seleccione un tipo...</option>
+            </select>
+        </label><br>
+        <div id="nuevo-tipo-container" style="display:none;">
+            <label>Nuevo tipo: <input type="text" name="nuevo_tipo" id="nuevo_tipo_input"></label>
+        </div>
+
+        <label>Marca: <input type="text" name="marca"></label><br>
+        <label>Modelo: <input type="text" name="modelo"></label><br>
+        <label>Estado de Entrada: <textarea name="estado_entrada"></textarea></label><br>
+
+        <fieldset>
+            <legend>Servicios</legend>
+            <div id="servicios-checkboxes"></div>
+            <div id="servicio-nuevo-container" style="display:none; margin-top: 5px;">
+                <label>Nuevo servicio: <input type="text" name="nuevo_servicio" id="nuevo_servicio_input"></label>
+            </div>
+        </fieldset>
+
+        <label>Periféricos que deja: <input type="text" name="perifericos"></label><br>
+        <label>Observaciones: <textarea name="observaciones"></textarea></label><br>
+
+        <label>Tipo de Pago:
+            <select name="tipo_pago" id="tipo_pago_select" required>
+                <option value="">Seleccione un tipo de pago...</option>
+            </select>
+        </label><br>
+        <div id="nuevo-tipo_pago-container" style="display:none;">
+            <label>Nuevo tipo de pago: <input type="text" name="nuevo_tipo_pago" id="nuevo_tipo_pago_input"></label>
+        </div>
+
+        <label>Pago recibido: <input type="number" name="pago" step="0.01" min="0" required></label><br>
+        <label>Subir Fotos: <input type="file" name="fotos" multiple></label><br><br>
+
+        <button type="submit">Enviar Orden</button>
+    </form>
+
+    <script src="{{ url_for('static', filename='js/orden.js') }}"></script>
+</body>
+</html>

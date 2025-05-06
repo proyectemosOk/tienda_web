@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Inventario</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gestor_inventario_1.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/gestor_inventario.css') }}">
+</head>
+
+<body>
+    <div class="container-fluid">
+        <header class="row bg-primary text-white py-3">
+            <div class="col-12 text-center">
+                <h1>Sistema de Gestión de Inventario</h1>
+            </div>
+        </header>
+
+        <nav class="row bg-light py-2">
+            <div class="col-12">
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#entrada-productos" data-bs-toggle="tab">
+                            <i class="fas fa-box-open"></i> Entrada de Productos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#proveedores" data-bs-toggle="tab">
+                            <i class="fas fa-truck"></i> Proveedores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#inventario" data-bs-toggle="tab">
+                            <i class="fas fa-warehouse"></i> Inventario
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#reportes" data-bs-toggle="tab">
+                            <i class="fas fa-chart-bar"></i> Reportes
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <div class="tab-content mt-3">
+            <!-- Entrada de Productos -->
+            <div class="tab-pane fade show active" id="entrada-productos">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Registro de Entrada</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="product-entry-form">
+                                    <div class="mb-3">
+                                        <label for="proveedor" class="form-label">Proveedor</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="proveedor"
+                                                placeholder="Código o nombre">
+                                            <button class="btn btn-secondary" type="button" id="buscar-proveedor">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="numero-factura" class="form-label">Número de Factura</label>
+                                        <input type="text" class="form-control" id="numero-factura">
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="fecha-emision" class="form-label">Fecha Emisión</label>
+                                        <input type="date" class="form-control" id="fecha-emision">
+                                    </div>
+
+                                    <hr>
+
+                                    <h4>Detalles del Producto</h4>
+                                    <div class="mb-3">
+                                        <label for="codigo-producto" class="form-label">Código de Producto</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control" id="codigo-producto"
+                                                placeholder="Código">
+                                            <button class="btn btn-secondary" type="button" id="buscar-producto">
+                                                <i class="fas fa-search"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="nombre-producto" class="form-label">Nombre del Producto</label>
+                                        <input type="text" class="form-control" id="nombre-producto" readonly>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-4 mb-3">
+                                            <label for="cantidad" class="form-label">Cantidad</label>
+                                            <input type="number" class="form-control" id="cantidad" min="1">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="precio-compra" class="form-label">Precio Compra</label>
+                                            <input type="number" class="form-control" id="precio-compra" step="0.01"
+                                                min="0">
+                                        </div>
+                                        <div class="col-md-4 mb-3">
+                                            <label for="precio-venta" class="form-label">Precio Venta</label>
+                                            <input type="number" class="form-control" id="precio-venta" step="0.01"
+                                                min="0">
+                                        </div>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label for="fecha-vencimiento" class="form-label">Fecha de Vencimiento</label>
+                                        <input type="date" class="form-control" id="fecha-vencimiento">
+                                    </div>
+
+                                    <button type="button" class="btn btn-primary" id="agregar-producto">
+                                        <i class="fas fa-plus"></i> Agregar Producto
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Productos Agregados</h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped" id="tabla-productos">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Nombre</th>
+                                            <th>Cantidad</th>
+                                            <th>Precio Compra</th>
+                                            <th>Precio Venta</th>
+                                            <th>Fecha Vencimiento</th>
+                                            <th>Subtotal</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-productos">
+                                        <!-- Productos se agregarán dinámicamente -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr>
+                                            <td colspan="6" class="text-end"><strong>Total:</strong></td>
+                                            <td id="total-entrada">0.00</td>
+                                            <td></td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+
+                                <div class="d-flex justify-content-end mt-3">
+                                    <button class="btn btn-success" id="finalizar-entrada">
+                                        <i class="fas fa-save"></i> Finalizar Entrada
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Proveedores -->
+            <div class="tab-pane fade" id="proveedores">
+                <!-- Contenido de Proveedores -->
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Nuevo Proveedor</h3>
+                            </div>
+                            <div class="card-body">
+                                <form id="proveedor-form">
+                                    <div class="mb-3">
+                                        <label for="codigo-proveedor" class="form-label">Código</label>
+                                        <input type="text" class="form-control" id="codigo-proveedor">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="nombre-proveedor" class="form-label">Nombre</label>
+                                        <input type="text" class="form-control" id="nombre-proveedor">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="rut-proveedor" class="form-label">RUT</label>
+                                        <input type="text" class="form-control" id="rut-proveedor">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="direccion-proveedor" class="form-label">Dirección</label>
+                                        <input type="text" class="form-control" id="direccion-proveedor">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="telefono-proveedor" class="form-label">Teléfono</label>
+                                        <input type="tel" class="form-control" id="telefono-proveedor">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="email-proveedor" class="form-label">Email</label>
+                                        <input type="email" class="form-control" id="email-proveedor">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Guardar Proveedor
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Lista de Proveedores</h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-striped" id="tabla-proveedores">
+                                    <thead>
+                                        <tr>
+                                            <th>Código</th>
+                                            <th>Nombre</th>
+                                            <th>RUT</th>
+                                            <th>Teléfono</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Proveedores se agregarán dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Inventario -->
+            <div class="tab-pane fade" id="inventario">
+                <!-- Contenido de Inventario -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3 class="card-title">Listado de Productos en Inventario</h3>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped" id="tabla-inventario">
+                            <thead>
+                                <tr>
+                                    <th>Código</th>
+                                    <th>Nombre</th>
+                                    <th>Categoría</th>
+                                    <th>Stock</th>
+                                    <th>Precio Compra</th>
+                                    <th>Precio Venta</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Productos del inventario se agregarán dinámicamente -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reportes -->
+            <div class="tab-pane fade" id="reportes">
+                <!-- Contenido de Reportes -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Reporte de Entradas</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-entradas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Reporte de Stock</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-stock"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/gestor_inventario.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/gestor_inventario_1.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/gestos_inventarios_cargar_productos.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/swall.js') }}"></script>
+</body>
+
+</html>
