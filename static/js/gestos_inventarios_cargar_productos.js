@@ -1,6 +1,3 @@
-
-
-
 function cargar_productos() {
     fetch('/api/productos', {
       method: 'GET',
@@ -16,6 +13,7 @@ function cargar_productos() {
         // Limpiar tbody antes de agregar nuevos productos
         tbody.innerHTML = '';
         // Iterar sobre los productos y crear filas
+        
         data.forEach(producto => {
           const fila = document.createElement('tr');
           fila.innerHTML = `
@@ -89,8 +87,145 @@ function ver_detalle_producto(codigo) {
 }
 
 function editar_producto(codigo) {
-    // Redirigir a página de edición o abrir modal de edición
-    window.location.href = `/productos/editar/${codigo}`;
+  // Primero, obtener los detalles del producto
+  fetch(`/api/productos/${codigo}`, {
+      method: 'GET',
+      headers: {
+          'Content-Type': 'application/json'
+      }
+  })
+  .then(res => res.json())
+  .then(producto => {
+      // Abrir un modal de edición usando SweetAlert
+      Swal.fire({
+          title: 'Editar Producto',
+          html: `
+              <div class="container">
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Código</label>
+                          <input type="text" id="edit-codigo" class="form-control" value="${producto.codigo}" readonly>
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Nombre</label>
+                          <input type="text" id="edit-nombre" class="form-control" value="${producto.nombre}">
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Categoría</label>
+                          <input type="text" id="edit-categoria" class="form-control" value="${producto.categoria || ''}">
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Stock</label>
+                          <input type="number" id="edit-stock" class="form-control" value="${producto.stock}">
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Precio Compra</label>
+                          <input type="number" id="edit-precio-compra" class="form-control" value="${producto.precio_compra}" step="0.01">
+                      </div>
+                  </div>
+                  <div class="row mb-3">
+                      <div class="col">
+                          <label class="form-label">Precio Venta</label>
+                          <input type="number" id="edit-precio-venta" class="form-control" value="${producto.precio_venta}" step="0.01">
+                      </div>
+                  </div>
+              </div>
+          `,
+          showCancelButton: true,
+          confirmButtonText: 'Guardar Cambios',
+          cancelButtonText: 'Cancelar',
+          preConfirm: () => {
+              // Validar y recoger los datos del formulario
+              const nombre = document.getElementById('edit-nombre').value.trim();
+              const categoria = document.getElementById('edit-categoria').value.trim();
+              const stock = document.getElementById('edit-stock').value;
+              const precioCompra = document.getElementById('edit-precio-compra').value;
+              const precioVenta = document.getElementById('edit-precio-venta').value;
+
+              // Validaciones básicas
+              if (!nombre) {
+                  Swal.showValidationMessage('El nombre es obligatorio');
+                  return false;
+              }
+
+              if (isNaN(stock) || stock < 0) {
+                  Swal.showValidationMessage('El stock debe ser un número válido');
+                  return false;
+              }
+
+              if (isNaN(precioCompra) || precioCompra < 0) {
+                  Swal.showValidationMessage('El precio de compra debe ser un número válido');
+                  return false;
+              }
+
+              if (isNaN(precioVenta) || precioVenta < 0) {
+                  Swal.showValidationMessage('El precio de venta debe ser un número válido');
+                  return false;
+              }
+
+              // Retornar los datos actualizados
+              return {
+                  codigo: codigo,
+                  nombre: nombre,
+                  categoria: categoria,
+                  stock: parseFloat(stock),
+                  precio_compra: parseFloat(precioCompra),
+                  precio_venta: parseFloat(precioVenta)
+              };
+          }
+      }).then((result) => {
+          if (result.isConfirmed) {
+              // Enviar los datos actualizados al servidor
+              fetch(`/api/productos/${codigo}`, {
+                  method: 'PUT',
+                  headers: {
+                      'Content-Type': 'application/json'
+                  },
+                  body: JSON.stringify(result.value)
+              })
+              .then(res => {
+                  if (!res.ok) {
+                      throw new Error('Error al actualizar el producto');
+                  }
+                  return res.json();
+              })
+              .then(() => {
+                  // Mostrar mensaje de éxito
+                  Swal.fire(
+                      'Actualizado',
+                      'El producto ha sido actualizado correctamente.',
+                      'success'
+                  );
+                  // Recargar la tabla de productos
+                  cargar_productos();
+              })
+              .catch(err => {
+                  console.error("Error actualizando producto:", err);
+                  Swal.fire({
+                      icon: 'error',
+                      title: 'Error',
+                      text: 'No se pudo actualizar el producto.'
+                  });
+              });
+          }
+      });
+  })
+  .catch(err => {
+      console.error("Error obteniendo detalles del producto:", err);
+      Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'No se pudieron cargar los detalles del producto para edición.'
+      });
+  });
 }
 
 function eliminar_producto(codigo) {
