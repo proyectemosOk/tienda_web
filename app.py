@@ -272,10 +272,6 @@ def eliminar_producto(codigo):
             'mensaje': 'Error interno del servidor',
             'error': str(e)
         }), 500
-    finally:
-        # Asegurarse de cerrar la conexión
-        if 'conn_db' in locals():
-            conn_db.cerrar_conexion()
                   
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
