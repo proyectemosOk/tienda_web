@@ -1,3 +1,5 @@
+// import { cargarProveedores } from './proveedores.js';
+
 document.addEventListener("DOMContentLoaded", () => {
     const form = document.getElementById("proveedor-form");
 
@@ -22,7 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             // Enviar los datos a la API
-            const respuesta = await fetch("/api/proveedores", {
+            const respuesta = await fetch("/api/crear_proveedor", {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -52,6 +54,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
                 // Limpiar el formulario
                 form.reset();
+                // cargarProveedores()
             } else {
                 const error = await respuesta.json();
                 Swal.fire({

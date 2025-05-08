@@ -357,32 +357,40 @@ def eliminar_producto(codigo):
             'error': str(e)
         }), 500
 
-@app.route('/api/proveedores', methods=['POST'])
-def guardar_proveedor():
+@app.route('/api/crear_proveedor', methods=['POST'])
+def crear_proveedor():
     try:
-        # Obtener los datos enviados desde el formulario
         datos = request.get_json()
 
-        # Validar datos requeridos
-        if not all(key in datos for key in ("nombre", "rut", "direccion", "telefono", "email")):
+        # Validar otros campos obligatorios (sin incluir "codigo")
+        if not all(key in datos for key in ("nombre", "rut", "telefono")):
             return jsonify({"error": "Faltan datos obligatorios"}), 400
 
-        # Insertar en la base de datos
-        proveedor = {
-            "codigo": datos.get("codigo", "AUTO"),  # Código puede ser opcional o generado automáticamente
-            "nombre": datos["nombre"],
-            "rut": datos["rut"],
-            "direccion": datos["direccion"],
-            "telefono": datos["telefono"],
-            "email": datos["email"],
-        }
-        id_proveedor = conn_db.insertar("proveedores", proveedor)
+        # Generar el código automáticamente (por ejemplo, basado en el último registro)
+        ultimo_codigo = conn_db.seleccionar(
+            tabla="proveedores",
+            columnas="MAX(codigo) AS ultimo_codigo"
+        )[0][0] or 0  # Si no hay registros, empezamos desde 0
+        nuevo_codigo = int(ultimo_codigo) + 1
 
-        return jsonify({"mensaje": "Proveedor guardado exitosamente", "id_proveedor": id_proveedor}), 201
+        # Insertar el proveedor en la base de datos
+        conn_db.insertar(
+            tabla="proveedores",
+            datos={
+                "codigo": nuevo_codigo,
+                "nombre": datos["nombre"],
+                "rut": datos["rut"],
+                "direccion": datos["direccion"],
+                "telefono": datos["telefono"],
+                "email": datos["email"],
+                "estado": 1  # Estado activo por defecto
+            }
+        )
 
+        return jsonify({"mensaje": "Proveedor creado exitosamente", "codigo": nuevo_codigo}), 201
     except Exception as e:
-        print(f"Error al guardar proveedor: {e}")
-        return jsonify({"error": "Ocurrió un error al guardar el proveedor"}), 500                  
+        print(f"Error al crear proveedor: {e}")
+        return jsonify({"error": "Error al crear proveedor"}), 500
 
 
 @app.route('/api/proveedores', methods=['GET'])
@@ -394,7 +402,21 @@ def cargar_proveedores():
             columnas="id, codigo, nombre, rut, telefono",
             condicion="estado = 1"
         )
-        return jsonify(proveedores), 200
+
+        # Construir una lista de diccionarios con los datos de los proveedores
+        lista_proveedores = [
+            {
+                "id": proveedor[0],
+                "codigo": proveedor[1],
+                "nombre": proveedor[2],
+                "rut": proveedor[3],
+                "telefono": proveedor[4]
+            }
+            for proveedor in proveedores
+        ]
+
+        # Retornar la lista de proveedores en formato JSON
+        return jsonify(lista_proveedores), 200
     except Exception as e:
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
