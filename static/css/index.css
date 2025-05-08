@@ -1,0 +1,77 @@
+body {
+    margin: 0;
+}
+
+.home {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: #e0f7fa;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .inicio-sesion {
+    background: #ffffff;
+    padding: 40px 30px;
+    margin-left: 50px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 360px;
+    width: 100%;
+  }
+
+  .anuncio-publicidad{
+    border-radius: 20px;
+    height: 250px;
+    width: 100%;
+  }
+
+  .anuncio-publicidad img {
+    height: 250px;
+    width: 100%;
+    border-radius: 18px;
+  }
+
+  .inicio-sesion h2 {
+    margin-bottom: 30px;
+    text-align: center;
+    color: #0077b6;
+  }
+
+  .inicio-sesion input {
+    width: 92.5%;
+    padding: 12px;
+    margin: 10px 0 ;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 16px;
+  }
+
+  .inicio-sesion button {
+    width: 100%;
+    padding: 12px;
+    background-color: #00b894;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .inicio-sesionr button:hover {
+    background-color: #019875;
+  }
+
+  .inicio-sesion .link {
+    margin-top: 15px;
+    text-align: center;
+    font-size: 14px;
+  }
+
+  .inicio-sesion .link a {
+    color: #0077b6;
+    text-decoration: none;
+  }

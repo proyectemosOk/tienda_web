@@ -14,9 +14,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 conn_db = ConexionBase("tienda_jfleong6_1.db")
 
-@app.route('/orden')
+@app.route('/')
 def index():
-    return render_template('orden.html')
+    return render_template('index.html')
 
 @app.route('/orden')
 def orden():
