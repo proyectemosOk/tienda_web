@@ -15,30 +15,28 @@ function cargar_productos() {
 
         // Iterar sobre los productos y crear filas
         data.productos.forEach(producto => {
-            
             const fila = document.createElement('tr');
             fila.innerHTML = `
-                <td>${producto.codigo}</td>
-                <td>${producto.nombre}</td>
-                <td>${producto.categoria || 'Sin categoría'}</td>
-                <td>${producto.stock}</td>
-                <td>$${producto.precio_compra.toFixed(2)}</td>
-                <td>$${producto.precio_venta.toFixed(2)}</td>
-                <td>
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-info" onclick="ver_detalle_producto('${producto.codigo}')">
-                            <i class="fas fa-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-warning" onclick="editar_producto('${producto.codigo}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="eliminar_producto('${producto.codigo}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                </td>
-            `;
-
+            <td>${producto.codigo}</td>
+            <td>${producto.nombre}</td>
+            <td>${producto.categoria || 'Sin categoría'}</td>
+            <td>${producto.stock}</td>
+            <td>$${producto.precio_compra.toFixed(2)}</td>
+            <td>$${producto.precio_venta.toFixed(2)}</td>
+            <td>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-sm btn-info" onclick="ver_detalle_producto('${producto.codigo}')">
+                        <img src="${iconoVer}" alt="Ver" width="16">
+                    </button>
+                    <button class="btn btn-sm btn-warning" onclick="editar_producto('${producto.codigo}')">
+                        <img src="${iconoEditar}" alt="Editar" width="16">
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="eliminar_producto('${producto.codigo}')">
+                        <img src="${iconoEliminar}" alt="Eliminar" width="16">
+                    </button>
+                </div>
+            </td>
+        `;
             tbody.appendChild(fila);
         });
     })

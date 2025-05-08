@@ -401,7 +401,21 @@ def crear_tablas(base):
     conexion.commit()
     conexion.close()
 
+# Conexión a la base de datos (cambia el nombre si es diferente)
+conexion = sqlite3.connect("tienda_jfleong6_1.db")
+cursor = conexion.cursor()
 
+# Intentar agregar la columna 'activo'
+try:
+    cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
+    
+    
+    print("Columna 'activo' agregada correctamente.")
+except sqlite3.OperationalError as e:
+    if "duplicate column name" in str(e):
+        print("La columna 'activo' ya existe.")
+    else:
+        raise
 # Ruta a tu archivo de credenciales Firebase
 # firebase = ServicioFirebase("../proyectemosok-31150-firebase-adminsdk-fbsvc-fdae62578b.json")
 

@@ -92,7 +92,6 @@ def api_tipos():
     tipos = conn_db.seleccionar("tipos", "nombre")
     return jsonify([{"nombre": t[0]} for t in tipos])
 
-
 @app.route('/api/servicios')
 def api_servicios():
     servicios = conn_db.seleccionar("servicios", "nombre")
@@ -357,6 +356,106 @@ def eliminar_producto(codigo):
             'mensaje': 'Error interno del servidor',
             'error': str(e)
         }), 500
-                  
+
+@app.route('/api/proveedores', methods=['POST'])
+def guardar_proveedor():
+    try:
+        # Obtener los datos enviados desde el formulario
+        datos = request.get_json()
+
+        # Validar datos requeridos
+        if not all(key in datos for key in ("nombre", "rut", "direccion", "telefono", "email")):
+            return jsonify({"error": "Faltan datos obligatorios"}), 400
+
+        # Insertar en la base de datos
+        proveedor = {
+            "codigo": datos.get("codigo", "AUTO"),  # Código puede ser opcional o generado automáticamente
+            "nombre": datos["nombre"],
+            "rut": datos["rut"],
+            "direccion": datos["direccion"],
+            "telefono": datos["telefono"],
+            "email": datos["email"],
+        }
+        id_proveedor = conn_db.insertar("proveedores", proveedor)
+
+        return jsonify({"mensaje": "Proveedor guardado exitosamente", "id_proveedor": id_proveedor}), 201
+
+    except Exception as e:
+        print(f"Error al guardar proveedor: {e}")
+        return jsonify({"error": "Ocurrió un error al guardar el proveedor"}), 500                  
+
+
+@app.route('/api/proveedores', methods=['GET'])
+def cargar_proveedores():
+    try:
+        # Obtener todos los proveedores activos
+        proveedores = conn_db.seleccionar(
+            tabla="proveedores",
+            columnas="id, codigo, nombre, rut, telefono",
+            condicion="estado = 1"
+        )
+        return jsonify(proveedores), 200
+    except Exception as e:
+        print(f"Error al cargar proveedores: {e}")
+        return jsonify({"error": "Error al cargar proveedores"}), 500
+
+@app.route('/api/proveedores/<int:id>', methods=['GET'])
+def ver_proveedor(id):
+    try:
+        proveedor = conn_db.seleccionar(
+            tabla="proveedores",
+            columnas="id, codigo, nombre, rut, direccion, telefono, email, fecha_registro",
+            condicion="id = ?",
+            parametros=(id,)
+        )
+        if proveedor:
+            return jsonify(proveedor[0]), 200
+        else:
+            return jsonify({"error": "Proveedor no encontrado"}), 404
+    except Exception as e:
+        print(f"Error al obtener detalles del proveedor: {e}")
+        return jsonify({"error": "Error al obtener detalles del proveedor"}), 500
+
+@app.route('/api/proveedores/<int:id>', methods=['PUT'])
+def editar_proveedor(id):
+    try:
+        datos = request.get_json()
+        # Validar datos requeridos
+        if not all(key in datos for key in ("nombre", "rut", "direccion", "telefono", "email")):
+            return jsonify({"error": "Faltan datos obligatorios"}), 400
+
+        # Actualizar datos del proveedor
+        conn_db.actualizar(
+            tabla="proveedores",
+            datos={
+                "nombre": datos["nombre"],
+                "rut": datos["rut"],
+                "direccion": datos["direccion"],
+                "telefono": datos["telefono"],
+                "email": datos["email"]
+            },
+            condicion="id = ?",
+            parametros_condicion=(id,)
+        )
+        return jsonify({"mensaje": "Proveedor actualizado exitosamente"}), 200
+    except Exception as e:
+        print(f"Error al editar proveedor: {e}")
+        return jsonify({"error": "Error al editar proveedor"}), 500
+
+@app.route('/api/proveedores/<int:id>', methods=['DELETE'])
+def eliminar_proveedor(id):
+    try:
+        # Cambiar estado del proveedor a 0
+        conn_db.actualizar(
+            tabla="proveedores",
+            datos={"estado": 0},
+            condicion="id = ?",
+            parametros_condicion=(id,)
+        )
+        return jsonify({"mensaje": "Proveedor eliminado correctamente"}), 200
+    except Exception as e:
+        print(f"Error al eliminar proveedor: {e}")
+        return jsonify({"error": "Error al eliminar proveedor"}), 500
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
