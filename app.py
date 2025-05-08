@@ -211,6 +211,7 @@ def obtener_producto(codigo):
             "mensaje": str(e)
         }), 500
 
+
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
     try:
@@ -308,6 +309,6 @@ def eliminar_producto(codigo):
             'mensaje': 'Error interno del servidor',
             'error': str(e)
         }), 500
-
+                  
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
