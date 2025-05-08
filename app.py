@@ -14,9 +14,9 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 conn_db = ConexionBase("tienda_jfleong6_1.db")
 
-@app.route('/orden')
+@app.route('/')
 def index():
-    return render_template('orden.html')
+    return render_template('index.html')
 
 @app.route('/orden')
 def orden():
@@ -105,17 +105,47 @@ def api_tipos_pago():
 
 @app.route('/api/productos')
 def productos():
-    productos = conn_db.seleccionar("productos", "codigo, nombre, categoria, stock, precio_compra, precio_venta")
-    return jsonify([
-        {
-            "codigo": items[0],
-            "nombre": items[1],
-            "categoria": items[2],
-            "stock": items[3],
-            "precio_compra": float(items[4]),
-            "precio_venta": float(items[5])
-        } for items in productos
-    ])
+    try:        
+        # Si la columna existe, obtener productos inactivos
+        lista_productos = conn_db.seleccionar(
+            "productos", 
+            "codigo, nombre, categoria, stock, precio_compra, precio_venta", 
+            "activo = ?", 
+            ('1',)
+        )
+               
+        # Manejar el caso de lista vacía
+        if not lista_productos:
+            return jsonify({
+                'mensaje': 'No se encontraron productos',
+                'productos': [],
+                'total': 0
+            }), 400
+        
+        # Transformar la lista de productos
+        productos_formateados = [
+            {
+                "codigo": str(items[0]),
+                "nombre": items[1],
+                "categoria": items[2],
+                "stock": items[3],
+                "precio_compra": float(items[4]),
+                "precio_venta": float(items[5])
+            } for items in lista_productos
+        ]
+        
+        return jsonify({
+            'productos': productos_formateados,
+            'total': len(productos_formateados)
+        }), 200
+    
+    except Exception as e:
+        # Manejo de errores más detallado
+        print(f"Error al obtener productos: {str(e)}")
+        return jsonify({
+            'mensaje': 'Error interno al recuperar productos',
+            'error': str(e)
+        }), 500
 
 @app.route('/api/productos/<codigo>', methods=['GET'])
 def obtener_producto(codigo):
@@ -126,12 +156,12 @@ def obtener_producto(codigo):
         
         # Formatear el resultado
         detalle_producto = {
-            "categoria": producto[0][0],
-            "codigo": producto[0][1],
-            "nombre": producto[0][2],
-            "precio_compra": float(producto[0][3]),
-            "precio_venta": float(producto[0][4]),
-            "stock": producto[0][5]
+            "categoria": producto[0][2],
+            "codigo": producto[0][0],
+            "nombre": producto[0][1],
+            "precio_compra": float(producto[0][4]),
+            "precio_venta": float(producto[0][5]),
+            "stock": producto[0][3]
         }
         
         return jsonify(detalle_producto)
@@ -154,6 +184,7 @@ def obtener_ventas_dia():
         # Obtener la fecha actual
         fecha_hoy = datetime.now().strftime('%Y-%m-%d')
 
+<<<<<<< HEAD
         # Total de ventas del día
         total_ventas = conn_db.seleccionar(
             tabla="ventas",
@@ -230,5 +261,106 @@ def cargar_ventas_dia():
         print(f"Error al cargar las ventas del día: {e}")
         return jsonify({"error": "Ocurrió un error al cargar las ventas del día."}), 500
     
+=======
+
+@app.route('/api/productos/<codigo>', methods=['PUT'])
+def actualizar_producto(codigo):
+    try:
+        # Obtener datos del producto desde la solicitud
+        datos = request.get_json()
+        
+        # Validar que se reciban datos
+        if not datos:
+            return jsonify({
+                'mensaje': 'No se recibieron datos para actualizar',
+                'error': True
+            }), 400
+        
+        
+        # Validaciones de datos
+        campos_validos = ['nombre', 'categoria', 'stock', 'precio_compra', 'precio_venta']
+        
+        # Filtrar solo campos válidos
+        datos_actualizacion = {
+            campo: valor for campo, valor in datos.items() 
+            if campo in campos_validos
+        }
+        
+        # Validaciones adicionales
+        if 'stock' in datos_actualizacion and datos_actualizacion['stock'] < 0:
+            return jsonify({
+                'mensaje': 'El stock no puede ser negativo',
+                'error': True
+            }), 400
+        
+        if 'precio_compra' in datos_actualizacion and datos_actualizacion['precio_compra'] < 0:
+            return jsonify({
+                'mensaje': 'El precio de compra no puede ser negativo',
+                'error': True
+            }), 400
+        
+        if 'precio_venta' in datos_actualizacion and datos_actualizacion['precio_venta'] < 0:
+            return jsonify({
+                'mensaje': 'El precio de venta no puede ser negativo',
+                'error': True
+            }), 400
+        
+        # Verificar si hay datos válidos para actualizar
+        if not datos_actualizacion:
+            return jsonify({
+                'mensaje': 'No se proporcionaron campos válidos para actualizar',
+                'error': True
+            }), 400
+        
+        # Llamar al método actualizar
+        conn_db.actualizar(
+            tabla='productos', 
+            datos=datos_actualizacion, 
+            condicion='codigo = ?', 
+            parametros_condicion=(codigo,)
+        )
+        
+        return jsonify({
+            'mensaje': 'Producto actualizado correctamente',
+            }
+        ), 200
+    
+    except Exception as e:
+        # Manejo de errores
+        print(f"Error al actualizar producto: {str(e)}")
+        return jsonify({
+            'mensaje': 'Error interno del servidor',
+            'error': str(e)
+        }), 500
+    finally:
+        # Asegurarse de cerrar la conexión
+        if 'conn_db' in locals():
+            conn_db.cerrar_conexion()
+
+@app.route('/api/productos/<codigo>', methods=['DELETE'])
+def eliminar_producto(codigo):
+    try:        
+        # Desactivar el producto usando el método actualizar()
+        conn_db.actualizar(
+            tabla='productos', 
+            datos={'activo': 0}, 
+            condicion='codigo = ?', 
+            parametros_condicion=(codigo,)
+        )
+        
+        return jsonify({
+            'mensaje': 'Producto eliminado correctamente',
+            'producto_desactivado': codigo
+        }), 200
+    
+    except Exception as e:
+        # Manejo de errores
+        print(f"Error al desactivar producto: {str(e)}")
+        return jsonify({
+            'mensaje': 'Error interno del servidor',
+            'error': str(e)
+        }), 500
+                  
+>>>>>>> main
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
