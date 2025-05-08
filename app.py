@@ -147,43 +147,6 @@ def productos():
             'error': str(e)
         }), 500
 
-@app.route('/api/productos', methods=['GET'])
-def buscar_producto():
-    try:
-        # Obtener el parámetro de búsqueda (puede ser código o nombre)
-        termino = request.args.get('q', '').strip()
-
-        if not termino:
-            return jsonify({"error": "Debe proporcionar un término de búsqueda."}), 400
-
-        # Consulta para buscar coincidencias por código o nombre
-        productos = conn_db.seleccionar(
-            "productos",
-            "codigo, nombre, categoria, stock, precio_compra, precio_venta",
-            "codigo LIKE ? OR nombre LIKE ?",
-            (f"%{termino}%", f"%{termino}%")
-        )
-
-        # Formatear el resultado
-        lista_productos = [
-            {
-                "codigo": producto[0],
-                "nombre": producto[1],
-                "categoria": producto[2],
-                "stock": producto[3],
-                "precio_compra": float(producto[4]),
-                "precio_venta": float(producto[5])
-            }
-            for producto in productos
-        ]
-
-        return jsonify(lista_productos)
-
-    except Exception as e:
-        print(f"Error al buscar producto: {e}")
-        return jsonify({"error": "Ocurrió un error al buscar el producto."}), 500
-
-
 @app.route('/api/productos/<codigo>', methods=['GET'])
 def obtener_producto(codigo):
     try:
@@ -210,8 +173,92 @@ def obtener_producto(codigo):
             "error": "Error interno del servidor",
             "mensaje": str(e)
         }), 500
+    
+@app.route('/cierre_dia')
+def cierre_dia():
+    return render_template('cierre_dia.html')
+# API para obtener las ventas del día
+@app.route('/api/ventas/dia', methods=['GET'])
+def obtener_ventas_dia():
+    try:
+        # Obtener la fecha actual
+        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+        # Total de ventas del día
+        total_ventas = conn_db.seleccionar(
+            tabla="ventas",
+            columnas="SUM(total_venta)",
+            condicion="DATE(fecha) = ?",
+            parametros=(fecha_hoy,)
+        )[0][0] or 0
 
+        # Desglose por método de pago
+        desglose_pagos = conn_db.ejecutar_personalizado('''
+            SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
+            FROM pagos_venta pv
+            JOIN ventas v ON pv.venta_id = v.id
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+            WHERE DATE(v.fecha) = ?
+            GROUP BY tp.nombre
+        ''', (fecha_hoy,))
 
+        # Formatear el desglose en un diccionario
+        desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
+
+        # Respuesta JSON
+        return jsonify({
+            "fecha": fecha_hoy,
+            "total_ventas": total_ventas,
+            "desglose_pagos": desglose
+        })
+
+    except Exception as e:
+        print(f"Error al obtener las ventas del día: {e}")
+        return jsonify({"error": "Ocurrió un error al obtener las ventas del día."}), 500
+
+@app.route('/api/ventas/cargar', methods=['GET'])
+def cargar_ventas_dia():
+    try:
+        # Obtener la fecha actual
+        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+
+        # Consulta para obtener las ventas del día y sus métodos de pago
+        consulta = '''
+            SELECT 
+                v.id AS id_venta,
+                v.fecha,
+                v.total_venta,
+                GROUP_CONCAT(tp.nombre, ', ') AS metodos_pago
+            FROM ventas v
+            LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
+            LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+            WHERE DATE(v.fecha) = ?
+            GROUP BY v.id
+        '''
+
+        # Ejecutar la consulta
+        ventas = conn_db.ejecutar_personalizado(consulta, (fecha_hoy,))
+
+        # Formatear los datos en una lista de diccionarios
+        resultado = [
+            {
+                "id_venta": venta[0],
+                "fecha": venta[1],
+                "total_venta": venta[2],
+                "metodos_pago": venta[3] if venta[3] else "Sin método de pago"
+            }
+            for venta in ventas
+        ]
+
+        # Respuesta JSON
+        return jsonify({
+            "fecha": fecha_hoy,
+            "ventas": resultado
+        })
+
+    except Exception as e:
+        print(f"Error al cargar las ventas del día: {e}")
+        return jsonify({"error": "Ocurrió un error al cargar las ventas del día."}), 500
+    
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
     try:
