@@ -56,13 +56,6 @@ async function cargarVentasDelDia() {
         }
 
         tbody.innerHTML = data.ventas.map(venta => {
-            // // Formatear la fecha para mostrar solo la hora
-            // const fecha = new Date(venta.fecha);
-            // const hora = fecha.toLocaleTimeString('es-CL', {
-            //     hour: '2-digit',
-            //     minute: '2-digit'
-            // });
-
             // Formatear el monto
             const montoFormateado = new Intl.NumberFormat('es-CL', {
                 style: 'currency',
@@ -72,13 +65,10 @@ async function cargarVentasDelDia() {
             return `
                 <tr>
                     <td>${venta.id_venta}</td>
-                    <td>${montoFormateado}</td>
-                    <td>
-                        <span class="badge badge-${venta.metodos_pago.toLowerCase()}">
-                            ${venta.metodos_pago}
-                        </span>
-                    </td>
                     <td>${venta.fecha}</td>
+                    <td>${montoFormateado}</td>
+                    <td>${venta.metodos_pago}</td>
+                    
                 </tr>`;
         }).join('');
 

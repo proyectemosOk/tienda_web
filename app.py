@@ -187,8 +187,8 @@ def obtener_ventas_dia():
         total_ventas = conn_db.seleccionar(
             tabla="ventas",
             columnas="SUM(total_venta)",
-            condicion="DATE(fecha) = ?",
-            parametros=(fecha_hoy,)
+            condicion="estado = ?",
+            parametros=('1',)
         )[0][0] or 0
 
         # Desglose por método de pago
@@ -197,10 +197,10 @@ def obtener_ventas_dia():
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE DATE(v.fecha) = ?
+            WHERE v.estado = ? 
             GROUP BY tp.nombre
-        ''', (fecha_hoy,))
-
+        ''', ('1',))
+        print(desglose_pagos)
         # Formatear el desglose en un diccionario
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
 
@@ -231,12 +231,13 @@ def cargar_ventas_dia():
             FROM ventas v
             LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
             LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE DATE(v.fecha) = ?
+            WHERE v.estado = ?
             GROUP BY v.id
         '''
 
         # Ejecutar la consulta
-        ventas = conn_db.ejecutar_personalizado(consulta, (fecha_hoy,))
+        ventas = conn_db.ejecutar_personalizado(consulta, ("1",))
+        
 
         # Formatear los datos en una lista de diccionarios
         resultado = [
