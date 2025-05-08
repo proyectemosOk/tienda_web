@@ -147,6 +147,43 @@ def productos():
             'error': str(e)
         }), 500
 
+@app.route('/api/productos', methods=['GET'])
+def buscar_producto():
+    try:
+        # Obtener el parámetro de búsqueda (puede ser código o nombre)
+        termino = request.args.get('q', '').strip()
+
+        if not termino:
+            return jsonify({"error": "Debe proporcionar un término de búsqueda."}), 400
+
+        # Consulta para buscar coincidencias por código o nombre
+        productos = conn_db.seleccionar(
+            "productos",
+            "codigo, nombre, categoria, stock, precio_compra, precio_venta",
+            "codigo LIKE ? OR nombre LIKE ?",
+            (f"%{termino}%", f"%{termino}%")
+        )
+
+        # Formatear el resultado
+        lista_productos = [
+            {
+                "codigo": producto[0],
+                "nombre": producto[1],
+                "categoria": producto[2],
+                "stock": producto[3],
+                "precio_compra": float(producto[4]),
+                "precio_venta": float(producto[5])
+            }
+            for producto in productos
+        ]
+
+        return jsonify(lista_productos)
+
+    except Exception as e:
+        print(f"Error al buscar producto: {e}")
+        return jsonify({"error": "Ocurrió un error al buscar el producto."}), 500
+
+
 @app.route('/api/productos/<codigo>', methods=['GET'])
 def obtener_producto(codigo):
     try:
@@ -173,7 +210,6 @@ def obtener_producto(codigo):
             "error": "Error interno del servidor",
             "mensaje": str(e)
         }), 500
-
 
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
@@ -272,6 +308,6 @@ def eliminar_producto(codigo):
             'mensaje': 'Error interno del servidor',
             'error': str(e)
         }), 500
-                  
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

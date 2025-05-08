@@ -27,19 +27,108 @@ document.addEventListener("DOMContentLoaded", () => {
         alert(`Proveedor encontrado: ${proveedor}`);
     });
 
-    // Función para buscar producto (simulación)
     buscarProductoBtn.addEventListener("click", () => {
-        const codigoProducto = codigoProductoInput.value.trim();
-        if (!codigoProducto) {
-            alert("Por favor, ingresa un código de producto.");
+        const terminoBusqueda = codigoProductoInput.value.trim();
+    
+        if (!terminoBusqueda) {
+            alert("Por favor, ingresa un código o nombre de producto.");
             return;
         }
-        // Aquí puedes implementar la lógica para buscar un producto en el backend
-        console.log(`Buscando producto: ${codigoProducto}`);
-        // Simulación de búsqueda exitosa
-        document.getElementById("nombre-producto").value = "Producto de ejemplo";
+    
+        // Realizar la búsqueda en el backend
+        fetch(`/api/productos?q=${encodeURIComponent(terminoBusqueda)}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => res.json())
+            .then(productos => {
+                if (productos.error) {
+                    throw new Error(productos.error);
+                }
+    
+                // Si hay una sola coincidencia, cargar directamente los datos del producto
+                if (productos.length === 1) {
+                    const producto = productos[0];
+                    cargarDatosProducto(producto);
+                } else if (productos.length > 1) {
+                    // Si hay varias coincidencias, mostrar una lista para seleccionar
+                    mostrarListaProductos(productos);
+                } else {
+                    // Si no hay coincidencias
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Sin resultados',
+                        text: 'No se encontraron productos con ese término de búsqueda.'
+                    });
+                }
+            })
+            .catch(err => {
+                console.error("Error buscando producto:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Ocurrió un error al buscar el producto.'
+                });
+            });
     });
-
+    
+    // Función para cargar los datos del producto en el formulario
+    function cargarDatosProducto(producto) {
+        document.getElementById("codigo-producto").value = producto.codigo;
+        document.getElementById("nombre-producto").value = producto.nombre;
+        document.getElementById("cantidad").focus(); // Enfocar en la cantidad para facilitar el flujo
+    }
+    
+    // Función para mostrar una lista de productos en una ventana emergente
+    function mostrarListaProductos(productos) {
+        // Crear el HTML para la lista de productos
+        const listaHTML = productos.map(producto => `
+            <div class="producto-item" style="margin-bottom: 10px; cursor: pointer;" onclick="seleccionarProducto('${producto.codigo}')">
+                <strong>${producto.nombre}</strong> (Código: ${producto.codigo})<br>
+                Categoría: ${producto.categoria || 'Sin categoría'} - Stock: ${producto.stock}
+            </div>
+        `).join('');
+    
+        // Mostrar la ventana emergente con la lista
+        Swal.fire({
+            title: 'Seleccionar Producto',
+            html: `
+                <div style="text-align: left; max-height: 300px; overflow-y: auto;">
+                    ${listaHTML}
+                </div>
+            `,
+            showConfirmButton: false // No mostrar botón de confirmación, ya que seleccionamos directamente
+        });
+    }
+    
+    // Función global para seleccionar un producto desde la lista
+    function seleccionarProducto(codigo) {
+        // Cerrar la ventana emergente
+        Swal.close();
+    
+        // Buscar el producto seleccionado en el backend y cargar los datos
+        fetch(`/api/productos/${codigo}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(res => res.json())
+            .then(producto => {
+                cargarDatosProducto(producto);
+            })
+            .catch(err => {
+                console.error("Error obteniendo detalles del producto:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudieron cargar los detalles del producto.'
+                });
+            });
+    }
+    
     // Función para agregar un producto a la tabla
     agregarProductoBtn.addEventListener("click", () => {
         const codigoProducto = codigoProductoInput.value.trim();
