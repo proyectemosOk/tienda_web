@@ -1,6 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify
 import os
-from werkzeug.utils import secure_filename
 from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
@@ -17,6 +16,10 @@ conn_db = ConexionBase("tienda_jfleong6_1.db")
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
 @app.route('/orden')
 def orden():

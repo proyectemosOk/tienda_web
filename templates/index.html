@@ -30,6 +30,12 @@
         </div>
 
     </section>
+    <script>
+      document.getElementById('boton-continuar').addEventListener('click', function(e) {
+          e.preventDefault(); // Evita el envío de formulario si lo hay
+          window.location.href = '/home'; // Redirige a /inicio
+      });
+    </script>
 
 </body>
 </html>

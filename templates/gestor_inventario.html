@@ -12,17 +12,27 @@
 <body>
     <div class="container-fluid">
         <header class="row bg-primary text-white py-3">
-            <div class="col-12 text-center">
-                <h1>Sistema de Gestión de Inventario</h1>
+            <!-- Icono Home a la izquierda -->
+            <div class="col-2 d-flex align-items-center">
+                <a class="nav-link active" href="/home" data-bs-toggle="tab">
+                    <img src="{{ url_for('static', filename='svg/house.svg') }}" alt="" width="32">
+                </a>
             </div>
+            <!-- Título centrado -->
+            <div class="col-8 d-flex align-items-center justify-content-center">
+                <h1 class="mb-0">Sistema de Gestión de Inventario</h1>
+            </div>
+            <!-- Columna vacía para equilibrar -->
+            <div class="col-2"></div>
         </header>
+
 
         <nav class="row bg-light py-2">
             <div class="col-12">
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
                         <a class="nav-link active" href="#entrada-productos" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/box-open.svg') }}" alt="" width="24"> Entrada de Productos
+                            <i class="fas"></i>  Entrada de Productos
                         </a>
                     </li>
                     <li class="nav-item">
