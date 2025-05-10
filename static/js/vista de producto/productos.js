@@ -1,8 +1,9 @@
 class Producto {
-    constructor(id, nombre, precio, descripcion, imagen) {
+    constructor(id, nombre, precio, categoria, descripcion, imagen) {
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
+        this.categoria = categoria
         this.descripcion = descripcion;
         this.imagen = imagen;
         this.elemento = null; // Agregamos una propiedad para guardar el elemento DOM
@@ -58,7 +59,7 @@ class CatalogoProductos {
             this.mostrarTodos();
         } else {
             this.productos.forEach(p => {
-                if (p.nombre.toLowerCase().includes(query.toLowerCase())) {
+                if (p.nombre.toLowerCase().includes(query.toLowerCase()) || p.categoria.toLowerCase().includes(query.toLowerCase())) {
                     p.elemento.style.display = '';
                 } else {
                     p.elemento.style.display = 'none';
@@ -80,6 +81,7 @@ function cargarProductos() {
                     item.id,
                     item.nombre,
                     item.precio,
+                    item.categoria,
                     item.descripcion,
                     item.imagen
                 );

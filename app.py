@@ -515,7 +515,7 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, descripcion")
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion")
     productos_list = []
 
     for prod in productos:
@@ -524,12 +524,43 @@ def obtener_productos():
             "id": prod[0],
             "nombre": prod[1],
             "precio": prod[2],
-            "descripcion": prod[3],
+            "categoria": prod[3],
+            "descripcion": prod[4],
             "imagen": url_imagen
         })
 
     return jsonify(productos_list)
 
+@app.route('/api/metodos_pago', methods=['GET'])
+def obtener_metodos_pago():
+    try:
+        # Obtener métodos de pago de la base de datos
+        metodos = conn_db.seleccionar("tipos_pago", "id, nombre")
+        
+        if not metodos:
+            return jsonify({
+                'mensaje': 'No se encontraron métodos de pago',
+                'metodos': [],
+                'total': 0
+            }), 404
+        
+        # Formatear la respuesta
+        metodos_formateados = [{
+            "id": metodo[0],
+            "nombre": metodo[1]
+        } for metodo in metodos]
+        
+        return jsonify({
+            'metodos': metodos_formateados,
+            'total': len(metodos_formateados)
+        }), 200
+    
+    except Exception as e:
+        print(f"Error al obtener métodos de pago: {str(e)}")
+        return jsonify({
+            'mensaje': 'Error interno al recuperar métodos de pago',
+            'error': str(e)
+        }), 500
 
 
 
