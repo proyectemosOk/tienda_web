@@ -1,128 +1,202 @@
-/* Estilos generales del cuerpo */
+/* Reset y global */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* Estilos del cuerpo */
 body {
     font-family: 'Arial', sans-serif;
-    background-color: #f0f4f8; /* Fondo claro */
-    color: #1a237e; /* Azul oscuro para el texto */
+    background-color: #f0f4f8;
+    color: #1a237e;
     margin: 0;
     padding: 20px;
+    line-height: 1.6;
 }
 
 /* Contenedor principal */
 .container {
+    width: 90%;
     max-width: 1200px;
     margin: auto;
     padding: 20px;
-    background-color: #ffffff; /* Fondo blanco */
+    background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+}
+.container:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
 }
 
-/* Estilo del encabezado */
+/* Título principal (si lo agregas en tu HTML) */
 h1 {
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
-    color: #0d47a1; /* Azul oscuro para el encabezado */
+    color: #0d47a1;
 }
 
 /* Lista de productos */
 .product-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Diseño responsivo */
+    margin-top: 2rem;
+    display: flex;
+    flex-wrap: wrap;
     gap: 20px;
+    justify-content: center;
 }
 
-/* Estilo de cada producto */
+/* Cada producto */
 .product {
-    background-color: #bbdefb; /* Fondo azul claro para cada producto */
-    border: 1px solid #0d47a1; /* Borde azul oscuro */
+    flex: 1 1 180px;
+    max-width: 220px;
+    background-color: #bbdefb;
+    border: 1px solid #0d47a1;
     border-radius: 12px;
     padding: 15px;
-    transition: transform 0.2s, box-shadow 0.2s; /* Efecto de hover */
-    text-align: center; /* Centrar texto */
-    cursor: pointer; /* Cambia el cursor al pasar sobre el producto */
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden; /* oculta el texto que se sale */
+    word-wrap: break-word;
 }
 
-/* Efecto de hover en productos */
 .product:hover {
-    transform: scale(1.05); /* Efecto de aumento al pasar el ratón */
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Sombra al pasar el ratón */
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    background-color: #a6c8f9;
 }
 
-/* Estilo de las imágenes de productos */
+/* Imagen del producto */
 .product img {
-    max-width: 60%; /* Ajusta el tamaño de la imagen a un 60% */
-    height: auto; /* Mantiene la proporción de la imagen */
-    border-radius: 8px; /* Bordes redondeados para la imagen */
-    margin-bottom: 10px; /* Espacio debajo de la imagen */
+    max-width: 70%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+}
+.product:hover img {
+    transform: scale(1.05);
 }
 
-/* Estilo del precio (aplicado a todos los elementos que contengan el precio) */
+/* Texto y precio en productos */
 .product p {
-    color: #4caf50; /* Color verde para el precio */
-    font-size: 1.4em; /* Tamaño de fuente para el precio */
-    font-weight: bold; /* Negrita para el precio */
+    color: #4caf50;
+    font-size: 1.2em;
+    font-weight: bold;
+    margin: 8px 0;
 }
 
-/* Estilos del modal */
+@media(max-width: 600px) {
+    .product {
+        max-width: 45%;
+    }
+}
+
+/* Estilos del input de búsqueda */
+#search-input {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1em;
+    border: 2px solid #0d47a1;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+#search-input:focus {
+    border-color: #0d47a1;
+    box-shadow: 0 0 8px rgba(13, 71, 161, 0.3);
+}
+
+/* Modal */
 .modal {
     display: none; /* Oculto por defecto */
-    position: fixed; /* Mantiene el modal en su lugar */
-    z-index: 1; /* Asegura que esté encima de otros elementos */
+    position: fixed;
+    z-index: 999;
     left: 0;
     top: 0;
-    width: 100%; /* Ancho completo */
-    height: 100%; /* Alto completo */
-    overflow: auto; /* Habilita el desplazamiento si es necesario */
-    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro con opacidad */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    justify-items: center;
+    align-content: center;
 }
 
-/* Contenido del modal */
+.modal.show {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+}
 .modal-content {
-    background-color: #ffffff; /* Fondo blanco */
-    margin: 10% auto; /* Margen automático para centrar */
-    padding: 20px;
-    border: 1px solid #0d47a1; /* Borde azul oscuro */
+    background-color: #fff;
+    padding: 30px;
     border-radius: 12px;
-    width: 80%; /* Ancho del modal */
-    text-align: center; /* Centrar texto en el modal */
+    width: 90%;
+    max-width: 700px;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+    text-align: center;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.modal.show .modal-content {
+    transform: translateY(0);
+}
+.modal .close {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    color: #555;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.modal .close:hover {
+    color: #000;
 }
 
-/* Estilo de la imagen en el modal */
-.modal img {
-    max-width: 80%; /* Ajusta el tamaño de la imagen en el modal */
-    height: auto; /* Mantiene la proporción de la imagen */
-    border-radius: 8px; /* Bordes redondeados para la imagen */
-    margin-bottom: 20px; /* Espacio debajo de la imagen */
+/* Imagen del modal */
+#modal-image {
+    max-width: 80%;
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    transition: transform 0.2s;
+}
+#modal-image:hover {
+    transform: scale(1.02);
 }
 
-/* Estilo del precio en el modal */
-.modal p.precio {
-    color: #4caf50; /* Color verde para el precio */
-    font-size: 1.6em; /* Tamaño de fuente para el precio */
-    font-weight: bold; /* Negrita para el precio */
-    margin: 10px 0; /* Espaciado vertical */
+/* Texto en modal */
+#modal-name {
+    margin-bottom: 15px;
+    font-size: 2em;
+    color: #0d47a1;
+}
+#modal-id,
+#modal-price,
+#modal-description {
+    margin: 10px 0;
+    font-size: 1.2em;
+    color: #333;
 }
 
-/* Estilo de la descripción del producto en el modal */
-.modal p.descripcion {
-    font-size: 1.2em; /* Tamaño de fuente para la descripción */
-    color: #333; /* Color gris oscuro para la descripción */
-    margin: 10px 0; /* Espaciado vertical */
+/* Precio en modal */
+#modal-price {
+    color: #4caf50;
+    font-weight: bold;
 }
 
-/* Estilo del botón de cerrar */
-.close {
-    color: #aaa; /* Color del botón de cerrar */
-    float: right; /* Alinear a la derecha */
-    font-size: 28px; /* Tamaño del botón de cerrar */
-    font-weight: bold; /* Negrita */
-}
-
-/* Efecto de hover en el botón de cerrar */
-.close:hover,
-.close:focus {
-    color: black; /* Color al pasar el ratón o enfocar */
-    text-decoration: none; /* Sin subrayado */
-    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+/* Mejoras en accesibilidad y usabilidad */
+button, input[type="text"] {
+    font-family: inherit;
+    font-size: inherit;
 }

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/static/css/productos.css" />
+    <title>Vista del Producto</title>
+</head>
+<body>
+    <div class="container">
+        <label for="search-input">Buscar productos:</label>
+        <input type="text" id="search-input" placeholder="Buscar productos..." />
+        <div id="product-list" class="product-list"></div>
+    </div>
+
+    <!-- Modal para mostrar detalles del producto -->
+    <div id="product-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <img id="modal-image" src="" alt="Imagen del producto" onerror="this.onerror=null; this.src='/static/img_productos/img.png'"/>
+            <h2 id="modal-name"></h2>
+            <p>ID: <span id="modal-id"></span></p>
+            <p>Precio: <span id="modal-price"></span></p>
+            <p>Descripción: <span id="modal-description"></span></p>
+        </div>
+    </div>
+
+    <!-- Incluye tu JavaScript aquí -->
+    <script src="/static/js/vista de producto/productos.js"></script>
+</body>
+</html>

@@ -5,24 +5,31 @@ class Producto {
         this.precio = precio;
         this.descripcion = descripcion;
         this.imagen = imagen;
+        this.elemento = null; // Agregamos una propiedad para guardar el elemento DOM
     }
 
     crearElemento() {
-        const productoDiv = document.createElement('div');
-        productoDiv.classList.add('product');
-        productoDiv.innerHTML = `
-            <img src="${this.imagen}" alt="${this.nombre}">
-            <h2>${this.nombre}</h2>
+        this.elemento = document.createElement('div');
+        this.elemento.classList.add('product');
+        this.elemento.innerHTML = `
+            <img src="${this.imagen}" alt="${this.nombre}" onerror="this.onerror=null; this.src='/static/img_productos/img.png'">
+            <h2>${this.nombre.length > 20 ? this.nombre.substring(0, 20) + '...' : this.nombre}</h2>
             <p>Precio: $${this.precio}</p>
         `;
-        productoDiv.addEventListener('click', () => {
+        this.elemento.addEventListener('click', () => {
             this.mostrarModal();
         });
-        return productoDiv;
+        return this.elemento;
     }
 
     mostrarModal() {
-        document.getElementById('modal-image').src = this.imagen; 
+        const modalImage = document.getElementById('modal-image');
+        modalImage.src = this.imagen;
+        modalImage.onerror = function() {
+            this.onerror = null; // evitar bucles infinitos
+            this.src = '/static/img_productos/img.png'; // imagen predeterminada
+        };
+        // document.getElementById('modal-image').src = this.imagen; 
         document.getElementById('modal-name').innerText = this.nombre;
         document.getElementById('modal-id').innerText = this.id;
         document.getElementById('modal-price').innerText = `$${this.precio}`;
@@ -31,37 +38,57 @@ class Producto {
     }
 }
 
-// Datos de productos en formato JSON 
-const productosData = [
-    {
-        "id": 1,
-        "nombre": "Manzanas",
-        "precio": 100,
-        "descripcion": "Manzanas frescas y crujientes, perfectas para comer o cocinar",
-        "imagen": "/static/img/imagen de ejemplo.webp" 
-    },
-    {
-        "id": 2,
-        "nombre": " Arroz Blanco",
-        "precio": 200,
-        "descripcion": "Arroz blanco de grano largo, ideal para acompañar tus platos.",
-        "imagen": "/static/img/imagen de ejemplo.webp" 
-    },
-    {
-        "id": 3,
-        "nombre": "Pollo Fresco",
-        "precio": 300,
-        "descripcion": "Pollo fresco y jugoso, perfecto para asar o guisar.",
-        "imagen": "/static/img/imagen de ejemplo.webp"
+class CatalogoProductos {
+    constructor() {
+        this.productos = [];
+        this.contenedor = document.getElementById('product-list'); // Asumo que tienes un div con id 'product-list'
     }
-];
+
+    agregarProducto(producto) {
+        this.productos.push(producto);
+        this.contenedor.appendChild(producto.crearElemento());
+    }
+
+    mostrarTodos() {
+        this.productos.forEach(p => p.elemento.style.display = '');
+    }
+
+    filtrarPorNombre(query) {
+        if (!query) {
+            this.mostrarTodos();
+        } else {
+            this.productos.forEach(p => {
+                if (p.nombre.toLowerCase().includes(query.toLowerCase())) {
+                    p.elemento.style.display = '';
+                } else {
+                    p.elemento.style.display = 'none';
+                }
+            });
+        }
+    }
+}
+
+// Instancia del catálogo
+const catalogo = new CatalogoProductos();
 
 function cargarProductos() {
-    const productList = document.getElementById('product-list');
-    productosData.forEach(data => {
-        const producto = new Producto(data.id, data.nombre, data.precio, data.descripcion, data.imagen);
-        productList.appendChild(producto.crearElemento());
-    });
+    fetch('/api/productos/ventas')  // URL de tu API
+        .then(response => response.json())
+        .then(data => {
+            data.forEach(item => {
+                const producto = new Producto(
+                    item.id,
+                    item.nombre,
+                    item.precio,
+                    item.descripcion,
+                    item.imagen
+                );
+                catalogo.agregarProducto(producto);
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar productos:', error);
+        });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -78,5 +105,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (event.target === modal) {
             modal.style.display = 'none';
         }
+    });
+
+    // Evento para buscar
+    const inputBusqueda = document.getElementById('search-input'); // Asegúrate de tener este input en tu HTML
+    inputBusqueda.addEventListener('input', () => {
+        const query = inputBusqueda.value.trim();
+        catalogo.filtrarPorNombre(query);
     });
 });

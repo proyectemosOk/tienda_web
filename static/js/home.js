@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', function() {
     const botones = {
         'monederos': 'monederos.html',
-        'ventas': 'ventas.html',
+        'ventas': '/ventas',
         'inventario': '/inventarios',
-        'cuentas': 'cuentas.html',
+        'cuentas': '/cierre_dia',
         'personal': 'personal.html',
         'configuraciones': 'configuraciones.html',
         'empresa': 'empresa.html',

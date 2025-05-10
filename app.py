@@ -8,10 +8,12 @@ import json
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
+
+IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
+DEFAULT_IMAGE = 'img.png'  # La imagen por defecto en la raíz del proyecto
+conn_db = ConexionBase("tienda_jfleong6_1.db")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-
-conn_db = ConexionBase("tienda_jfleong6_1.db")
 
 @app.route('/')
 def index():
@@ -25,9 +27,17 @@ def home():
 def orden():
     return render_template('orden.html')
 
+@app.route('/ventas')
+def ventas():
+    return render_template('vista_de_producto.html')
+
 @app.route('/inventarios')
 def inventarios():
     return render_template('gestor_inventario.html')
+
+@app.route('/cierre_dia')
+def cierre_dia():
+    return render_template('cierre_dia.html')
 
 @app.route('/submit', methods=['POST'])
 def submit():
@@ -176,9 +186,7 @@ def obtener_producto(codigo):
             "mensaje": str(e)
         }), 500
     
-@app.route('/cierre_dia')
-def cierre_dia():
-    return render_template('cierre_dia.html')
+
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
 def obtener_ventas_dia():
@@ -504,6 +512,26 @@ def eliminar_proveedor(id):
     except Exception as e:
         print(f"Error al eliminar proveedor: {e}")
         return jsonify({"error": "Error al eliminar proveedor"}), 500
+
+@app.route('/api/productos/ventas', methods=['GET'])
+def obtener_productos():
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, descripcion")
+    productos_list = []
+
+    for prod in productos:
+        url_imagen = f"/static/img_productos/{prod[0]}.png"
+        productos_list.append({
+            "id": prod[0],
+            "nombre": prod[1],
+            "precio": prod[2],
+            "descripcion": prod[3],
+            "imagen": url_imagen
+        })
+
+    return jsonify(productos_list)
+
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
