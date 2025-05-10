@@ -303,11 +303,13 @@
         const iconoEditar = "{{ url_for('static', filename='svg/edit.svg') }}";
         const iconoEliminar = "{{ url_for('static', filename='svg/eliminar.svg') }}";
     </script>
+    <script type="module" src="{{ url_for('static', filename='js/inventario/proveedores.js') }}"></script>
+
     <script src="{{ url_for('static', filename='js/inventario/gestor_inventario.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventario/gestor_inventario_1.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventario/gestos_inventarios_cargar_productos.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventario/guardar_proveedor.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/inventario/proveedores.js') }}"></script>
+    
     <script src="{{ url_for('static', filename='js/inventario/gestor_entradas.js') }}"></script>
     <script src="{{ url_for('static', filename='js/swall.js') }}"></script>
 </body>

@@ -369,28 +369,39 @@ def crear_proveedor():
         if not all(key in datos for key in ("nombre", "rut", "telefono")):
             return jsonify({"error": "Faltan datos obligatorios"}), 400
 
-        # Generar el código automáticamente (por ejemplo, basado en el último registro)
         ultimo_codigo = conn_db.seleccionar(
             tabla="proveedores",
-            columnas="MAX(codigo) AS ultimo_codigo"
-        )[0][0] or 0  # Si no hay registros, empezamos desde 0
+            columnas="MAX(CAST(codigo AS INTEGER)) AS ultimo_codigo"
+        )[0][0] or 0
         nuevo_codigo = int(ultimo_codigo) + 1
-
         # Insertar el proveedor en la base de datos
-        conn_db.insertar(
+        resultado, error_info = conn_db.insertar(
             tabla="proveedores",
             datos={
                 "codigo": nuevo_codigo,
                 "nombre": datos["nombre"],
                 "rut": datos["rut"],
-                "direccion": datos["direccion"],
+                "direccion": datos.get("direccion"),
                 "telefono": datos["telefono"],
-                "email": datos["email"],
-                "estado": 1  # Estado activo por defecto
+                "email": datos.get("email"),
+                "estado": 1
             }
         )
 
-        return jsonify({"mensaje": "Proveedor creado exitosamente", "codigo": nuevo_codigo}), 201
+        print(resultado, error_info)
+
+        if error_info:
+            # Aquí verificamos si el error es de restricción UNIQUE y si hay columna
+            if "columna" in error_info:
+                return jsonify({
+                    "error": error_info["error"],
+                    "columna": error_info["columna"]
+                }), 400
+            else:
+                return jsonify({"error": error_info["error"]}), 500
+        else:
+            return jsonify({"mensaje": "Proveedor creado exitosamente", "codigo": resultado}), 201
+
     except Exception as e:
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
@@ -434,7 +445,19 @@ def ver_proveedor(id):
             parametros=(id,)
         )
         if proveedor:
-            return jsonify(proveedor[0]), 200
+            # proveedor[0] es la fila, convertirla a diccionario con claves
+            fila = proveedor[0]
+            proveedor_dict = {
+                "id": fila[0],
+                "codigo": fila[1],
+                "nombre": fila[2],
+                "rut": fila[3],
+                "direccion": fila[4],
+                "telefono": fila[5],
+                "email": fila[6],
+                "fecha_registro": fila[7]
+            }
+            return jsonify(proveedor_dict), 200
         else:
             return jsonify({"error": "Proveedor no encontrado"}), 404
     except Exception as e:

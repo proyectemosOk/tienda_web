@@ -3,6 +3,7 @@ import sqlite3
 from firebase_config import ServicioFirebase
 import bcrypt
 from crear_bd import crear_tablas
+
 class ConexionBase:
     def __init__(self, nombre_bd: str, ruta_credenciales_firebase: str = None):
         """
@@ -32,18 +33,43 @@ class ConexionBase:
             if consulta.strip().upper().startswith("INSERT"):
                 return cursor.lastrowid
             return None
+        except sqlite3.IntegrityError as e:
+            mensaje = str(e)
+            if "UNIQUE constraint failed" in mensaje:
+                # Extraer el nombre de la columna del mensaje
+                # Ejemplo: 'UNIQUE constraint failed: tabla.columna'
+                parts = mensaje.split(':')
+                if len(parts) > 1:
+                    columna_info = parts[1].strip()  # 'tabla.columna'
+                    columna = columna_info.split('.')[-1]  # 'columna'
+                    return {"error": "El valor ya existe en la columna.", "columna": columna}
+                else:
+                    return {"error": "El valor ya existe en una columna."}
+            else:
+                return {"error": mensaje}
         except sqlite3.Error as e:
-            print(f"❌ Error al ejecutar consulta:\n{consulta}\n{e}")
-            return None
+            return {"error": str(e)}
         finally:
+            
             conexion.close()
 
+
     def insertar(self, tabla, datos):
+
         columnas = ", ".join(datos.keys())
         valores = tuple(datos.values())
         placeholders = ", ".join("?" for _ in datos)
         consulta = f"INSERT INTO {tabla} ({columnas}) VALUES ({placeholders})"
-        id_generado = self.ejecutar_consulta(consulta, valores)
+        resultado = self.ejecutar_consulta(consulta, valores)
+
+        # Verificar si hubo error por restricción UNIQUE
+        if isinstance(resultado, dict) and "error" in resultado:
+            if "columna" in resultado:
+                return None, {"error": resultado["error"], "columna": resultado["columna"]}
+            else:
+                return None, {"error": resultado["error"]}
+
+        id_generado = resultado
 
         if self.firebase and id_generado:
             try:
@@ -53,7 +79,9 @@ class ConexionBase:
                 print(f"🔥 Documento '{id_generado}' insertado en Firebase colección '{tabla}'.")
             except Exception as e:
                 print(f"⚠️ Error subiendo a Firebase: {e}")
-        return id_generado
+
+        return id_generado, None
+
 
     def seleccionar(self, tabla, columnas="*", condicion=None, parametros=()):
         consulta = f"SELECT {columnas} FROM {tabla}"
