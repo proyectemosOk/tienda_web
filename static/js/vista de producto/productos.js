@@ -1,43 +1,82 @@
-const products = [
+class Producto {
+    constructor(id, nombre, precio, descripcion, imagen) {
+        this.id = id;
+        this.nombre = nombre;
+        this.precio = precio;
+        this.descripcion = descripcion;
+        this.imagen = imagen;
+    }
+
+    crearElemento() {
+        const productoDiv = document.createElement('div');
+        productoDiv.classList.add('product');
+        productoDiv.innerHTML = `
+            <img src="${this.imagen}" alt="${this.nombre}">
+            <h2>${this.nombre}</h2>
+            <p>Precio: $${this.precio}</p>
+        `;
+        productoDiv.addEventListener('click', () => {
+            this.mostrarModal();
+        });
+        return productoDiv;
+    }
+
+    mostrarModal() {
+        document.getElementById('modal-image').src = this.imagen; 
+        document.getElementById('modal-name').innerText = this.nombre;
+        document.getElementById('modal-id').innerText = this.id;
+        document.getElementById('modal-price').innerText = `$${this.precio}`;
+        document.getElementById('modal-description').innerText = this.descripcion;
+        document.getElementById('product-modal').style.display = 'block';
+    }
+}
+
+// Datos de productos en formato JSON 
+const productosData = [
     {
         "id": 1,
-        "nombre": "Producto A",
-        "precio": 29.99,
-        "descripcion": "Descripción del Producto A",
-        "imagen": "https://via.placeholder.com/150" // URL de la imagen
+        "nombre": "Manzanas",
+        "precio": 100,
+        "descripcion": "Manzanas frescas y crujientes, perfectas para comer o cocinar",
+        "imagen": "/static/img/imagen de ejemplo.webp" 
     },
     {
         "id": 2,
-        "nombre": "Producto B",
-        "precio": 19.99,
-        "descripcion": "Descripción del Producto B",
-        "imagen": "https://via.placeholder.com/150" // URL de la imagen
+        "nombre": " Arroz Blanco",
+        "precio": 200,
+        "descripcion": "Arroz blanco de grano largo, ideal para acompañar tus platos.",
+        "imagen": "/static/img/imagen de ejemplo.webp" 
     },
     {
         "id": 3,
-        "nombre": "Producto C",
-        "precio": 39.99,
-        "descripcion": "Descripción del Producto C",
-        "imagen": "https://via.placeholder.com/150" // URL de la imagen
+        "nombre": "Pollo Fresco",
+        "precio": 300,
+        "descripcion": "Pollo fresco y jugoso, perfecto para asar o guisar.",
+        "imagen": "/static/img/imagen de ejemplo.webp"
     }
 ];
 
-function displayProducts(products) {
+function cargarProductos() {
     const productList = document.getElementById('product-list');
-    productList.innerHTML = '';
-
-    products.forEach(product => {
-        const productDiv = document.createElement('div');
-        productDiv.className = 'product';
-        productDiv.innerHTML = `
-            <img src="${product.imagen}" alt="${product.nombre}">
-            <h2>${product.nombre}</h2>
-            <p>ID: ${product.id}</p>
-            <p>Precio: $${product.precio.toFixed(2)}</p>
-            <p>Descripción: ${product.descripcion}</p>
-        `;
-        productList.appendChild(productDiv);
+    productosData.forEach(data => {
+        const producto = new Producto(data.id, data.nombre, data.precio, data.descripcion, data.imagen);
+        productList.appendChild(producto.crearElemento());
     });
 }
 
-displayProducts(products);
+document.addEventListener('DOMContentLoaded', () => {
+    cargarProductos();
+
+    // Cerrar el modal al hacer clic en la X
+    document.querySelector('.close').addEventListener('click', () => {
+        document.getElementById('product-modal').style.display = 'none';
+    });
+
+    // Cerrar el modal al hacer clic fuera del contenido
+    window.addEventListener('click', (event) => {
+        const modal = document.getElementById('product-modal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    });
+});

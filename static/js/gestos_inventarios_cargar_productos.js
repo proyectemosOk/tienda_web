@@ -1,6 +1,4 @@
 
-
-
 function cargar_productos() {
     fetch('/api/productos', {
       method: 'GET',
