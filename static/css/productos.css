@@ -1,0 +1,128 @@
+/* Estilos generales del cuerpo */
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: #f0f4f8; /* Fondo claro */
+    color: #1a237e; /* Azul oscuro para el texto */
+    margin: 0;
+    padding: 20px;
+}
+
+/* Contenedor principal */
+.container {
+    max-width: 1200px;
+    margin: auto;
+    padding: 20px;
+    background-color: #ffffff; /* Fondo blanco */
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Estilo del encabezado */
+h1 {
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+    color: #0d47a1; /* Azul oscuro para el encabezado */
+}
+
+/* Lista de productos */
+.product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Diseño responsivo */
+    gap: 20px;
+}
+
+/* Estilo de cada producto */
+.product {
+    background-color: #bbdefb; /* Fondo azul claro para cada producto */
+    border: 1px solid #0d47a1; /* Borde azul oscuro */
+    border-radius: 12px;
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s; /* Efecto de hover */
+    text-align: center; /* Centrar texto */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el producto */
+}
+
+/* Efecto de hover en productos */
+.product:hover {
+    transform: scale(1.05); /* Efecto de aumento al pasar el ratón */
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3); /* Sombra al pasar el ratón */
+}
+
+/* Estilo de las imágenes de productos */
+.product img {
+    max-width: 60%; /* Ajusta el tamaño de la imagen a un 60% */
+    height: auto; /* Mantiene la proporción de la imagen */
+    border-radius: 8px; /* Bordes redondeados para la imagen */
+    margin-bottom: 10px; /* Espacio debajo de la imagen */
+}
+
+/* Estilo del precio (aplicado a todos los elementos que contengan el precio) */
+.product p {
+    color: #4caf50; /* Color verde para el precio */
+    font-size: 1.4em; /* Tamaño de fuente para el precio */
+    font-weight: bold; /* Negrita para el precio */
+}
+
+/* Estilos del modal */
+.modal {
+    display: none; /* Oculto por defecto */
+    position: fixed; /* Mantiene el modal en su lugar */
+    z-index: 1; /* Asegura que esté encima de otros elementos */
+    left: 0;
+    top: 0;
+    width: 100%; /* Ancho completo */
+    height: 100%; /* Alto completo */
+    overflow: auto; /* Habilita el desplazamiento si es necesario */
+    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro con opacidad */
+}
+
+/* Contenido del modal */
+.modal-content {
+    background-color: #ffffff; /* Fondo blanco */
+    margin: 10% auto; /* Margen automático para centrar */
+    padding: 20px;
+    border: 1px solid #0d47a1; /* Borde azul oscuro */
+    border-radius: 12px;
+    width: 80%; /* Ancho del modal */
+    text-align: center; /* Centrar texto en el modal */
+}
+
+/* Estilo de la imagen en el modal */
+.modal img {
+    max-width: 80%; /* Ajusta el tamaño de la imagen en el modal */
+    height: auto; /* Mantiene la proporción de la imagen */
+    border-radius: 8px; /* Bordes redondeados para la imagen */
+    margin-bottom: 20px; /* Espacio debajo de la imagen */
+}
+
+/* Estilo del precio en el modal */
+.modal p.precio {
+    color: #4caf50; /* Color verde para el precio */
+    font-size: 1.6em; /* Tamaño de fuente para el precio */
+    font-weight: bold; /* Negrita para el precio */
+    margin: 10px 0; /* Espaciado vertical */
+}
+
+/* Estilo de la descripción del producto en el modal */
+.modal p.descripcion {
+    font-size: 1.2em; /* Tamaño de fuente para la descripción */
+    color: #333; /* Color gris oscuro para la descripción */
+    margin: 10px 0; /* Espaciado vertical */
+}
+
+/* Estilo del botón de cerrar */
+.close {
+    color: #aaa; /* Color del botón de cerrar */
+    float: right; /* Alinear a la derecha */
+    font-size: 28px; /* Tamaño del botón de cerrar */
+    font-weight: bold; /* Negrita */
+}
+
+/* Efecto de hover en el botón de cerrar */
+.close:hover,
+.close:focus {
+    color: black; /* Color al pasar el ratón o enfocar */
+    text-decoration: none; /* Sin subrayado */
+    cursor: pointer; /* Cambia el cursor al pasar sobre el botón */
+}

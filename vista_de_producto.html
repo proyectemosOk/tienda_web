@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/productos.css">
+    <title>Vista del Producto</title>
+</head>
+<body>
+    <div class="container">
+        <h1>Productos</h1>
+        <div id="product-list" class="product-list"></div>
+    </div>
+    
+    <div id="product-modal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <img id="modal-image" src="" alt="Imagen del producto">
+            <h2 id="modal-name"></h2>
+            <p>ID: <span id="modal-id"></span></p>
+            <p>Precio: <span id="modal-price"></span></p>
+            <p>Descripción: <span id="modal-description"></span></p>
+        </div>
+    </div>
+
+    <script src="/static/js/vista de producto/productos.js"></script>
+</body>
+</html>
