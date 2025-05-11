@@ -5,6 +5,7 @@ from orden import Orden
 from firebase_config import ServicioFirebase
 from datetime import datetime
 import json
+import socket
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -515,7 +516,7 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion")
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion, codigo")
     productos_list = []
 
     for prod in productos:
@@ -526,6 +527,7 @@ def obtener_productos():
             "precio": prod[2],
             "categoria": prod[3],
             "descripcion": prod[4],
+            "codigo": prod[5],
             "imagen": url_imagen
         })
 
@@ -565,4 +567,7 @@ def obtener_metodos_pago():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    
+    host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
+    print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
+    app.run(debug=True, host=host_ip, port=5000)
