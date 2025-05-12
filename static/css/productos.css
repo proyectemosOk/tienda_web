@@ -1,213 +1,101 @@
-/* Reset y global */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
-
-/* Estilos del cuerpo */
 body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f0f4f8;
-    color: #1a237e;
-    margin: 0;
-    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background-color: #f5f7fa;
+    color: #1a1a1a;
     line-height: 1.6;
-}
-
-/* Contenedor principal */
-.container {
-    width: 96vw;
-    /* max-width: 1200px; */
-    margin: auto;
-    padding: 20px;
-    background-color: #ffffff;
+  }
+  
+  .container {
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 1rem;
+  }
+  
+  .product-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  
+  .product {
+    background-color: white;
+    border: 1px solid #e0e0e0;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
-}
-.container:hover {
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
-}
-
-/* Título principal (si lo agregas en tu HTML) */
-h2 {
-    text-align: center;
-    font-size: 1em;
-    color: #0d47a1;
-}
-
-/* Lista de productos */
-.product-list {
-    margin-top: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-}
-
-/* Cada producto */
-.product {
-    flex: 1 1 120px;
-    max-width: 150px;
-    background-color: #bbdefb;
-    border: 1px solid #0d47a1;
-    border-radius: 12px;
-    padding: 15px;
+    padding: 1.25rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background-color 0.3s;
+    transition: all 0.3s ease;
     display: flex;
     flex-direction: column;
     align-items: center;
-    overflow: hidden; /* oculta el texto que se sale */
-    word-wrap: break-word;
-}
-
-.product:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
-    background-color: #a6c8f9;
-}
-
-/* Imagen del producto */
-.product img {
-    max-width: 70%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    transition: transform 0.2s;
-}
-.product:hover img {
-    transform: scale(1.05);
-}
-
-/* Texto y precio en productos */
-.product p {
-    color: #4caf50;
-    font-size: 1em;
-    font-weight: bold;
-    margin: 8px 0;
-}
-
-@media(max-width: 600px) {
-    .product {
-        max-width: 45%;
-    }
-}
-
-/* Estilos del input de búsqueda */
-#search-input {
-    width: 100%;
-    padding: 12px 15px;
-    font-size: 1em;
-    border: 2px solid #0d47a1;
-    border-radius: 8px;
-    outline: none;
-    transition: border-color 0.3s, box-shadow 0.3s;
-}
-#search-input:focus {
-    border-color: #0d47a1;
-    box-shadow: 0 0 8px rgba(13, 71, 161, 0.3);
-}
-
-/* Modal */
-.modal {
-    display: none; /* Oculto por defecto */
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    justify-items: center;
-    align-content: center;
-}
-
-.modal.show {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
-}
-.modal-content {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 12px;
-    width: 90%;
-    max-width: 700px;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     text-align: center;
     position: relative;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-}
-.modal.show .modal-content {
-    transform: translateY(0);
-}
-.modal .close {
-    position: absolute;
-    top: 10px;
-    right: 20px;
-    color: #555;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: color 0.2s;
-}
-.modal .close:hover {
-    color: #000;
-}
-
-/* Imagen del modal */
-#modal-image {
-    max-width: 80%;
-    height: auto;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  }
+  
+  .product:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    border-color: #4f46e5;
+  }
+  
+  .product img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
     border-radius: 8px;
-    margin-bottom: 20px;
-    transition: transform 0.2s;
-}
-#modal-image:hover {
-    transform: scale(1.02);
-}
-
-/* Texto en modal */
-#modal-name {
-    margin-bottom: 15px;
-    font-size: 2em;
-    color: #0d47a1;
-}
-#modal-id,
-#modal-price,
-#modal-description {
-    margin: 10px 0;
-    font-size: 1.2em;
-    color: #333;
-}
-
-/* Precio en modal */
-#modal-price {
-    color: #4caf50;
-    font-weight: bold;
-}
-
-/* Mejoras en accesibilidad y usabilidad */
-button, input[type="text"] {
-    font-family: inherit;
-    font-size: inherit;
-
-}
-.btn-agregar{
-    border-radius: 20px;
-    background-color: #21f328;
+    margin-bottom: 0.75rem;
+    transition: transform 0.3s ease;
+  }
+  
+  .product:hover img {
+    transform: scale(1.1);
+  }
+  
+  .product p {
+    color: #4f46e5;
+    font-weight: 600;
+    margin: 0.5rem 0;
+    font-size: 0.95rem;
+  }
+  
+  /* Botón Agregar mejorado */
+  .product button {
+    background-color: #4f46e5;
     color: white;
-    padding: 5px;
-    transition: 1s ease;
-    &:hover{
-        background-color: #0d47a1;
-
-    }
-}
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 30px;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  }
+  
+  .product button:hover {
+    background-color: #4338ca;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Buscador */
+  #search-input {
+    width: 100%;
+    padding: 0.75rem 1.25rem;
+    font-size: 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: 50px;
+    background-color: white;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+  
+  #search-input:focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+    outline: none;
+  }
+  
+  
