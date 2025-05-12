@@ -408,12 +408,17 @@ cursor = conexion.cursor()
 # Intentar agregar la columna 'activo'
 try:
     cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
-    
-    
-    print("Columna 'activo' agregada correctamente.")
 except sqlite3.OperationalError as e:
     if "duplicate column name" in str(e):
-        print("La columna 'activo' ya existe.")
+        pass
+    else:
+        raise
+# Intentar agregar la columna 'actual'
+try:
+    cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
+except sqlite3.OperationalError as e:
+    if "duplicate column name" in str(e):
+        pass
     else:
         raise
 # Ruta a tu archivo de credenciales Firebase
@@ -456,7 +461,7 @@ except sqlite3.OperationalError as e:
 #         doc_ref.set(pago)
 
 if __name__ == "__main__":
-    crear_tablas()
+    crear_tablas("tienda_jfleong6_1.db")
     print("Tablas creadas exitosamente.")
 
     

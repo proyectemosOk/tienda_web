@@ -17,8 +17,8 @@ body {
 
 /* Contenedor principal */
 .container {
-    width: 90%;
-    max-width: 1200px;
+    width: 96vw;
+    /* max-width: 1200px; */
     margin: auto;
     padding: 20px;
     background-color: #ffffff;
@@ -31,10 +31,9 @@ body {
 }
 
 /* Título principal (si lo agregas en tu HTML) */
-h1 {
+h2 {
     text-align: center;
-    margin-bottom: 30px;
-    font-size: 2.5em;
+    font-size: 1em;
     color: #0d47a1;
 }
 
@@ -49,8 +48,8 @@ h1 {
 
 /* Cada producto */
 .product {
-    flex: 1 1 180px;
-    max-width: 220px;
+    flex: 1 1 120px;
+    max-width: 150px;
     background-color: #bbdefb;
     border: 1px solid #0d47a1;
     border-radius: 12px;
@@ -85,7 +84,7 @@ h1 {
 /* Texto y precio en productos */
 .product p {
     color: #4caf50;
-    font-size: 1.2em;
+    font-size: 1em;
     font-weight: bold;
     margin: 8px 0;
 }
@@ -199,4 +198,16 @@ h1 {
 button, input[type="text"] {
     font-family: inherit;
     font-size: inherit;
+
+}
+.btn-agregar{
+    border-radius: 20px;
+    background-color: #21f328;
+    color: white;
+    padding: 5px;
+    transition: 1s ease;
+    &:hover{
+        background-color: #0d47a1;
+
+    }
 }
