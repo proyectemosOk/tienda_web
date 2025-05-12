@@ -858,20 +858,21 @@ def crear_venta():
     # Validación inicial
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
-
+    
     try:
         total_pagos = sum(p['valor'] for p in data['metodos_pago'])
         if total_pagos != data['total_venta']:
             return jsonify({"error": "Suma de pagos no coincide con el total"}), 400
-
+        
         # 1. Insertar venta principal
         venta_data = {
             "vendedor_id": data['vendedor_id'],
             "cliente_id": data['cliente_id'],
             "total_venta": data['total_venta'],
-            "fecha": datetime.now().isoformat()
+            "fecha": datetime.now()
         }
         venta_id, error = conn_db.insertar("ventas", venta_data)
+        print(venta_id)
         if error:
             return jsonify(error), 400
 
