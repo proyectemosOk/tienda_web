@@ -24,6 +24,10 @@ def index():
 def home():
     return render_template('home.html')
 
+@app.route('/login-sesion')
+def login_sesion():
+    return render_template('login-sesion.html')
+
 @app.route('/orden')
 def orden():
     return render_template('orden.html')
@@ -805,6 +809,47 @@ def obtener_clientes():
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
     
+@app.route('/api/login-segunda', methods=['POST'])
+def login():
+    try:
+        datos = request.get_json()
+        
+        # Validar campos requeridos
+        if not datos or 'usuario' not in datos or 'contrasena' not in datos:
+            return jsonify({
+                "valido": False,
+                "mensaje": "Se requieren usuario y contraseña"
+            }), 400
+        
+        # Validar credenciales
+        resultado = conn_db.validar_credenciales(
+            tabla="usuarios",
+            usuario=datos['usuario'],
+            contrasena=datos['contrasena']
+        )
+        
+        # Limpiar datos sensibles en la respuesta
+        if resultado['valido']:
+            respuesta = {
+                "valido": True,
+                "mensaje": "Autenticación exitosa",
+                "id_usuario": resultado["id_usuario"],
+                "rol": resultado["rol"],
+                "usuario": datos['usuario']
+            }
+            return jsonify(respuesta), 200
+        else:
+            return jsonify({
+                "valido": False,
+                "mensaje": resultado["mensaje"]
+            }), 401
+            
+    except Exception as e:
+        print(f"Error en login: {str(e)}")
+        return jsonify({
+            "valido": False,
+            "mensaje": "Error interno del servidor"
+        }), 500
 
 if __name__ == '__main__':
     
