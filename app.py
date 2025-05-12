@@ -564,6 +564,220 @@ def obtener_metodos_pago():
             'error': str(e)
         }), 500
 
+# Rutas para la API de entregas diarias
+
+@app.route('/entregas_diarias')
+def entregas_diarias():
+    return render_template('entregas_diarias.html')
+
+@app.route('/api/entregas', methods=['GET'])
+def obtener_entregas():
+    try:
+        # Parámetro opcional para limitar la cantidad de entregas
+        limit = request.args.get('limit', 10, type=int)
+        
+        # Consulta para obtener las entregas más recientes
+        entregas = conn_db.ejecutar_personalizado('''
+            SELECT e.id, e.fecha, e.responsable, e.observaciones
+            FROM entregas e
+            ORDER BY e.fecha DESC
+            LIMIT ?
+        ''', (limit,))
+        
+        resultado = []
+        for entrega in entregas:
+            id_entrega = entrega[0]
+            
+            # Obtener los valores por tipo de pago para esta entrega
+            valores = conn_db.ejecutar_personalizado('''
+                SELECT tp.nombre, ev.valor
+                FROM entrega_valores ev
+                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
+                WHERE ev.id_entrega = ?
+            ''', (id_entrega,))
+            
+            # Convertir valores a un diccionario
+            valores_dict = {tipo: float(valor) for tipo, valor in valores}
+            
+            # Agregar entrega al resultado
+            resultado.append({
+                "id": id_entrega,
+                "fecha": entrega[1],
+                "responsable": entrega[2],
+                "observaciones": entrega[3],
+                "valores": valores_dict
+            })
+        
+        return jsonify({"entregas": resultado})
+    
+    except Exception as e:
+        print(f"Error al obtener entregas: {e}")
+        return jsonify({"error": "Error al obtener entregas", "mensaje": str(e)}), 500
+
+@app.route('/api/entregas/<int:id>', methods=['GET'])
+def obtener_entrega(id):
+    try:
+        # Obtener datos de la entrega
+        entrega = conn_db.ejecutar_personalizado('''
+            SELECT id, fecha, responsable, observaciones
+            FROM entregas
+            WHERE id = ?
+        ''', (id,))
+        
+        if not entrega:
+            return jsonify({"error": "Entrega no encontrada"}), 404
+        
+        # Obtener valores por tipo de pago
+        valores = conn_db.ejecutar_personalizado('''
+            SELECT tp.nombre, ev.valor
+            FROM entrega_valores ev
+            JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
+            WHERE ev.id_entrega = ?
+        ''', (id,))
+        
+        # Convertir a diccionario
+        valores_dict = {tipo: float(valor) for tipo, valor in valores}
+        
+        # Construir respuesta
+        resultado = {
+            "id": entrega[0][0],
+            "fecha": entrega[0][1],
+            "responsable": entrega[0][2],
+            "observaciones": entrega[0][3],
+            "valores": valores_dict
+        }
+        
+        return jsonify(resultado)
+    
+    except Exception as e:
+        print(f"Error al obtener detalle de entrega: {e}")
+        return jsonify({"error": "Error al obtener detalle de entrega", "mensaje": str(e)}), 500
+
+@app.route('/api/entregas', methods=['POST'])
+def crear_entrega():
+    try:
+        datos = request.get_json()
+        
+        # Validar datos requeridos
+        if not datos or 'fecha' not in datos or 'responsable' not in datos or 'valores' not in datos:
+            return jsonify({"error": "Faltan datos requeridos"}), 400
+        
+        # Validar que haya al menos un valor
+        if not datos['valores']:
+            return jsonify({"error": "Debe incluir al menos un valor"}), 400
+        
+        # Insertar en la tabla de entregas
+        resultado = conn_db.ejecutar_consulta('''
+            INSERT INTO entregas (fecha, responsable, observaciones, fecha_registro)
+            VALUES (?, ?, ?, datetime('now'))
+        ''', (datos['fecha'], datos['responsable'], datos.get('observaciones', '')))
+        
+        if isinstance(resultado, dict) and "error" in resultado:
+            return jsonify({"error": "Error al crear entrega", "mensaje": resultado["error"]}), 500
+        
+        id_entrega = resultado
+        
+        # Insertar valores por tipo de pago
+        for tipo_pago, valor in datos['valores'].items():
+            # Obtener ID del tipo de pago
+            tipo = conn_db.seleccionar("tipos_pago", "id", "nombre = ?", (tipo_pago,))
+            
+            if not tipo:
+                # Si no existe el tipo de pago, crearlo
+                conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": f"Creado automáticamente"})
+                tipo = conn_db.seleccionar("tipos_pago", "id", "nombre = ?", (tipo_pago,))
+            
+            id_tipo_pago = tipo[0][0]
+            
+            # Insertar valor
+            conn_db.ejecutar_consulta('''
+                INSERT INTO entrega_valores (id_entrega, id_tipo_pago, valor)
+                VALUES (?, ?, ?)
+            ''', (id_entrega, id_tipo_pago, valor))
+        
+        return jsonify({"mensaje": "Entrega creada exitosamente", "id": id_entrega})
+    
+    except Exception as e:
+        print(f"Error al crear entrega: {e}")
+        return jsonify({"error": "Error al crear entrega", "mensaje": str(e)}), 500
+
+@app.route('/api/estadisticas', methods=['GET'])
+def obtener_estadisticas():
+    try:
+        # Obtener el período solicitado (semana, mes, año)
+        periodo = request.args.get('periodo', 'semana')
+        
+        # Definir la consulta SQL según el período
+        if periodo == 'semana':
+            # Agrupar por semana
+            consulta = '''
+                SELECT 
+                    strftime('%Y-%W', e.fecha) as periodo,
+                    tp.nombre,
+                    SUM(ev.valor) as total
+                FROM entregas e
+                JOIN entrega_valores ev ON e.id = ev.id_entrega
+                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
+                GROUP BY periodo, tp.nombre
+                ORDER BY periodo DESC
+                LIMIT 12
+            '''
+        elif periodo == 'mes':
+            # Agrupar por mes
+            consulta = '''
+                SELECT 
+                    strftime('%Y-%m', e.fecha) as periodo,
+                    tp.nombre,
+                    SUM(ev.valor) as total
+                FROM entregas e
+                JOIN entrega_valores ev ON e.id = ev.id_entrega
+                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
+                GROUP BY periodo, tp.nombre
+                ORDER BY periodo DESC
+                LIMIT 12
+            '''
+        else:  # año
+            # Agrupar por año
+            consulta = '''
+                SELECT 
+                    strftime('%Y', e.fecha) as periodo,
+                    tp.nombre,
+                    SUM(ev.valor) as total
+                FROM entregas e
+                JOIN entrega_valores ev ON e.id = ev.id_entrega
+                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
+                GROUP BY periodo, tp.nombre
+                ORDER BY periodo DESC
+                LIMIT 5
+            '''
+        
+        # Ejecutar la consulta
+        datos = conn_db.ejecutar_personalizado(consulta)
+        
+        # Procesar los resultados para agruparlos por período
+        periodos = {}
+        for fila in datos:
+            periodo_str = fila[0]
+            tipo_pago = fila[1]
+            valor = float(fila[2])
+            
+            if periodo_str not in periodos:
+                periodos[periodo_str] = {
+                    "periodo": periodo_str,
+                    "valores": {}
+                }
+            
+            periodos[periodo_str]["valores"][tipo_pago] = valor
+        
+        # Convertir a lista y ordenar por período
+        resultado = list(periodos.values())
+        resultado.sort(key=lambda x: x["periodo"], reverse=False)
+        
+        return jsonify(resultado)
+    
+    except Exception as e:
+        print(f"Error al obtener estadísticas: {e}")
+        return jsonify({"error": "Error al obtener estadísticas", "mensaje": str(e)}), 500
 
 
 if __name__ == '__main__':
