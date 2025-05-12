@@ -24,6 +24,10 @@ def index():
 def home():
     return render_template('home.html')
 
+
+
+
+
 @app.route('/orden')
 def orden():
     return render_template('orden.html')
@@ -804,7 +808,155 @@ def obtener_clientes():
     except Exception as e:
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
     
+@app.route('/api/crear_venta', methods=['POST'])
+def crear_venta():
+    data = request.get_json()
+    # Validación inicial
+    if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
+        return jsonify({"error": "Campos requeridos faltantes"}), 400
+
+    try:
+        total_pagos = sum(p['valor'] for p in data['metodos_pago'])
+        if total_pagos != data['total_venta']:
+            return jsonify({"error": "Suma de pagos no coincide con el total"}), 400
+
+        # 1. Insertar venta principal
+        venta_data = {
+            "vendedor_id": data['vendedor_id'],
+            "cliente_id": data['cliente_id'],
+            "total_venta": data['total_venta'],
+            "fecha": datetime.now().isoformat()
+        }
+        venta_id, error = conn_db.insertar("ventas", venta_data)
+        if error:
+            return jsonify(error), 400
+
+        # 2. Procesar productos
+        for producto in data['productos']:
+            # Obtener información del producto
+            prod_info = conn_db.seleccionar(
+                tabla="productos",
+                columnas="id, stock",
+                condicion="codigo = ?",
+                parametros=(producto['codigo'],)
+            )
+            if not prod_info:
+                return jsonify({"error": f"Producto {producto['codigo']} no encontrado"}), 404
+                
+            prod_id, stock_actual = prod_info[0]
+
+            # Verificar stock
+            if stock_actual < producto['cantidad']:
+                return jsonify({"error": f"Stock insuficiente para {producto['codigo']}"}), 400
+
+            # 2.1 Insertar detalle de venta
+            detalle_data = {
+                "venta_id": venta_id,
+                "producto_id": prod_id,
+                "cantidad": producto['cantidad'],
+                "precio_unitario": producto['precio_unitario']
+            }
+            detalle_id, error = conn_db.insertar("detalles_ventas", detalle_data)
+            if error:
+                return jsonify(error), 400
+
+            # 2.2 Actualizar stock
+            nuevo_stock = stock_actual - producto['cantidad']
+            conn_db.actualizar(
+                tabla="productos",
+                datos={"stock": nuevo_stock},
+                condicion="id = ?",
+                parametros_condicion=(prod_id,)
+            )
+
+            # 4. Actualizar lotes (opcional)
+            if 'lotes_productos' in data:
+                conn_db.ejecutar_personalizado(
+                    """UPDATE lotes_productos SET cantidad = cantidad - ?
+                       WHERE producto_id = ? AND fecha_ingreso = (
+                           SELECT MIN(fecha_ingreso) FROM lotes_productos WHERE producto_id = ?
+                       )""",
+                    (producto['cantidad'], prod_id, prod_id)
+                )
+
+            # 5. Registrar modificación
+            registro_data = {
+                "producto_id": prod_id,
+                "usuario_id": data['vendedor_id'],
+                "detalle": f"Venta {venta_id}: -{producto['cantidad']}u",
+                "fecha": datetime.now().isoformat()
+            }
+            conn_db.insertar("registro_modificaciones", registro_data)
+
+        # 3. Registrar métodos de pago
+        for pago in data['metodos_pago']:
+            pago_data = {
+                "venta_id": venta_id,
+                "metodo_pago": pago['metodo'],
+                "valor": pago['valor']
+            }
+            pago_id, error = conn_db.insertar("pagos_venta", pago_data)
+            if error:
+                return jsonify(error), 400
+
+            # 6. Actualizar acumulado en tipos_pago
+            if pago.get('acumular', False):
+                conn_db.ejecutar_personalizado(
+                    "UPDATE tipos_pago SET monto_actual = monto_actual + ? WHERE nombre = ?",
+                    (pago['valor'], pago['metodo'])
+                )
+
+        return jsonify({
+            "mensaje": "Venta registrada exitosamente",
+            "venta_id": venta_id
+        }), 201
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     
