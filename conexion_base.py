@@ -1,8 +1,9 @@
 # conexion_base.py
 import sqlite3
 from firebase_config import ServicioFirebase
-import bcrypt
 from crear_bd import crear_tablas
+import bcrypt
+from typing import Dict, Union
 
 class ConexionBase:
     def __init__(self, nombre_bd: str, ruta_credenciales_firebase: str = None):
@@ -147,88 +148,134 @@ class ConexionBase:
             conexion.commit()
             conexion.close()
 
-    def validar_credenciales(self,tabla: str, usuario: str, contrasena: str) -> dict:
-        """
-        Valida las credenciales del usuario contra la base de datos.
 
-        :param usuario: Usuario ingresado.
-        :param contrasena: Contraseña ingresada en texto claro.
-        :return: Diccionario con resultado de validación.
+
+    def validar_credenciales(self, tabla: str, usuario: str, contrasena: str) -> Dict[str, Union[bool, str, int]]:
         """
-        # resultado = self.seleccionar(tabla=tabla, columnas="id, contrasena, base_datos", condicion="usuario = ?", parametros=(usuario,))
-        resultado = self.seleccionar(tabla=tabla,columnas="id, contrasena, rol", condicion="usuario=?",parametros=(usuario,))
-        print(resultado)
-        if not resultado:
-            return {"valido": False, "mensaje": "Usuario no encontrado."}
+        Valida credenciales de usuario con protección contra ataques comunes.
         
-        id_usuario, info, rol = resultado[0]
-
+        Parámetros:
+            tabla (str): Nombre de la tabla de usuarios
+            usuario (str): Nombre de usuario ingresado
+            contrasena (str): Contraseña en texto claro
+            
+        Retorna:
+            dict: Resultado con estructura:
+            {
+                'valido': bool,
+                'mensaje': str,
+                'id_usuario': int (solo si válido),
+                'rol': str (solo si válido)
+            }
+            
+        Mejoras implementadas:
+        - Validación de formato de hash
+        - Protección contra timing attacks
+        - Manejo seguro de errores
+        - Eliminación de datos sensibles en respuesta
+        """
         try:
-            if bcrypt.checkpw(contrasena.encode('utf-8'), info.encode('utf-8')):
+            # 1. Validación básica de entrada
+            if not all([usuario, contrasena]):
+                return {"valido": False, "mensaje": "Credenciales incompletas"}
+                
+            # 2. Consulta segura con parámetros
+            resultado = self.seleccionar(
+                tabla=tabla,
+                columnas="id, contrasena, rol",
+                condicion="nombre = ?",
+                parametros=(usuario,)
+            )
+            print(resultado)
+            # 3. Validar existencia de usuario
+            if not resultado or len(resultado[0]) != 3:
+                return {"valido": False, "mensaje": "Credenciales inválidas"}
+                
+            id_usuario, hash_almacenado, rol = resultado[0]
+            
+            # 4. Verificar formato del hash
+            if not hash_almacenado.startswith("$2b$"):
+                
+                return {"valido": False, "mensaje": "Error de configuración de seguridad"}
+                
+            # 5. Comparación segura contra timing attacks
+            contraseña_valida = bcrypt.checkpw(
+                contrasena.encode('utf-8'),
+                hash_almacenado.encode('utf-8')
+            )
+            print(contraseña_valida)
+            if contraseña_valida:
                 return {
                     "valido": True,
-                    "mensaje": "Login exitoso",
+                    "mensaje": "Autenticación exitosa",
                     "id_usuario": id_usuario,
-                    "rol": rol,
-                    "info": info
+                    "rol": rol
                 }
             else:
-                return {"valido": False, "mensaje": "Contraseña incorrecta."}
+                return {"valido": False, "mensaje": "Credenciales inválidas"}
+                
+        except bcrypt.CryptBackendError as e:
+            # Loggear error sin exponer detalles
+            print(f"Error de cifrado: {str(e)}")
+            return {"valido": False, "mensaje": "Error del sistema"}
+            
         except Exception as e:
-            return {"valido": False, "mensaje": f"Error validando contraseña: {str(e)}"}
+            # Manejo genérico de errores
+            print(f"Error inesperado: {str(e)}")
+            return {"valido": False, "mensaje": "Error en el proceso de autenticación"}
 
-    def registrar_cliente_seguro(self, cliente_data: dict) -> dict:
-        """
-        Registra un nuevo cliente en la base principal y genera su base de datos personalizada.
-        
-        :param cliente_data: Diccionario con los campos necesarios del cliente.
-        :return: Diccionario con el resultado del registro.
-        """
-        try:
-            # Separar datos
-            email = cliente_data["email"]
-            parte_email = email.split('@')[0]
-            contrasena_hash = cliente_data["contrasena"]
+        def registrar_cliente_seguro(self, cliente_data: dict) -> dict:
+            """
+            Registra un nuevo cliente en la base principal y genera su base de datos personalizada.
+            
+            :param cliente_data: Diccionario con los campos necesarios del cliente.
+            :return: Diccionario con el resultado del registro.
+            """
+            try:
+                # Separar datos
+                email = cliente_data["email"]
+                parte_email = email.split('@')[0]
+                contrasena_hash = cliente_data["contrasena"]
 
-            # Insertar cliente (base_datos es temporal aquí)
-            cliente_data_temp = cliente_data.copy()
-            cliente_data_temp["base_datos"] = ""
-            cliente_data_temp["usuario"] = parte_email
+                # Insertar cliente (base_datos es temporal aquí)
+                cliente_data_temp = cliente_data.copy()
+                cliente_data_temp["base_datos"] = ""
+                cliente_data_temp["usuario"] = parte_email
 
-            id_cliente = self.insertar("clientes", cliente_data_temp)
+                id_cliente = self.insertar("clientes", cliente_data_temp)
 
-            # Crear nombre de base de datos personalizada
-            base_datos = f"tienda_{parte_email}_{id_cliente}.db"
+                # Crear nombre de base de datos personalizada
+                base_datos = f"tienda_{parte_email}_{id_cliente}.db"
 
-            # Actualizar cliente con base_datos real
-            self.actualizar(
-                tabla="clientes",
-                datos={"base_datos": base_datos},
-                condicion="id = ?",
-                parametros_condicion=(id_cliente,)
-            )
+                # Actualizar cliente con base_datos real
+                self.actualizar(
+                    tabla="clientes",
+                    datos={"base_datos": base_datos},
+                    condicion="id = ?",
+                    parametros_condicion=(id_cliente,)
+                )
 
-            # Crear la nueva base de datos del cliente
-            crear_tablas(base_datos)
+                # Crear la nueva base de datos del cliente
+                crear_tablas(base_datos)
 
-            # Insertar al usuario admin en su propia base de datos
-            cliente_db = ConexionBase(base_datos)
-            usuario_admin = {
-                "usuario": parte_email,
-                "contrasena": contrasena_hash,
-                "rol": "admin"
-            }
-            cliente_db.insertar("usuarios", usuario_admin)
+                # Insertar al usuario admin en su propia base de datos
+                cliente_db = ConexionBase(base_datos)
+                usuario_admin = {
+                    "usuario": parte_email,
+                    "contrasena": contrasena_hash,
+                    "rol": "admin"
+                }
+                cliente_db.insertar("usuarios", usuario_admin)
 
-            return {
-                "exito": True,
-                "usuario": parte_email,
-                "base_datos": base_datos,
-                "pass": contrasena_hash
-            }
+                return {
+                    "exito": True,
+                    "usuario": parte_email,
+                    "base_datos": base_datos,
+                    "pass": contrasena_hash
+                }
 
-        except Exception as e:
-            return {
-                "exito": False,
-                "error": f"Error al registrar cliente: {str(e)}"
-            }
+            except Exception as e:
+                return {
+                    "exito": False,
+                    "error": f"Error al registrar cliente: {str(e)}"
+                }
