@@ -24,15 +24,9 @@ def index():
 def home():
     return render_template('home.html')
 
-<<<<<<< HEAD
 @app.route('/login-sesion')
 def login_sesion():
     return render_template('login-sesion.html')
-=======
-
-
-
->>>>>>> 120406f1aa7ff2aada86f7acdfb442727575b68f
 
 @app.route('/orden')
 def orden():
@@ -197,7 +191,6 @@ def obtener_producto(codigo):
             "mensaje": str(e)
         }), 500
     
-
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
 def obtener_ventas_dia():
@@ -425,7 +418,6 @@ def crear_proveedor():
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
 
-
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:
@@ -576,7 +568,6 @@ def obtener_metodos_pago():
         }), 500
 
 # Rutas para la API de entregas diarias
-
 @app.route('/entregas_diarias')
 def entregas_diarias():
     return render_template('cuentas.html')
