@@ -306,6 +306,36 @@ document.querySelector('.otros-metodos').addEventListener('change', function() {
     }
 });
 
+document.addEventListener('DOMContentLoaded', () => {
+    const clienteCombo = document.getElementById('clienteCombo');
+
+    // Función para cargar los clientes desde la API
+    const cargarClientes = async () => {
+        try {
+            const response = await fetch('/api/clientes');
+            if (!response.ok) {
+                throw new Error('Error al cargar los clientes');
+            }
+            const clientes = await response.json();
+
+            // Limpiar el combo antes de llenarlo
+            clienteCombo.innerHTML = '<option value="">Seleccionar cliente</option>';
+
+            // Llenar el combo con los clientes
+            clientes.forEach(cliente => {
+                const option = document.createElement('option');
+                option.value = cliente.documento;
+                option.textContent = cliente.nombre;
+                clienteCombo.appendChild(option);
+            });
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Llamar a la función para cargar los clientes al cargar la página
+    cargarClientes();
+});
 
 
 // // Ejemplo de agregar items (esto vendría desde tu interfaz de productos)

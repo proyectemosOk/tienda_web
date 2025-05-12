@@ -516,7 +516,7 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion, codigo")
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion, codigo, stock")
     productos_list = []
 
     for prod in productos:
@@ -528,6 +528,7 @@ def obtener_productos():
             "categoria": prod[3],
             "descripcion": prod[4],
             "codigo": prod[5],
+            "stock":prod[6],
             "imagen": url_imagen
         })
 
@@ -550,7 +551,7 @@ def obtener_metodos_pago():
         metodos_formateados = [{
             "id": metodo[0],
             "nombre": metodo[1]
-        } for metodo in metodos]
+        } for metodo in metodos[0:3]]
         
         return jsonify({
             'metodos': metodos_formateados,
@@ -568,7 +569,7 @@ def obtener_metodos_pago():
 
 @app.route('/entregas_diarias')
 def entregas_diarias():
-    return render_template('entregas_diarias.html')
+    return render_template('cuentas.html')
 
 @app.route('/api/entregas', methods=['GET'])
 def obtener_entregas():
@@ -779,6 +780,31 @@ def obtener_estadisticas():
         print(f"Error al obtener estadísticas: {e}")
         return jsonify({"error": "Error al obtener estadísticas", "mensaje": str(e)}), 500
 
+@app.route('/api/clientes', methods=['GET'])
+def obtener_clientes():
+    try:
+        # Obtener todos los proveedores activos
+        clientes = conn_db.seleccionar(
+            tabla="clientes",
+            columnas="numero, nombre"
+        )
+        print(clientes)
+
+        # Construir una lista de diccionarios con los datos de los proveedores
+        lista_clientes = [
+            {
+                "documento": cliente[0],
+                "nombre": cliente[1]
+            }
+            for cliente in clientes
+        ]
+
+        # Retornar la lista de proveedores en formato JSON
+        return jsonify(lista_clientes), 200
+    except Exception as e:
+        print(f"Error al cargar proveedores: {e}")
+        return jsonify({"error": "Error al cargar proveedores"}), 500
+    
 
 if __name__ == '__main__':
     

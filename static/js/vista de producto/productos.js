@@ -1,5 +1,5 @@
 class Producto {
-    constructor(id, nombre, precio, categoria, descripcion, codigo, imagen) {
+    constructor(id, nombre, precio, categoria, descripcion, codigo,stock, imagen) {
         
         this.id = id;
         this.nombre = nombre;
@@ -7,6 +7,7 @@ class Producto {
         this.categoria = categoria
         this.descripcion = descripcion;
         this.codigo = codigo;
+        this.stock = stock;
         this.imagen = imagen;
         this.elemento = null; // Agregamos una propiedad para guardar el elemento DOM
     }
@@ -20,9 +21,10 @@ class Producto {
             <p>Precio: $${this.precio}</p>
             <button class = "btn-agregar">Agregar</button>
         `;
-        this.elemento.addEventListener('dblclick', () => {
-            this.mostrarModal();
-        });
+        // this.elemento.addEventListener('dblclick', () => {
+        //     this.mostrarModal();
+        // });
+
         // Agrega el evento de clic
         this.elemento.addEventListener('click', () => {
             this.agregar_item(); // Llama a la función cuando se hace clic
@@ -46,7 +48,7 @@ class Producto {
         document.getElementById('product-modal').style.display = 'block';
     }
     agregar_item(){
-        alert(this.id)
+        ticket.agregarItem(this.id, this.nombre, this.precio, this.codigo, this.stock);
     }
 }
 
@@ -100,6 +102,7 @@ function cargarProductos() {
                     item.categoria,
                     item.descripcion,
                     item.codigo,
+                    item.stock,
                     item.imagen
                 );
                 catalogo.agregarProducto(producto);

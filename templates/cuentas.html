@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión Comercial</title>
+    
+    <!-- Estilos comunes -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="static/css/estilos_globales/sweet_alerta2.css">
+    
+    <!-- Estilos específicos -->
+    <link rel="stylesheet" href="static/css/estilos_globales/bustra_mind.css">
+    <link rel="stylesheet" href="static/css/style_cierre_dia.css">
+    <link rel="stylesheet" href="static/css/entregas_diarias.css">
+</head>
+<body>
+    <!-- Menú de navegación -->
+    <nav class="main-nav">
+        <div class="nav-container">
+            <ul class="nav-tabs">
+                <li class="nav-item active" data-target="cierre-dia">
+                    <i class="fas fa-cash-register"></i>
+                    Cierre Diario
+                </li>
+                <li class="nav-item" data-target="entregas-diarias">
+                    <i class="fas fa-money-bill-wave"></i>
+                    Entregas
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Contenido de pestañas -->
+    <div class="tab-content">
+        <!-- Pestaña Cierre Diario -->
+        <div id="cierre-dia" class="tab-pane active">
+            <div class="container py-4">
+                <div class="dashboard-card">
+                    <div class="card-header-gradient">
+                        <div class="floating-action">
+                            <button class="action-button" onclick="imprimirResumen()" title="Imprimir">
+                                <i class="fas fa-print"></i>
+                            </button>
+                            <button class="action-button" onclick="guardarResumen()" title="Guardar">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        <h2 class="m-0">
+                            <i class="fas fa-cash-register me-2"></i>
+                            Cierre Diario de Ventas
+                        </h2>
+                    </div>
+
+                    <div class="stats-container" id="dynamicStats"></div>
+                    
+                    <div class="table-container">
+                        <table class="custom-table">
+                            <thead>
+                                <tr>
+                                    <th>ID Venta</th>
+                                    <th>Fecha</th>
+                                    <th>Total</th>
+                                    <th>Método de pago</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ventasTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pestaña Entregas Diarias -->
+        <div id="entregas-diarias" class="tab-pane">
+            <!-- Contenido original de entregas_diarias.html aquí -->
+            <!-- [Insertar todo el contenido de entregas_diarias.html conservando su estructura] -->
+        </div>
+    </div>
+
+    <!-- Elementos comunes -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Scripts comunes -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="{{ url_for('static', filename='js/script_globales/chart.js') }}"></script>
+    
+    <!-- Scripts específicos -->
+    <script src="{{ url_for('static', filename='js/cierre_dia/cierre_de_dia.js') }}"></script>
+    <script src="/static/js/entregas_diarias/entregas_diarias.js"></script>
+
+    <!-- Control de pestañas -->
+    <script>
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                // Oculta todas las pestañas
+                document.querySelectorAll('.tab-pane').forEach(pane => {
+                    pane.classList.remove('active');
+                });
+                
+                // Desactiva todos los ítems del menú
+                document.querySelectorAll('.nav-item').forEach(navItem => {
+                    navItem.classList.remove('active');
+                });
+                
+                // Muestra la pestaña seleccionada
+                const target = this.dataset.target;
+                document.getElementById(target).classList.add('active');
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
