@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de Sesión</title>
+    <link rel="stylesheet" href="/static/css/login-sesion.css">
+</head>
+<body>
+    
+    <div class="container">
+
+        <div class="login-card">
+
+            <h2>Login</h2>
+            <form>
+
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Ingrese usuario">
+                </div>
+
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Ingrese contraseña">
+                </div>
+
+                <div class="options">
+
+                    <div class="remember">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">Remember me</label>
+                    </div>
+
+                    <a href="#" class="forgot">Forgot Password?</a>
+
+                </div>
+                
+                <button type="submit" id="Login-sesion" class="login-btn">Login</button>
+                <!-- <p class="register-link">Don't have an account? <a href="#">Register</a></p> -->
+                
+            </form>
+
+        </div>
+
+    </div>
+    <script src="/static/js/login-sesion.js">
+    </script>
+</body>
+</html>

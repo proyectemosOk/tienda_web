@@ -24,9 +24,9 @@ def index():
 def home():
     return render_template('home.html')
 
-
-
-
+@app.route('/login-sesion')
+def login_sesion():
+    return render_template('login-sesion.html')
 
 @app.route('/orden')
 def orden():
@@ -191,7 +191,6 @@ def obtener_producto(codigo):
             "mensaje": str(e)
         }), 500
     
-
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
 def obtener_ventas_dia():
@@ -418,8 +417,8 @@ def crear_proveedor():
     except Exception as e:
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
-
-
+    
+    
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:
@@ -810,47 +809,51 @@ def obtener_clientes():
         return jsonify({"error": "Error al cargar proveedores"}), 500
  
  
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
- 
+    
+    
+    
+@app.route('/api/login-segunda', methods=['POST'])
+def login():
+    try:
+        datos = request.get_json()
+        
+        # Validar campos requeridos
+        if not datos or 'usuario' not in datos or 'contrasena' not in datos:
+            return jsonify({
+                "valido": False,
+                "mensaje": "Se requieren usuario y contraseña"
+            }), 400
+        
+        # Validar credenciales
+        resultado = conn_db.validar_credenciales(
+            tabla="usuarios",
+            usuario=datos['usuario'],
+            contrasena=datos['contrasena']
+        )
+        
+        # Limpiar datos sensibles en la respuesta
+        if resultado['valido']:
+            respuesta = {
+                "valido": True,
+                "mensaje": "Autenticación exitosa",
+                "id_usuario": resultado["id_usuario"],
+                "rol": resultado["rol"],
+                "usuario": datos['usuario']
+            }
+            return jsonify(respuesta), 200
+        else:
+            return jsonify({
+                "valido": False,
+                "mensaje": resultado["mensaje"]
+            }), 401
+            
+    except Exception as e:
+        print(f"Error en login: {str(e)}")
+        return jsonify({
+            "valido": False,
+            "mensaje": "Error interno del servidor"
+        }), 500
+
     
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
@@ -858,105 +861,51 @@ def crear_venta():
     # Validación inicial
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
-
-    try:
-        total_pagos = sum(p['valor'] for p in data['metodos_pago'])
-        if total_pagos != data['total_venta']:
-            return jsonify({"error": "Suma de pagos no coincide con el total"}), 400
-
-        # 1. Insertar venta principal
-        venta_data = {
-            "vendedor_id": data['vendedor_id'],
-            "cliente_id": data['cliente_id'],
-            "total_venta": data['total_venta'],
-            "fecha": datetime.now().isoformat()
+    
+    new_venta = {'vendedor_id': data['vendedor_id'],
+                "cliente_id": data["cliente_id"],
+                "total_venta": data["total_venta"],
+                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                }
+    id, error = conn_db.insertar("ventas", new_venta)
+    
+    # Limpiar datos sensibles en la respuesta
+    if id:
+        
+        for producto in data["productos"]:
+            detalles_ventas = {"venta_id": id,
+                               "producto_id":producto["codigo"],
+                               "cantidad":producto["cantidad"],
+                               "precio_unitario":producto["precio_unitario"]}
+            conn_db.insertar("detalles_ventas", detalles_ventas)
+            can_sum = conn_db.seleccionar("productos","stock","codigo= ?",(producto["codigo"],))[0][0]
+            
+            actulizar = {"stock":int(producto["cantidad"])-int(can_sum)}
+            conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
+            
+            # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
+            # print(can_sum)
+            
+        for pago in data["metodos_pago"]:
+            detalles_pagos ={"venta_id": id,
+                               "metodo":pago["metodo"],
+                               "valor":pago["valor"]}
+            conn_db.insertar("pagos_venta", detalles_pagos)
+            
+            can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(pago["metodo"],))[0][0]
+            actulizar = {"actual":int(pago["valor"])+int(can_sum)}
+            conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (pago["metodo"],))
+            
+        respuesta = {
+            "valido": True,
+            "mensaje": f"Venta exitosa {id}"
         }
-        venta_id, error = conn_db.insertar("ventas", venta_data)
-        if error:
-            return jsonify(error), 400
-
-        # 2. Procesar productos
-        for producto in data['productos']:
-            # Obtener información del producto
-            prod_info = conn_db.seleccionar(
-                tabla="productos",
-                columnas="id, stock",
-                condicion="codigo = ?",
-                parametros=(producto['codigo'],)
-            )
-            if not prod_info:
-                return jsonify({"error": f"Producto {producto['codigo']} no encontrado"}), 404
-                
-            prod_id, stock_actual = prod_info[0]
-
-            # Verificar stock
-            if stock_actual < producto['cantidad']:
-                return jsonify({"error": f"Stock insuficiente para {producto['codigo']}"}), 400
-
-            # 2.1 Insertar detalle de venta
-            detalle_data = {
-                "venta_id": venta_id,
-                "producto_id": prod_id,
-                "cantidad": producto['cantidad'],
-                "precio_unitario": producto['precio_unitario']
-            }
-            detalle_id, error = conn_db.insertar("detalles_ventas", detalle_data)
-            if error:
-                return jsonify(error), 400
-
-            # 2.2 Actualizar stock
-            nuevo_stock = stock_actual - producto['cantidad']
-            conn_db.actualizar(
-                tabla="productos",
-                datos={"stock": nuevo_stock},
-                condicion="id = ?",
-                parametros_condicion=(prod_id,)
-            )
-
-            # 4. Actualizar lotes (opcional)
-            if 'lotes_productos' in data:
-                conn_db.ejecutar_personalizado(
-                    """UPDATE lotes_productos SET cantidad = cantidad - ?
-                       WHERE producto_id = ? AND fecha_ingreso = (
-                           SELECT MIN(fecha_ingreso) FROM lotes_productos WHERE producto_id = ?
-                       )""",
-                    (producto['cantidad'], prod_id, prod_id)
-                )
-
-            # 5. Registrar modificación
-            registro_data = {
-                "producto_id": prod_id,
-                "usuario_id": data['vendedor_id'],
-                "detalle": f"Venta {venta_id}: -{producto['cantidad']}u",
-                "fecha": datetime.now().isoformat()
-            }
-            conn_db.insertar("registro_modificaciones", registro_data)
-
-        # 3. Registrar métodos de pago
-        for pago in data['metodos_pago']:
-            pago_data = {
-                "venta_id": venta_id,
-                "metodo_pago": pago['metodo'],
-                "valor": pago['valor']
-            }
-            pago_id, error = conn_db.insertar("pagos_venta", pago_data)
-            if error:
-                return jsonify(error), 400
-
-            # 6. Actualizar acumulado en tipos_pago
-            if pago.get('acumular', False):
-                conn_db.ejecutar_personalizado(
-                    "UPDATE tipos_pago SET monto_actual = monto_actual + ? WHERE nombre = ?",
-                    (pago['valor'], pago['metodo'])
-                )
-
+        return jsonify(respuesta), 200
+    else:
         return jsonify({
-            "mensaje": "Venta registrada exitosamente",
-            "venta_id": venta_id
-        }), 201
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+            "valido": False,
+            "mensaje": "Venta no registrada"
+        }), 401
 
 if __name__ == '__main__':
     
