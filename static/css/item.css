@@ -52,7 +52,7 @@
   background-color: white;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  max-height: 150vh;
+  max-height: 95vh;
   overflow-y: auto;
 }
 
