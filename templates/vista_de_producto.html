@@ -27,7 +27,7 @@
                     <div class="ticket-header">
                         <input type="text" id="clienteSearch" placeholder="Buscar cliente" />
                         <select class="cliente-combo" id="clienteCombo">
-                            <option value="">Seleccionar cliente</option>
+                            <option value="1">Cliente común</option>
                         </select>
 
 
@@ -47,21 +47,6 @@
                         <button class="btn-payment" data-method="efectivo">Efectivo</button>
                         <input type="text" class="payment-input" id="input-efectivo" placeholder="$0"
                             style="display:none;">
-                    </div>
-
-                    <div class="payment-method-group">
-                        <button class="btn-payment" data-method="cxc">CXC</button>
-                        <input type="text" class="payment-input" id="input-cxc" placeholder="$0" style="display:none;">
-                    </div>
-
-                    <!-- Select con soporte múltiple -->
-                    <div class="payment-method-group">
-                        <select class="otros-metodos">
-                            <option value="">Otros métodos</option>
-                            <option value="tarjeta">Tarjeta de crédito</option>
-                            <option value="transferencia">Transferencia bancaria</option>
-                        </select>
-                        <div class="payment-inputs-container" id="otros-metodos-inputs"></div>
                     </div>
                 </div>
 

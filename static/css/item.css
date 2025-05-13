@@ -32,7 +32,6 @@
   align-items: flex-start;
   padding: 1.5rem;
   background-color: #f5f7fa;
-  min-height: 100vh;
 }
 
 .product-list-container {
@@ -45,15 +44,14 @@
 }
 
 .ticket-section {
-  width: var(--ticket-width);
+   width: var(--ticket-width);
+  min-height: 65vh;
   position: sticky;
-  top: 1.5rem;
+  top: 0;
   padding: 1.5rem;
   background-color: white;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
-  max-height: 95vh;
-  overflow-y: auto;
 }
 
 /* Sección de búsqueda de cliente */
@@ -110,6 +108,7 @@
   border-left: 4px solid var(--primary-color);
   transition: var(--transition);
   position: relative;
+  width: 33vw;
 }
 
 .item-card:hover {
@@ -181,11 +180,11 @@
   align-items: center;
 }
 .item-quantity-input{
+  left: 3%;
   font-size: 1.2rem;
   font-weight: 700;
   width: 1.5vw;
-  border: 0px;
-  /* background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); */
+  border: 0px;    
   background-color: transparent;
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-xl);
@@ -243,14 +242,14 @@
 .btn-quantity-plus{
   font-size: 1.5vw;
   position: relative;
-  left: 10%;
+  left: 3%;
   cursor: pointer; 
   color: rgb(57, 238, 57);
 }
 .btn-quantity-minus{
   font-size: 1.5vw;
   position: relative;
-  left: 10%;
+  left: 3%;
   cursor: pointer;
   color: #dc2626;
 }
@@ -493,7 +492,7 @@
 }
 
 .cont-pagos {
-  height: 90vh;
+  height: auto;
   position: relative;
   display: flex;
   flex-direction: column;
