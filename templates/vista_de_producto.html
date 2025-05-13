@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="/static/css/item.css" />
     <title>Vista del Producto</title>
 </head>
+
 <body>
     <div class="container">
         <!-- Sección de productos (izquierda) -->
@@ -14,39 +16,44 @@
             <label for="search-input">Buscar productos:</label>
             <input type="text" id="search-input" placeholder="Buscar productos..." />
             <div id="product-list" class="product-list"></div>
-            
+
         </div>
 
         <!-- Sección del ticket (derecha) -->
-        <section class="ticket-section">
-            <div class="ticket-container">
-                <!-- Encabezado con cliente -->
-                <div class="ticket-header">
-                    <input type="text" id="clienteSearch" placeholder="Buscar cliente" />
-                    <select class="cliente-combo" id="clienteCombo">
-                        <option value="">Seleccionar cliente</option>
-                    </select>
+        <div class="cont-pagos">
+            <section class="ticket-section">
+                <div class="ticket-container">
+                    <!-- Encabezado con cliente -->
+                    <div class="ticket-header">
+                        <input type="text" id="clienteSearch" placeholder="Buscar cliente" />
+                        <select class="cliente-combo" id="clienteCombo">
+                            <option value="">Seleccionar cliente</option>
+                        </select>
+                    </div>
+
+
+                    <!-- Lista de productos -->
+                    <div class="items-container" id="itemsContainer">
+                        <!-- Los items se agregarán dinámicamente aquí -->
+                    </div>
+
+                    <!-- Métodos de pago -->
                 </div>
-
-
-                <!-- Lista de productos -->
-                <div class="items-container" id="itemsContainer">
-                    <!-- Los items se agregarán dinámicamente aquí -->
-                </div>
-
-                <!-- Métodos de pago -->
+            </section>
+            <section class="pagos-section">
                 <div class="payment-methods">
                     <!-- Botones existentes -->
                     <div class="payment-method-group">
                         <button class="btn-payment" data-method="efectivo">Efectivo</button>
-                        <input type="text" class="payment-input" id="input-efectivo" placeholder="$0" style="display:none;">
+                        <input type="text" class="payment-input" id="input-efectivo" placeholder="$0"
+                            style="display:none;">
                     </div>
-                    
+
                     <div class="payment-method-group">
                         <button class="btn-payment" data-method="cxc">CXC</button>
                         <input type="text" class="payment-input" id="input-cxc" placeholder="$0" style="display:none;">
                     </div>
-                    
+
                     <!-- Select con soporte múltiple -->
                     <div class="payment-method-group">
                         <select class="otros-metodos">
@@ -61,21 +68,21 @@
 
                 <!-- Total y botón de vender -->
                 <div class="ticket-footer">
-                    <button class="btn btn-success" id="venderBtn">Vender</button>
+                    <button class="btn-btn-success" id="venderBtn">Vender</button>
                     <div class="total-display">
-                        <span>Total:</span>
-                        <span id="totalLabel">$0</span>
+                        <span><b>Total:</b></span>
+                        <span id="totalLabel"><b>$0</b></span>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </div>
     </div>
-
     <!-- Modal para mostrar detalles del producto -->
     <div id="product-modal" class="modal" style="display: none;">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <img id="modal-image" src="" alt="Imagen del producto" onerror="this.onerror=null; this.src='/static/img_productos/img.png'"/>
+            <img id="modal-image" src="" alt="Imagen del producto"
+                onerror="this.onerror=null; this.src='/static/img_productos/img.png'" />
             <h2 id="modal-name"></h2>
             <p>ID: <span id="modal-id"></span></p>
             <p>Precio: <span id="modal-price"></span></p>
@@ -86,6 +93,7 @@
     <!-- Incluye tu JavaScript aquí -->
     <script src="/static/js/vista de producto/item.js"></script>
     <script src="/static/js/vista de producto/productos.js"></script>
-    
+
 </body>
+
 </html>

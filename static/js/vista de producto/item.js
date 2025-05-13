@@ -21,7 +21,7 @@ class Item {
         <p class="btn-quantity-minus"><b>-</b></p>
         <input type="text" class="item-quantity-input" value="1">
         <p class="btn-quantity-plus"><b>+</b></p>
-        <div class="item-total">$${precio}</div>
+        <div class="item-total"><b>$${precio}</b></div>
       </div>
     `;
     
