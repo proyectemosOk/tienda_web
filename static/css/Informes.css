@@ -1,0 +1,243 @@
+:root {
+    --primary-gradient: linear-gradient(135deg, #1e40af, #3b82f6);
+    --secondary-gradient: linear-gradient(135deg, #475569, #64748b);
+    --success-gradient: linear-gradient(135deg, #15803d, #22c55e);
+    --danger-gradient: linear-gradient(135deg, #b91c1c, #ef4444);
+    --warning-gradient: linear-gradient(135deg, #92400e, #f59e0b);
+    --info-gradient: linear-gradient(135deg, #0369a1, #0ea5e9);
+    
+    --primary-color: #3b82f6;
+    --secondary-color: #64748b;
+    --success-color: #22c55e;
+    --danger-color: #ef4444;
+    --warning-color: #f59e0b;
+    --info-color: #0ea5e9;
+    
+    --text-light: #f8fafc;
+    --text-dark: #1e293b;
+    --bg-light: #f8fafc;
+    --bg-dark: #1e293b;
+    --border-color: #e2e8f0;
+}
+
+body {
+    background-color: #f0f2f5;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Gradientes para encabezados de tarjetas */
+.gradient-primary {
+    background: var(--primary-gradient);
+    color: var(--text-light);
+}
+
+.gradient-secondary {
+    background: var(--secondary-gradient);
+    color: var(--text-light);
+}
+
+.gradient-success {
+    background: var(--success-gradient);
+    color: var(--text-light);
+}
+
+.gradient-danger {
+    background: var(--danger-gradient);
+    color: var(--text-light);
+}
+
+/* Estilos para las tarjetas */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 15px 20px;
+    border-bottom: none;
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+/* Estilos para tarjetas de estadísticas */
+.stat-card {
+    background-color: #fff;
+    border-radius: 8px;
+    padding: 15px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    flex: 1;
+}
+
+.stat-card h3 {
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    margin-bottom: 5px;
+}
+
+.stat-card p {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin: 0;
+}
+
+/* Estilos para tarjetas de información */
+.info-card {
+    display: flex;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    height: 100%;
+}
+
+.info-icon {
+    font-size: 2rem;
+    color: var(--primary-color);
+    margin-right: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background-color: rgba(59, 130, 246, 0.1);
+    border-radius: 50%;
+}
+
+.info-content h3 {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin-bottom: 5px;
+}
+
+.info-content p {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+}
+
+/* Estilos para KPIs */
+.kpi-card {
+    background-color: #fff;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    height: 100%;
+}
+
+.kpi-title {
+    font-size: 1rem;
+    color: var(--secondary-color);
+    margin-bottom: 10px;
+}
+
+.kpi-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+}
+
+.kpi-change {
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.kpi-change.positive {
+    color: var(--success-color);
+}
+
+.kpi-change.negative {
+    color: var(--danger-color);
+}
+
+/* Estilos para tablas */
+.table {
+    margin-bottom: 0;
+}
+
+.table th {
+    background-color: rgba(100, 116, 139, 0.1);
+    font-weight: 600;
+    border-top: none;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+    padding: 12px 15px;
+}
+
+/* Estilos para botones de período */
+.periodo-btn {
+    border-radius: 20px;
+    padding: 8px 16px;
+}
+
+.periodo-btn.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+/* Estilos para las pestañas */
+.nav-tabs {
+    border-bottom: 1px solid var(--border-color);
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--secondary-color);
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 0;
+    margin-right: 5px;
+}
+
+.nav-tabs .nav-link:hover {
+    border: none;
+    background-color: rgba(59, 130, 246, 0.1);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom: 3px solid var(--primary-color);
+}
+
+.nav-tabs .nav-link i {
+    margin-right: 5px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .info-card, .kpi-card {
+        margin-bottom: 15px;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .nav-tabs .nav-link i {
+        margin-right: 0;
+    }
+    
+    .card-title {
+        font-size: 1.1rem;
+    }
+}
