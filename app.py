@@ -24,15 +24,9 @@ def index():
 def home():
     return render_template('home.html')
 
-<<<<<<< HEAD
 @app.route('/login-sesion')
 def login_sesion():
     return render_template('login-sesion.html')
-=======
-
-
-
->>>>>>> 120406f1aa7ff2aada86f7acdfb442727575b68f
 
 @app.route('/orden')
 def orden():
@@ -197,7 +191,6 @@ def obtener_producto(codigo):
             "mensaje": str(e)
         }), 500
     
-
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
 def obtener_ventas_dia():
@@ -424,8 +417,8 @@ def crear_proveedor():
     except Exception as e:
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
-
-
+    
+    
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:
@@ -905,20 +898,21 @@ def crear_venta():
     # Validación inicial
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
-
+    
     try:
         total_pagos = sum(p['valor'] for p in data['metodos_pago'])
         if total_pagos != data['total_venta']:
             return jsonify({"error": "Suma de pagos no coincide con el total"}), 400
-
+        
         # 1. Insertar venta principal
         venta_data = {
             "vendedor_id": data['vendedor_id'],
             "cliente_id": data['cliente_id'],
             "total_venta": data['total_venta'],
-            "fecha": datetime.now().isoformat()
+            "fecha": datetime.now()
         }
         venta_id, error = conn_db.insertar("ventas", venta_data)
+        print(venta_id)
         if error:
             return jsonify(error), 400
 
