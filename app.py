@@ -881,7 +881,7 @@ def crear_venta():
             conn_db.insertar("detalles_ventas", detalles_ventas)
             can_sum = conn_db.seleccionar("productos","stock","id= ?",(producto["codigo"],))[0][0]
             print(can_sum)
-            actulizar = {"stock":int(can_sum) - int(producto["cantidad"])}
+            actulizar = {"stock":float(can_sum) - float(producto["cantidad"])}
             conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
             
             # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
@@ -894,8 +894,8 @@ def crear_venta():
             conn_db.insertar("pagos_venta", detalles_pagos)
             
             can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(pago["metodo"],))[0][0]
-            print(can_sum)
-            actulizar = {"actual":int(pago["valor"])+int(can_sum)}
+            
+            actulizar = {"actual":float(pago["valor"])+float(can_sum)}
             conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (pago["metodo"],))
             
         respuesta = {
