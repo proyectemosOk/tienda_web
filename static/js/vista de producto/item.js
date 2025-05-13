@@ -165,13 +165,22 @@ class TicketDeVenta {
       precio_unitario: item.precio
     }));
   
-    // Métodos de pago visibles con valor
-    const metodosPago = Array.from(document.querySelectorAll('.payment-input'))
+    // Obtener métodos de pago visibles con valor
+    let metodosPago = Array.from(document.querySelectorAll('.payment-input'))
       .filter(input => input.style.display !== 'none' && input.value.trim() !== '')
       .map(input => ({
         metodo: input.dataset.method.toUpperCase(),
         valor: parseFloat(input.value)
       }));
+
+    // Si no hay ningún método de pago, usar efectivo por defecto con el total
+    if (metodosPago.length === 0) {
+      metodosPago = [{
+        metodo: 'Efectivo',
+        valor: this.total
+      }];
+    }
+
   
     // Total
     const totalVenta = this.total;
@@ -186,7 +195,7 @@ class TicketDeVenta {
   
     console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
   
-    fetch('/api/ventas', {
+    fetch('api/crear_venta', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
