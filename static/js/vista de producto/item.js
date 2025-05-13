@@ -150,11 +150,67 @@ class TicketDeVenta {
   }
   
   vender() {
-    // Implementar lógica de venta
-    console.log('Procesando venta...');
-    console.log('Total:', this.total);
-    console.log('Items:', this.items);
+    const clienteId = this.clienteCombo.value;
+    const vendedorId = "1";
+  
+    if (!clienteId) {
+      alert('Selecciona un cliente');
+      return;
+    }
+  
+    // Construir productos
+    const productos = Object.values(this.items).map(item => ({
+      codigo: item.id, 
+      cantidad: item.cantidad,
+      precio_unitario: item.precio
+    }));
+  
+    // Métodos de pago visibles con valor
+    const metodosPago = Array.from(document.querySelectorAll('.payment-input'))
+      .filter(input => input.style.display !== 'none' && input.value.trim() !== '')
+      .map(input => ({
+        metodo: input.dataset.method.toUpperCase(),
+        valor: parseFloat(input.value)
+      }));
+  
+    // Total
+    const totalVenta = this.total;
+  
+    const jsonVenta = {
+      vendedor_id: vendedorId,
+      cliente_id: clienteId,
+      total_venta: totalVenta,
+      metodos_pago: metodosPago,
+      productos: productos
+    };
+  
+    console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
+  
+    fetch('/api/ventas', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(jsonVenta)
+    })
+    .then(async res => {
+      const responseText = await res.text();
+  
+      if (!res.ok) {
+        console.error("❌ ERROR:", responseText);
+        throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
+      }
+  
+      const data = JSON.parse(responseText);
+      alert('✅ Venta registrada correctamente');
+      console.log(data);
+    })
+    .catch(err => {
+      console.error("❌ Fallo al registrar venta:", err.message);
+      alert(`Error al registrar venta:\n${err.message}`);
+    });
   }
+  
 }
 
 async function cargarMetodosPago() {
@@ -250,33 +306,36 @@ function crearElementoMetodoPago(metodo) {
 
 
 function mostrarInputPago(metodo) {
-    const inputId = `input-${metodo.id}`;
-    let input = document.getElementById(inputId);
-    
-    if (!input) {
-        input = document.createElement('input');
-        input.type = 'text';
-        input.className = 'payment-input';
-        input.id = inputId;
-        input.placeholder = '$0';
-        input.dataset.method = metodo.id;
-        
-        // Insertar después del elemento correspondiente
-        let parentElement;
-        if (metodo.nombre.toLowerCase() === 'efectivo' || metodo.nombre.toLowerCase() === 'cxc') {
-            parentElement = document.querySelector(`[data-method="${metodo.nombre.toLowerCase().replace(' ', '-')}"]`).parentNode;
-        } else {
-            parentElement = document.querySelector('.otros-metodos').parentNode;
-        }
-        
-        parentElement.appendChild(input);
-    }
-    
-    // Alternar visibilidad (en lugar de ocultar todos)
-    input.style.display = input.style.display === 'none' ? 'block' : 'block';
-    input.focus();
-}
+  const inputId = `input-${metodo.id}`;
+  let input = document.getElementById(inputId);
 
+  // Si no existe el input, lo creamos
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'payment-input';
+    input.id = inputId;
+    input.placeholder = '$0';
+    input.dataset.method = metodo.id;
+
+    // Insertar después del botón
+    let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
+    parentElement.appendChild(input);
+  }
+
+  // Alternar visibilidad solo de este input
+  const visible = input.style.display === 'block';
+
+  // Ocultar todos los inputs primero
+  document.querySelectorAll('.payment-input').forEach(el => el.style.display = 'none');
+
+  // Si ya estaba visible, lo ocultamos. Si no, lo mostramos.
+  input.style.display = visible ? 'none' : 'block';
+
+  if (!visible) {
+    input.focus();
+  }
+}
 
 
 // Uso:

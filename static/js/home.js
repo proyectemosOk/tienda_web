@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'personal': 'personal.html',
         'configuraciones': 'configuraciones.html',
         'empresa': 'empresa.html',
-        'informes': 'informes.html'
+        'informes': '/informes'
     };
 
     for (const [id, pagina] of Object.entries(botones)) {

@@ -570,9 +570,9 @@ def obtener_metodos_pago():
 
 # Rutas para la API de entregas diarias
 
-@app.route('/entregas_diarias')
+@app.route('/informes')
 def entregas_diarias():
-    return render_template('cuentas.html')
+    return render_template('informes.html')
 
 @app.route('/api/entregas', methods=['GET'])
 def obtener_entregas():
