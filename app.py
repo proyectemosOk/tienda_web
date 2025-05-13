@@ -865,9 +865,34 @@ def crear_venta():
     
     # Limpiar datos sensibles en la respuesta
     if id:
+        
+        for producto in data["productos"]:
+            detalles_ventas = {"venta_id": id,
+                               "producto_id":producto["codigo"],
+                               "cantidad":producto["cantidad"],
+                               "precio_unitario":producto["precio_unitario"]}
+            conn_db.insertar("detalles_ventas", detalles_ventas)
+            can_sum = conn_db.seleccionar("productos","stock","codigo= ?",(producto["codigo"],))[0][0]
+            
+            actulizar = {"stock":int(producto["cantidad"])-int(can_sum)}
+            conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
+            
+            # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
+            # print(can_sum)
+            
+        for pago in data["metodos_pago"]:
+            detalles_pagos ={"venta_id": id,
+                               "metodo":pago["metodo"],
+                               "valor":pago["valor"]}
+            conn_db.insertar("pagos_venta", detalles_pagos)
+            
+            can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(pago["metodo"],))[0][0]
+            actulizar = {"actual":int(pago["valor"])+int(can_sum)}
+            conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (pago["metodo"],))
+            
         respuesta = {
             "valido": True,
-            "mensaje": "Venta exitosa"
+            "mensaje": f"Venta exitosa {id}"
         }
         return jsonify(respuesta), 200
     else:
