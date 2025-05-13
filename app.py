@@ -417,7 +417,8 @@ def crear_proveedor():
     except Exception as e:
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
-
+    
+    
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:
@@ -568,6 +569,7 @@ def obtener_metodos_pago():
         }), 500
 
 # Rutas para la API de entregas diarias
+
 @app.route('/entregas_diarias')
 def entregas_diarias():
     return render_template('cuentas.html')
@@ -806,6 +808,9 @@ def obtener_clientes():
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
  
+ 
+    
+    
     
 @app.route('/api/login-segunda', methods=['POST'])
 def login():
@@ -849,6 +854,7 @@ def login():
             "mensaje": "Error interno del servidor"
         }), 500
 
+    
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
     data = request.get_json()

@@ -21,7 +21,7 @@ class Producto {
             <p>Precio: $${this.precio}</p>
             <button class = "btn-agregar">Agregar</button>
         `;
-        // this.elemento.addEventListener('dblclick', () => {
+        // this.elemento.addEventListener('click', () => {
         //     this.mostrarModal();
         // });
 
