@@ -82,7 +82,7 @@ body {
   
   /* Buscador */
   #search-input {
-    width: 100%;
+    width: 90%;
     padding: 0.75rem 1.25rem;
     font-size: 1rem;
     border: 2px solid #e0e0e0;

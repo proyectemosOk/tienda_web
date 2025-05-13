@@ -12,25 +12,24 @@ class Item {
     this.element = document.createElement('div');
     this.element.className = 'item-card';
     this.element.innerHTML = `
-      <div class="item-name">${nombre}</div>
+      <div class="item-name">${nombre}
+       <a class="btn-delete">❌</a>
+       </div>
       <div class="item-price">
         <span>Precio:</span>
-        <input type="text" class="item-price-input" value="${precio}">
-      </div>
-      <div class="item-quantity">
-        <button class="btn-quantity minus">-</button>
+        <input type="text" class="item-price-input" value="$${precio}">
+        <p class="btn-quantity-minus"><b>-</b></p>
         <input type="text" class="item-quantity-input" value="1">
-        <button class="btn-quantity plus">+</button>
+        <p class="btn-quantity-plus"><b>+</b></p>
+        <div class="item-total">$${precio}</div>
       </div>
-      <div class="item-total">$${precio}</div>
-      <button class="btn-delete">❌</button>
     `;
     
     parentElement.appendChild(this.element);
     
     // Event listeners
-    this.element.querySelector('.minus').addEventListener('click', () => this.restar());
-    this.element.querySelector('.plus').addEventListener('click', () => this.sumar());
+    this.element.querySelector('.btn-quantity-minus').addEventListener('click', () => this.restar());
+    this.element.querySelector('.btn-quantity-plus').addEventListener('click', () => this.sumar());
     this.element.querySelector('.btn-delete').addEventListener('click', () => this.eliminar());
     this.element.querySelector('.item-price-input').addEventListener('change', (e) => this.actualizarPrecio(e.target.value));
     this.element.querySelector('.item-quantity-input').addEventListener('change', (e) => this.actualizarCantidad(e.target.value));
