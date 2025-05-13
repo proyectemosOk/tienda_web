@@ -8,7 +8,7 @@ class Producto {
         this.descripcion = descripcion;
         this.codigo = codigo;
         this.stock = stock;
-        this.imagen = imagen;
+        this.imagen = "/static/img_productos/img.png";
         this.elemento = null; // Agregamos una propiedad para guardar el elemento DOM
     }
 
