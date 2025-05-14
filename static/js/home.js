@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
     const botones = {
-        'casa': '/home',
         'monederos': 'monederos.html',
         'ventas': '/ventas',
         'inventario': '/inventarios',
@@ -8,7 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
         'personal': 'personal.html',
         'configuraciones': 'configuraciones.html',
         'empresa': 'empresa.html',
-        'informes': '/informes'
+        'informes': '/informes',
+        'casa': '/home',
     };
 
     for (const [id, pagina] of Object.entries(botones)) {
