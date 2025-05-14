@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
     inicializarPestanaResumen();
     inicializarPestanaHistorial();
     inicializarPestanaEstadisticas();
-    
+
     // Manejar cambio de pestañas para actualizar gráficos
     const tabElems = document.querySelectorAll('button[data-bs-toggle="tab"]');
     tabElems.forEach(tab => {
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', function() {
             actualizarPestanaActiva(targetId);
         });
     });
-    
+
     // Manejar cambio de período para estadísticas
     document.querySelectorAll('.periodo-btn').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -93,7 +93,7 @@ function inicializarPestanaVentas() {
             }
         }
     });
-    
+
     // Cargar datos iniciales
     actualizarDatosVentas();
 }
@@ -101,29 +101,11 @@ function inicializarPestanaVentas() {
 function actualizarDatosVentas() {
     // Simular carga de datos desde API
     setTimeout(() => {
-        // Actualizar resumen de ventas
-        const resumenVentas = document.getElementById('resumenVentas');
-        resumenVentas.innerHTML = `
-            <div class="d-flex justify-content-between mb-3">
-                <div class="stat-card">
-                    <h3>Total Ventas</h3>
-                    <p>$15,450.00</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Transacciones</h3>
-                    <p>42</p>
-                </div>
-                <div class="stat-card">
-                    <h3>Ticket Promedio</h3>
-                    <p>$367.86</p>
-                </div>
-            </div>
-        `;
-        
+
         // Actualizar gráfico de ventas
         ventasChart.data.datasets[0].data = [8500, 4200, 2300, 450];
         ventasChart.update();
-        
+
         // Actualizar tabla de ventas
         const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
         cuerpoTablaVentas.innerHTML = generarFilasTablaVentas();
@@ -137,9 +119,19 @@ function generarFilasTablaVentas() {
         { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
         { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
         { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
-        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' }
+        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-001', fecha: '12/05/2025 10:15', total: '$450.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
+        { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
+        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-001', fecha: '12/05/2025 10:15', total: '$450.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
+        { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
+        { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
+        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
     ];
-    
+
     let html = '';
     ventas.forEach(venta => {
         html += `
@@ -159,7 +151,7 @@ function generarFilasTablaVentas() {
             </tr>
         `;
     });
-    
+
     return html;
 }
 
@@ -187,7 +179,7 @@ function inicializarPestanaServicios() {
             }
         }
     });
-    
+
     // Cargar datos iniciales
     actualizarDatosServicios();
 }
@@ -199,11 +191,11 @@ function actualizarDatosServicios() {
         document.getElementById('totalServicios').textContent = '18';
         document.getElementById('enProcesoServicios').textContent = '12';
         document.getElementById('listosServicios').textContent = '6';
-        
+
         // Actualizar gráfico de servicios
         serviciosChart.data.datasets[0].data = [5, 7, 6, 8];
         serviciosChart.update();
-        
+
         // Actualizar tabla de servicios
         const cuerpoTablaServicios = document.getElementById('cuerpoTablaServicios');
         cuerpoTablaServicios.innerHTML = generarFilasTablaServicios();
@@ -217,9 +209,14 @@ function generarFilasTablaServicios() {
         { id: 'S-002', cliente: 'María López', descripcion: 'Cambio de batería', fecha: '11/05/2025', estado: 'Pendiente', acciones: '' },
         { id: 'S-003', cliente: 'Carlos Gómez', descripcion: 'Actualización de software', fecha: '11/05/2025', estado: 'Listo', acciones: '' },
         { id: 'S-004', cliente: 'Ana Martínez', descripcion: 'Limpieza de hardware', fecha: '12/05/2025', estado: 'Pendiente', acciones: '' },
-        { id: 'S-005', cliente: 'Luis Rodríguez', descripcion: 'Recuperación de datos', fecha: '12/05/2025', estado: 'En Proceso', acciones: '' }
+        { id: 'S-005', cliente: 'Luis Rodríguez', descripcion: 'Recuperación de datos', fecha: '12/05/2025', estado: 'En Proceso', acciones: '' },
+        { id: 'S-001', cliente: 'Juan Pérez', descripcion: 'Reparación de pantalla', fecha: '10/05/2025', estado: 'En Proceso', acciones: '' },
+        { id: 'S-002', cliente: 'María López', descripcion: 'Cambio de batería', fecha: '11/05/2025', estado: 'Pendiente', acciones: '' },
+        { id: 'S-003', cliente: 'Carlos Gómez', descripcion: 'Actualización de software', fecha: '11/05/2025', estado: 'Listo', acciones: '' },
+        { id: 'S-004', cliente: 'Ana Martínez', descripcion: 'Limpieza de hardware', fecha: '12/05/2025', estado: 'Pendiente', acciones: '' },
+        { id: 'S-005', cliente: 'Luis Rodríguez', descripcion: 'Recuperación de datos', fecha: '12/05/2025', estado: 'En Proceso', acciones: '' },
     ];
-    
+
     let html = '';
     servicios.forEach(servicio => {
         const estadoClase = getEstadoClase(servicio.estado);
@@ -241,7 +238,7 @@ function generarFilasTablaServicios() {
             </tr>
         `;
     });
-    
+
     return html;
 }
 
@@ -280,7 +277,7 @@ function inicializarPestanaResumen() {
             }
         }
     });
-    
+
     // Crear gráfico de servicios por tipo
     const ctxServiciosTipo = document.getElementById('graficoServiciosTipo').getContext('2d');
     serviciosTipoChart = new Chart(ctxServiciosTipo, {
@@ -303,7 +300,7 @@ function inicializarPestanaResumen() {
             }
         }
     });
-    
+
     // Cargar datos iniciales
     actualizarDatosResumen();
 }
@@ -316,11 +313,11 @@ function actualizarDatosResumen() {
         document.getElementById('totalServiciosResumen').textContent = '18';
         document.getElementById('totalProductosResumen').textContent = '156';
         document.getElementById('totalClientesResumen').textContent = '45';
-        
+
         // Actualizar gráfico de ventas por categoría
         ventasCategoriaChart.data.datasets[0].data = [6500, 4200, 3800, 950];
         ventasCategoriaChart.update();
-        
+
         // Actualizar gráfico de servicios por tipo
         serviciosTipoChart.data.datasets[0].data = [8, 5, 3, 2];
         serviciosTipoChart.update();
@@ -333,13 +330,13 @@ function inicializarPestanaHistorial() {
     // Configurar fecha actual en los campos de fecha
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-    
+
     const fechaInicioInput = document.getElementById('fechaInicio');
     const fechaFinInput = document.getElementById('fechaFin');
-    
+
     fechaInicioInput.valueAsDate = inicioMes;
     fechaFinInput.valueAsDate = hoy;
-    
+
     // Configurar evento de envío del formulario de filtro
     document.getElementById('filtroHistorialForm').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -349,10 +346,54 @@ function inicializarPestanaHistorial() {
 
 function buscarHistorial() {
     const tipoRegistro = document.getElementById('tipoRegistro').value;
-    const fechaInicio = document.getElementById('fechaInicio').value;
-    const fechaFin = document.getElementById('fechaFin').value;
-    
-    // Simular carga de datos desde API
+    const fechaInicioStr = document.getElementById('fechaInicio').value;
+    const fechaFinStr = document.getElementById('fechaFin').value;
+
+    if (!fechaInicioStr || !fechaFinStr) {
+        alert('Por favor, seleccione ambas fechas de inicio y fin.');
+        return;
+    }
+
+    function crearFechaLocal(fechaStr) {
+        const [anio, mes, dia] = fechaStr.split('-');
+        return new Date(anio, mes - 1, dia);
+    }
+
+    const fechaInicio = crearFechaLocal(fechaInicioStr);
+    const fechaFin = crearFechaLocal(fechaFinStr);
+    fechaFin.setHours(23, 59, 59, 999); // incluir todo el día
+
+    // Datos de ejemplo para historial
+    const registros = [];
+
+    if (tipoRegistro === 'todos' || tipoRegistro === 'ventas') {
+        registros.push(
+            { id: 'V-001', tipo: 'Venta', fecha: '12/05/2025 10:15', descripcion: 'Venta de productos', total: '$450.00' },
+            { id: 'V-002', tipo: 'Venta', fecha: '12/05/2025 11:30', descripcion: 'Venta de productos', total: '$1,250.00' },
+            { id: 'V-003', tipo: 'Venta', fecha: '11/05/2025 12:45', descripcion: 'Venta de productos', total: '$320.00' }
+        );
+    }
+
+    if (tipoRegistro === 'todos' || tipoRegistro === 'servicios') {
+        registros.push(
+            { id: 'S-001', tipo: 'Servicio', fecha: '10/05/2025 09:30', descripcion: 'Reparación de pantalla', total: '$850.00' },
+            { id: 'S-002', tipo: 'Servicio', fecha: '11/05/2025 14:20', descripcion: 'Cambio de batería', total: '$350.00' },
+            { id: 'S-003', tipo: 'Servicio', fecha: '11/05/2025 16:15', descripcion: 'Actualización de software', total: '$200.00' }
+        );
+    }
+
+    function parseFecha(fechaStr) {
+        const [fechaPart, horaPart] = fechaStr.split(' ');
+        const [dia, mes, anio] = fechaPart.split('/');
+        const [hora, minutos] = horaPart.split(':');
+        return new Date(anio, mes - 1, dia, hora, minutos);
+    }
+
+    const registrosFiltrados = registros.filter(registro => {
+        const fechaRegistro = parseFecha(registro.fecha);
+        return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
+    });
+
     const cuerpoTablaHistorial = document.getElementById('cuerpoTablaHistorial');
     cuerpoTablaHistorial.innerHTML = `
         <tr>
@@ -364,36 +405,23 @@ function buscarHistorial() {
             </td>
         </tr>
     `;
-    
+
     setTimeout(() => {
-        cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(tipoRegistro);
+        if (registrosFiltrados.length === 0) {
+            cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
+            return;
+        }
+
+        cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(registrosFiltrados);
     }, 800);
 }
 
-function generarFilasTablaHistorial(tipo) {
-    // Datos de ejemplo para historial
-    const registros = [];
-    
-    if (tipo === 'todos' || tipo === 'ventas') {
-        registros.push(
-            { id: 'V-001', tipo: 'Venta', fecha: '12/05/2025 10:15', descripcion: 'Venta de productos', total: '$450.00', acciones: '' },
-            { id: 'V-002', tipo: 'Venta', fecha: '12/05/2025 11:30', descripcion: 'Venta de productos', total: '$1,250.00', acciones: '' },
-            { id: 'V-003', tipo: 'Venta', fecha: '11/05/2025 12:45', descripcion: 'Venta de productos', total: '$320.00', acciones: '' }
-        );
-    }
-    
-    if (tipo === 'todos' || tipo === 'servicios') {
-        registros.push(
-            { id: 'S-001', tipo: 'Servicio', fecha: '10/05/2025 09:30', descripcion: 'Reparación de pantalla', total: '$850.00', acciones: '' },
-            { id: 'S-002', tipo: 'Servicio', fecha: '11/05/2025 14:20', descripcion: 'Cambio de batería', total: '$350.00', acciones: '' },
-            { id: 'S-003', tipo: 'Servicio', fecha: '11/05/2025 16:15', descripcion: 'Actualización de software', total: '$200.00', acciones: '' }
-        );
-    }
-    
-    if (registros.length === 0) {
+
+function generarFilasTablaHistorial(registros) {
+    if (!registros || registros.length === 0) {
         return `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
     }
-    
+
     let html = '';
     registros.forEach(registro => {
         const tipoClase = registro.tipo === 'Venta' ? 'text-primary' : 'text-success';
@@ -415,9 +443,10 @@ function generarFilasTablaHistorial(tipo) {
             </tr>
         `;
     });
-    
+
     return html;
 }
+
 
 // ==================== PESTAÑA ESTADÍSTICAS ====================
 
@@ -447,7 +476,7 @@ function inicializarPestanaEstadisticas() {
             }
         }
     });
-    
+
     // Crear gráfico de servicios por período
     const ctxServiciosPeriodo = document.getElementById('graficoServiciosPeriodo').getContext('2d');
     serviciosPeriodoChart = new Chart(ctxServiciosPeriodo, {
@@ -473,7 +502,7 @@ function inicializarPestanaEstadisticas() {
             }
         }
     });
-    
+
     // Cargar datos iniciales
     actualizarEstadisticas();
 }
@@ -481,7 +510,7 @@ function inicializarPestanaEstadisticas() {
 function actualizarEstadisticas() {
     // Simular carga de datos desde API según el período seleccionado
     let etiquetas, datosVentas, datosServicios;
-    
+
     switch(periodoActual) {
         case 'semana':
             etiquetas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -504,17 +533,17 @@ function actualizarEstadisticas() {
             datosServicios = [45, 52, 58, 48, 55, 60, 57, 63, 70, 68, 75, 80];
             break;
     }
-    
+
     // Actualizar gráfico de ventas por período
     ventasPeriodoChart.data.labels = etiquetas;
     ventasPeriodoChart.data.datasets[0].data = datosVentas;
     ventasPeriodoChart.update();
-    
+
     // Actualizar gráfico de servicios por período
     serviciosPeriodoChart.data.labels = etiquetas;
     serviciosPeriodoChart.data.datasets[0].data = datosServicios;
     serviciosPeriodoChart.update();
-    
+
     // Actualizar KPIs
     document.getElementById('ticketPromedio').textContent = '$367.86';
     document.getElementById('ventasDiarias').textContent = '42';
@@ -524,32 +553,179 @@ function actualizarEstadisticas() {
 
 // ==================== FUNCIONES AUXILIARES ====================
 
-// Función para ver detalle de ventas
-function verDetalle(id) {
-    alert(`Ver detalle de venta ${id}`);
+// Crear modal simple para mostrar detalles
+function mostrarModal(titulo, contenido) {
+    // Verificar si ya existe el modal
+    let modal = document.getElementById('modalDetalle');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'modalDetalle';
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.backgroundColor = 'rgba(0,0,0,0.5)';
+        modal.style.display = 'flex';
+        modal.style.alignItems = 'center';
+        modal.style.justifyContent = 'center';
+        modal.style.zIndex = '1050';
+
+        const modalContent = document.createElement('div');
+        modalContent.id = 'modalContentDetalle';
+        modalContent.style.backgroundColor = '#fff';
+        modalContent.style.padding = '20px';
+        modalContent.style.borderRadius = '8px';
+        modalContent.style.width = '90%';
+        modalContent.style.maxWidth = '500px';
+        modalContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
+        modal.appendChild(modalContent);
+
+        // Botón cerrar
+        const btnCerrar = document.createElement('button');
+        btnCerrar.textContent = 'Cerrar';
+        btnCerrar.style.marginTop = '15px';
+        btnCerrar.className = 'btn btn-primary';
+        btnCerrar.onclick = () => {
+            modal.style.display = 'none';
+        };
+        modalContent.appendChild(btnCerrar);
+
+        document.body.appendChild(modal);
+    }
+
+    const modalContent = document.getElementById('modalContentDetalle');
+    // Insertar título y contenido antes del botón cerrar
+    modalContent.innerHTML = `<h4>${titulo}</h4><div>${contenido}</div>`;
+    // Añadir botón cerrar nuevamente
+    const btnCerrar = document.createElement('button');
+    btnCerrar.textContent = 'Cerrar';
+    btnCerrar.style.marginTop = '15px';
+    btnCerrar.className = 'btn btn-primary';
+    btnCerrar.onclick = () => {
+        modal.style.display = 'none';
+    };
+    modalContent.appendChild(btnCerrar);
+
+    modal.style.display = 'flex';
 }
 
-// Función para imprimir ticket
+// Función para ver detalle de venta
+function verDetalle(id) {
+    // Aquí puedes cargar datos reales, por ahora simulo contenido
+    const contenido = `<p>Detalles de la venta con ID: <strong>${id}</strong></p>
+                       <p>Fecha: 12/05/2025 10:15</p>
+                       <p>Total: $450.00</p>
+                       <p>Método de Pago: Efectivo</p>`;
+    mostrarModal('Detalle de Venta', contenido);
+}
+
+// Función para imprimir ticket de venta (abre ventana nueva con contenido para imprimir)
 function imprimirTicket(id) {
-    alert(`Imprimir ticket de venta ${id}`);
+    // Generar contenido HTML para impresión (simulado)
+    const contenido = `
+        <html>
+        <head>
+            <title>Ticket Venta ${id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h2 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                td, th { border: 1px solid #000; padding: 8px; }
+            </style>
+        </head>
+        <body>
+            <h2>Ticket de Venta</h2>
+            <p><strong>ID:</strong> ${id}</p>
+            <p><strong>Fecha:</strong> 12/05/2025 10:15</p>
+            <p><strong>Total:</strong> $450.00</p>
+            <p><strong>Método de Pago:</strong> Efectivo</p>
+            <hr>
+            <p>Gracias por su compra.</p>
+        </body>
+        </html>
+    `;
+
+    const ventanaImpresion = window.open('', '', 'width=600,height=400');
+    ventanaImpresion.document.write(contenido);
+    ventanaImpresion.document.close();
+    ventanaImpresion.focus();
+    ventanaImpresion.print();
+    ventanaImpresion.close();
 }
 
 // Función para ver detalle de servicio
 function verDetalleServicio(id) {
-    alert(`Ver detalle de servicio ${id}`);
+    const contenido = `<p>Detalles del servicio con ID: <strong>${id}</strong></p>
+                       <p>Cliente: Juan Pérez</p>
+                       <p>Descripción: Reparación de pantalla</p>
+                       <p>Estado: En Proceso</p>`;
+    mostrarModal('Detalle de Servicio', contenido);
 }
 
 // Función para actualizar estado de servicio
 function actualizarEstadoServicio(id) {
-    alert(`Actualizar estado de servicio ${id}`);
+    if (confirm(`¿Desea actualizar el estado del servicio ${id}?`)) {
+        // Simular actualización del estado en datos (puedes adaptar según tu backend)
+        // Para ejemplo, vamos a cambiar el estado en la tabla a "Listo" o "Entregado" de forma cíclica
+
+        // Buscar fila en la tabla
+        const filas = document.querySelectorAll('#cuerpoTablaServicios tr');
+        filas.forEach(fila => {
+            const celdaId = fila.children[0].textContent;
+            if (celdaId === id) {
+                const celdaEstado = fila.children[4];
+                const estadoActual = celdaEstado.textContent.trim().toLowerCase();
+                let nuevoEstado = 'pendiente';
+
+                if (estadoActual === 'pendiente') nuevoEstado = 'en proceso';
+                else if (estadoActual === 'en proceso') nuevoEstado = 'listo';
+                else if (estadoActual === 'listo') nuevoEstado = 'entregado';
+                else if (estadoActual === 'entregado') nuevoEstado = 'pendiente';
+
+                // Actualizar badge y texto
+                celdaEstado.innerHTML = `<span class="badge ${getEstadoClase(nuevoEstado)}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
+            }
+        });
+
+        alert(`Estado del servicio ${id} actualizado.`);
+    }
 }
 
 // Función para ver detalle de historial
 function verDetalleHistorial(id) {
-    alert(`Ver detalle de registro ${id}`);
+    const contenido = `<p>Detalles del registro con ID: <strong>${id}</strong></p>
+                       <p>Descripción detallada del registro histórico.</p>`;
+    mostrarModal('Detalle de Historial', contenido);
 }
 
-// Función para imprimir historial
+// Función para imprimir historial (similar a imprimirTicket)
 function imprimirHistorial(id) {
-    alert(`Imprimir registro ${id}`);
+    const contenido = `
+        <html>
+        <head>
+            <title>Registro Histórico ${id}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h2 { text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                td, th { border: 1px solid #000; padding: 8px; }
+            </style>
+        </head>
+        <body>
+            <h2>Registro Histórico</h2>
+            <p><strong>ID:</strong> ${id}</p>
+            <p><strong>Descripción:</strong> Detalle del registro histórico.</p>
+            <hr>
+            <p>Documento generado para impresión.</p>
+        </body>
+        </html>
+    `;
+
+    const ventanaImpresion = window.open('', '', 'width=600,height=400');
+    ventanaImpresion.document.write(contenido);
+    ventanaImpresion.document.close();
+    ventanaImpresion.focus();
+    ventanaImpresion.print();
+    ventanaImpresion.close();
 }
