@@ -6,6 +6,7 @@ from firebase_config import ServicioFirebase
 from datetime import datetime
 import json
 import socket
+from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 UPLOAD_FOLDER = 'uploads'
@@ -903,6 +904,102 @@ def crear_venta():
             "valido": False,
             "mensaje": "Venta no registrada"
         }), 401
+
+@app.route('/api/empresa', methods=['GET'])
+def obtener_datos_empresa():
+    try:
+        empresa = conn_db.seleccionar("empresa", "*", "id = 1")
+        if empresa:
+            columnas = [desc[0] for desc in conn_db.cursor.description]
+            datos = dict(zip(columnas, empresa[0]))
+            return jsonify(datos), 200
+        else:
+            return jsonify({"mensaje": "No se encontraron datos de la empresa"}), 404
+    except Exception as e:
+        print(f"Error al obtener empresa: {e}")
+        return jsonify({"error": "Error al obtener los datos de la empresa"}), 500
+
+@app.route('/api/empresa', methods=['POST'])
+def guardar_datos_empresa():
+    try:
+        datos = request.get_json()
+
+        # Siempre se guarda en ID=1 (solo 1 empresa)
+        if conn_db.existe_registro("empresa", "id", 1):
+            conn_db.actualizar("empresa", datos, "id = ?", (1,))
+        else:
+            datos["id"] = 1
+            conn_db.insertar("empresa", datos)
+
+        return jsonify({"mensaje": "Datos de la empresa guardados correctamente"}), 200
+    except Exception as e:
+        print(f"Error al guardar empresa: {e}")
+        return jsonify({"error": "Error al guardar los datos de la empresa"}), 500
+
+@app.route('/api/empresa/logo', methods=['POST'])
+def subir_logo_empresa():
+    try:
+        if 'logo' not in request.files:
+            return jsonify({'error': 'No se envió ningún archivo'}), 400
+
+        archivo = request.files['logo']
+
+        if archivo.filename == '':
+            return jsonify({'error': 'Nombre de archivo vacío'}), 400
+
+        # Validar que sea imagen
+        if archivo and archivo.mimetype.startswith('image'):
+            filename = secure_filename("logo_empresa.png")
+            ruta_completa = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            archivo.save(ruta_completa)
+
+            logo_url = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
+
+            # Actualizar en la base de datos
+            if conn_db.existe_registro("empresa", "id", 1):
+                conn_db.actualizar("empresa", {"logo_url": logo_url}, "id = ?", (1,))
+            else:
+                conn_db.insertar("empresa", {"id": 1, "logo_url": logo_url})
+
+            return jsonify({"mensaje": "Logo subido exitosamente", "logo_url": logo_url}), 200
+
+        return jsonify({'error': 'Archivo no válido'}), 400
+
+    except Exception as e:
+        print(f"Error al subir logo: {e}")
+        return jsonify({"error": "Error interno al subir el logo"}), 500
+
+@app.route('/datos_empresa')
+def datos_empresa():
+    return render_template('datos_empresa.html')
+
+@app.route('/api/empresa', methods=['GET', 'POST'])
+def api_empresa():
+    if request.method == 'GET':
+        # Obtener datos de la empresa desde la base
+        datos = conn_db.seleccionar("datos", "dato, descripcion")
+        resultado = {dato: descripcion for dato, descripcion in datos}
+        return jsonify(resultado)
+
+    elif request.method == 'POST':
+        # Guardar datos recibidos en la base
+        datos_recibidos = request.json  # Se espera JSON con claves y valores
+        
+        for clave, valor in datos_recibidos.items():
+            # Actualizar o insertar dato en la tabla 'datos'
+            # Intentamos actualizar primero
+            conn = conn_db.conectar()
+            cursor = conn.cursor()
+            cursor.execute("UPDATE datos SET descripcion = ? WHERE dato = ?", (valor, clave))
+            if cursor.rowcount == 0:
+                # No existía, insertamos
+                cursor.execute("INSERT INTO datos (dato, descripcion) VALUES (?, ?)", (clave, valor))
+            conn.commit()
+            cursor.close()
+            conn.close()
+
+        return jsonify({"mensaje": "Datos de empresa actualizados correctamente"})
+
 
 if __name__ == '__main__':
     
