@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Negocio</title>
+    <link rel="stylesheet" href="/static/css/registro.css">
+</head>
+<body>
+
+    <div class="registro-container">
+
+        <div class="titulo">
+            <h2>Formulario de Solicitud de Código de Negocio</h2>
+            <p>Por favor, complete el formulario a continuación para obtener su código.</p>
+        </div>
+        
+        <form id="formulario-registro" class="registro-form">
+            <div class="form-group">
+                <label for="nombre-negocio">Nombre del Negocio</label>
+                <input type="text" id="nombre-negocio" name="nombre-negocio" required placeholder="Ingrese el nombre de su negocio">
+            </div>
+
+            <div class="form-group">
+                <label for="nombre-dueño">Ingrese su Nombre</label>
+                <input type="text" id="nombre-dueño" name="nombre-dueño" required placeholder="Ingrese su nombre por favor.">
+            </div>
+            
+            <div class="form-group">
+                <label for="identificacion">Identificación</label>
+                <input type="number" id="identificacion" name="identificacion" required placeholder="Número de identificación">
+            </div>
+            
+            <div class="form-group">
+                <label for="correo-contacto">Correo Electrónico</label>
+                <input type="email" id="correo-contacto" name="correo-contacto" required placeholder="correo@negocio.com">
+            </div>
+            
+            <div class="form-group">
+                <label for="telefono-contacto">Teléfono de Contacto</label>
+                <input type="number" id="telefono-contacto" name="telefono-contacto" required placeholder="Número de teléfono">
+            </div>
+
+            <div class="form-group planes" >
+                <label for="tipo-plan">Tipo de Plan</label>
+                <select id="tipo-plan" name="tipo-plan" required>
+                    <option value="">Seleccione un tipo</option>
+                    <option value="">Gratuito</option>
+                    <option value="tecnologia">Mensual</option>
+                    <option value="comercio">Semanal</option>
+                </select>
+                <button type="button" id="btn-planes">🔎 Planes</button>
+            </div>
+
+            
+
+            <div id="modal-planes" class="modal-overlay" style="display:none;">
+                <div class="modal-content">
+                    <iframe src="planes.html" frameborder="0" class="modal-iframe"></iframe>
+                    <button id="modal-close" class="modal-close-btn">&times;</button>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="tipo-negocio">Tipo de Negocio</label>
+                <select id="tipo-negocio" name="tipo-negocio" required>
+                    <option value="">Seleccione un tipo</option>
+                    <option value="tecnologia">Tecnología</option>
+                    <option value="comercio">Comercio</option>
+                    <option value="servicios">Servicios</option>
+                    <option value="industria">Industria</option>
+                    <option value="otros">Otros</option>
+                </select>
+            </div>
+            
+            <div class="form-group">
+                <label for="descripcion-negocio">Descripción Breve (opcional)</label>
+                <textarea id="descripcion-negocio" name="descripcion-negocio" rows="4" placeholder="Describa brevemente su negocio"></textarea>
+            </div>
+            
+            <div class="form-group checkbox-group">
+                <input type="checkbox" id="aceptar-terminos" name="aceptar-terminos" required>
+                <label for="aceptar-terminos"><a href="#">Acepto los términos y condiciones</a></label>
+            </div>
+            
+            <button type="submit" class="btn-submit">
+                Solicitar Código de Negocio
+            </button>
+        </form>
+
+        <p class="volver">Regresar al menú principal <a href="index.html">aquí.</a></p>
+
+    </div>
+
+    <script>
+        const btnPlanes = document.getElementById('btn-planes');
+        const modal = document.getElementById('modal-planes');
+        const btnClose = document.getElementById('modal-close');
+
+        btnPlanes.addEventListener('click', () => {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden'; // Evita scroll en fondo
+        });
+
+        btnClose.addEventListener('click', () => {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto'; // Permite scroll otra vez
+        });
+
+        // Cerrar modal si se hace click fuera del contenido
+        modal.addEventListener('click', (e) => {
+            if(e.target === modal){
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+            }
+        });
+     </script>
+
+    <script src="/static/js/nuevo_registro.js"></script>
+</body>
+</html>
