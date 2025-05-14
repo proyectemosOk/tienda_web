@@ -351,13 +351,14 @@ def crear_tablas(base):
         marca TEXT,
         modelo TEXT,
         estado_entrada TEXT,
-        servicios TEXT,
+        servicio INTEGER,
         perifericos TEXT,
         observaciones TEXT,
         fecha TEXT,
         tipo_pago TEXT,
         pago REAL,
-        estado INTEGER
+        estado INTEGER,
+        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
     )""")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servicios (
