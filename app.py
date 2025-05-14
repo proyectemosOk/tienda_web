@@ -808,10 +808,6 @@ def obtener_clientes():
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
  
- 
-    
-    
-    
 @app.route('/api/login-segunda', methods=['POST'])
 def login():
     try:
@@ -853,8 +849,7 @@ def login():
             "valido": False,
             "mensaje": "Error interno del servidor"
         }), 500
-
-    
+   
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
     data = request.get_json()
