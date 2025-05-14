@@ -1,0 +1,20 @@
+.boton-menu{
+    display: flex;
+    justify-content: space-around;
+}
+#monederos, #ventas, #inventario, #cuentas, #personal, #configuraciones, #empresa, #informes, #casa{
+    text-align: center;
+    border: 1px solid gray;
+    align-content: center;
+    width: 10.5vw;
+    height: 6vw;
+    font-size: 1.3vw;
+    border-radius: 50px;
+    background-color: #4361ee;
+}
+#monederos:hover, #ventas:hover, #inventario:hover, #cuentas:hover, #personal:hover, #configuraciones:hover, #empresa:hover, #informes:hover, #casa:hover{
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    animation: wave 0.6s ease;
+    background: #5b25da;
+}
