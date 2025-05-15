@@ -3,7 +3,7 @@ import os
 from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 import socket
 from werkzeug.utils import secure_filename
@@ -1000,6 +1000,258 @@ def api_empresa():
 
         return jsonify({"mensaje": "Datos de empresa actualizados correctamente"})
 
+# Ejemplo para obtener ventas del día (desglose por método de pago y listado)
+@app.route('/api/informes/ventas', methods=['GET'])
+def api_informes_ventas():
+    try:
+        # Obtener ventas activas del día
+        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+        
+        # Total ventas por método de pago
+        desglose_pagos = conn_db.ejecutar_personalizado('''
+            SELECT tp.nombre, SUM(pv.valor)
+            FROM pagos_venta pv
+            JOIN ventas v ON pv.venta_id = v.id
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+            WHERE v.estado = 1 AND DATE(v.fecha) = ?
+            GROUP BY tp.nombre
+        ''', (fecha_hoy,))
+        
+        desglose = {item[0]: item[1] for item in desglose_pagos} if desglose_pagos else {}
+
+        # Listado de ventas del día
+        ventas = conn_db.ejecutar_personalizado('''
+            SELECT v.id, v.fecha, v.total_venta,
+            GROUP_CONCAT(tp.nombre, ', ') as metodos_pago
+            FROM ventas v
+            LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
+            LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+            WHERE v.estado = 1 AND DATE(v.fecha) = ?
+            GROUP BY v.id
+            ORDER BY v.fecha DESC
+        ''', (fecha_hoy,))
+        
+        lista_ventas = []
+        for v in ventas:
+            lista_ventas.append({
+                'id': v[0],
+                'fecha': v[1],
+                'total': v[2],
+                'metodos_pago': v[3] if v[3] else ""
+            })
+
+        return jsonify({
+            'desglose_pagos': desglose,
+            'ventas': lista_ventas
+        }), 200
+
+    except Exception as e:
+        print(f"Error API ventas: {e}")
+        return jsonify({'error': 'Error al obtener ventas'}), 500
+
+# API para servicios (conteo y listado)
+@app.route('/api/informes/servicios', methods=['GET'])
+def api_informes_servicios():
+    try:
+        # Contar servicios por estado
+        estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado']
+        conteos = {}
+        for estado in estados:
+            count = conn_db.contar('servicios', 'estado = ?', (estado,))
+            conteos[estado] = count or 0
+
+        # Listado servicios recientes (limit 10)
+        servicios = conn_db.ejecutar_personalizado('''
+            SELECT id, cliente, descripcion, fecha, estado
+            FROM servicios
+            ORDER BY fecha DESC
+            LIMIT 10
+        ''')
+
+        lista_servicios = []
+        if servicios:
+            for s in servicios:
+                lista_servicios.append({
+                    'id': s[0],
+                    'cliente': s[1],
+                    'descripcion': s[2],
+                    'fecha': s[3],
+                    'estado': s[4]
+                })
+
+        return jsonify({
+            'conteo_estados': conteos,
+            'servicios': lista_servicios
+        }), 200
+
+    except Exception as e:
+        print(f"Error API servicios: {e}")
+        return jsonify({'error': 'Error al obtener servicios'}), 500
+
+# API resumen general (totales y gráficos)
+@app.route('/api/informes/resumen', methods=['GET'])
+def api_informes_resumen():
+    try:
+        # Totales
+        total_ventas = conn_db.ejecutar_personalizado('SELECT SUM(total_venta) FROM ventas WHERE estado = 1')[0][0] or 0
+        total_servicios = conn_db.contar('servicios')
+        total_productos = conn_db.contar('productos')
+        total_clientes = conn_db.contar('clientes')
+
+        # Ventas por categoría
+        ventas_categoria = conn_db.ejecutar_personalizado('''
+            SELECT categoria, SUM(total_venta)
+            FROM ventas v
+            JOIN detalles_ventas dv ON v.id = dv.venta_id
+            JOIN productos p ON dv.producto_id = p.id
+            WHERE v.estado = 1
+            GROUP BY categoria
+        ''')
+
+        categorias = []
+        datos_ventas = []
+        if ventas_categoria:
+            for cat, total in ventas_categoria:
+                categorias.append(cat)
+                datos_ventas.append(total)
+
+        # Servicios por tipo
+        servicios_tipo = conn_db.ejecutar_personalizado('''
+            SELECT tipo, COUNT(*)
+            FROM servicios
+            GROUP BY tipo
+        ''')
+        tipos = []
+        datos_servicios = []
+        if servicios_tipo:
+            for tipo, count in servicios_tipo:
+                tipos.append(tipo)
+                datos_servicios.append(count)
+
+        return jsonify({
+            'totales': {
+                'ventas': total_ventas,
+                'servicios': total_servicios,
+                'productos': total_productos,
+                'clientes': total_clientes
+            },
+            'ventas_categoria': {
+                'categorias': categorias,
+                'datos': datos_ventas
+            },
+            'servicios_tipo': {
+                'tipos': tipos,
+                'datos': datos_servicios
+            }
+        }), 200
+
+    except Exception as e:
+        print(f"Error API resumen: {e}")
+        return jsonify({'error': 'Error al obtener resumen'}), 500
+
+# API historial (filtrado)
+@app.route('/api/informes/historial', methods=['GET'])
+def api_informes_historial():
+    try:
+        tipo = request.args.get('tipo', 'todos')
+        fecha_inicio = request.args.get('fecha_inicio')
+        fecha_fin = request.args.get('fecha_fin')
+
+        if not fecha_inicio or not fecha_fin:
+            return jsonify({'error': 'Faltan fechas'}), 400
+
+        fecha_inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
+        fecha_fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
+        fecha_fin_dt = fecha_fin_dt.replace(hour=23, minute=59, second=59)
+
+        registros = []
+
+        # Consultas ejemplo para ventas y servicios
+        if tipo in ['todos', 'ventas']:
+            ventas = conn_db.ejecutar_personalizado('''
+                SELECT id, fecha, 'Venta' as tipo, total_venta as total, 'Venta de productos' as descripcion
+                FROM ventas
+                WHERE estado = 1 AND fecha BETWEEN ? AND ?
+            ''', (fecha_inicio, fecha_fin))
+            for v in ventas:
+                registros.append({
+                    'id': v[0],
+                    'tipo': v[2],
+                    'fecha': v[1],
+                    'descripcion': v[4],
+                    'total': v[3]
+                })
+
+        if tipo in ['todos', 'servicios']:
+            servicios = conn_db.ejecutar_personalizado('''
+                SELECT id, fecha, 'Servicio' as tipo, costo as total, descripcion
+                FROM servicios
+                WHERE fecha BETWEEN ? AND ?
+            ''', (fecha_inicio, fecha_fin))
+            for s in servicios:
+                registros.append({
+                    'id': s[0],
+                    'tipo': s[2],
+                    'fecha': s[1],
+                    'descripcion': s[4],
+                    'total': s[3]
+                })
+
+        # Ordenar por fecha descendente
+        registros.sort(key=lambda x: x['fecha'], reverse=True)
+
+        return jsonify({'registros': registros}), 200
+
+    except Exception as e:
+        print(f"Error API historial: {e}")
+        return jsonify({'error': 'Error al obtener historial'}), 500
+
+# API estadísticas (ejemplo para ventas por período)
+@app.route('/api/informes/estadisticas', methods=['GET'])
+def api_informes_estadisticas():
+    try:
+        periodo = request.args.get('periodo', 'semana')  # semana, mes, año
+
+        ahora = datetime.now()
+
+        if periodo == 'semana':
+            inicio = ahora - timedelta(days=7)
+            formato_fecha = '%Y-%m-%d'
+        elif periodo == 'mes':
+            inicio = ahora - timedelta(days=30)
+            formato_fecha = '%Y-%m-%d'
+        elif periodo == 'año':
+            inicio = ahora - timedelta(days=365)
+            formato_fecha = '%Y-%m'
+        else:
+            inicio = ahora - timedelta(days=7)
+            formato_fecha = '%Y-%m-%d'
+
+        # Ejemplo: Ventas por día en el período
+        ventas_periodo = conn_db.ejecutar_personalizado('''
+            SELECT DATE(fecha) as dia, SUM(total_venta)
+            FROM ventas
+            WHERE estado = 1 AND fecha BETWEEN ? AND ?
+            GROUP BY dia
+            ORDER BY dia ASC
+        ''', (inicio.strftime('%Y-%m-%d'), ahora.strftime('%Y-%m-%d')))
+
+        etiquetas = []
+        datos = []
+        if ventas_periodo:
+            for dia, total in ventas_periodo:
+                etiquetas.append(dia)
+                datos.append(total)
+
+        return jsonify({
+            'periodo': periodo,
+            'etiquetas': etiquetas,
+            'datos': datos
+        }), 200
+
+    except Exception as e:
+        print(f"Error API estadisticas: {e}")
+        return jsonify({'error': 'Error al obtener estadísticas'}), 500
 
 if __name__ == '__main__':
     

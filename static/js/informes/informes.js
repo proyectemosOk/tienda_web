@@ -77,9 +77,9 @@ function inicializarPestanaVentas() {
     ventasChart = new Chart(ctxVentas, {
         type: 'doughnut',
         data: {
-            labels: ['Efectivo', 'Tarjeta', 'Transferencia', 'Otros'],
+            labels: [],
             datasets: [{
-                data: [0, 0, 0, 0],
+                data: [],
                 backgroundColor: colores,
                 borderWidth: 1
             }]
@@ -99,60 +99,43 @@ function inicializarPestanaVentas() {
 }
 
 function actualizarDatosVentas() {
-    // Simular carga de datos desde API
-    setTimeout(() => {
+    fetch('/api/informes/ventas')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
 
-        // Actualizar gráfico de ventas
-        ventasChart.data.datasets[0].data = [8500, 4200, 2300, 450];
-        ventasChart.update();
+            // Actualizar gráfico de ventas con desglose_pagos
+            const pagos = data.desglose_pagos;
+            const etiquetas = Object.keys(pagos);
+            const valores = Object.values(pagos);
 
-        // Actualizar tabla de ventas
-        const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
-        cuerpoTablaVentas.innerHTML = generarFilasTablaVentas();
-    }, 500);
-}
+            ventasChart.data.labels = etiquetas;
+            ventasChart.data.datasets[0].data = valores;
+            ventasChart.update();
 
-function generarFilasTablaVentas() {
-    // Datos de ejemplo para ventas
-    const ventas = [
-        { id: 'V-001', fecha: '12/05/2025 10:15', total: '$450.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
-        { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
-        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-001', fecha: '12/05/2025 10:15', total: '$450.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
-        { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
-        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-001', fecha: '12/05/2025 10:15', total: '$450.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-002', fecha: '12/05/2025 11:30', total: '$1,250.00', metodos: 'Tarjeta', acciones: '' },
-        { id: 'V-003', fecha: '12/05/2025 12:45', total: '$320.00', metodos: 'Efectivo', acciones: '' },
-        { id: 'V-004', fecha: '12/05/2025 13:20', total: '$780.00', metodos: 'Transferencia', acciones: '' },
-        { id: 'V-005', fecha: '12/05/2025 14:05', total: '$150.00', metodos: 'Efectivo', acciones: '' },
-    ];
-
-    let html = '';
-    ventas.forEach(venta => {
-        html += `
-            <tr>
-                <td>${venta.id}</td>
-                <td>${venta.fecha}</td>
-                <td>${venta.total}</td>
-                <td>${venta.metodos}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${venta.id}')">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="imprimirTicket('${venta.id}')">
-                        <i class="bi bi-printer"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    return html;
+            // Actualizar tabla de ventas
+            const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
+            cuerpoTablaVentas.innerHTML = data.ventas.map(venta => `
+                <tr>
+                    <td>${venta.id}</td>
+                    <td>${venta.fecha}</td>
+                    <td>$${parseFloat(venta.total).toFixed(2)}</td>
+                    <td>${venta.metodos_pago}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${venta.id}')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-sm btn-outline-secondary" onclick="imprimirTicket('${venta.id}')">
+                            <i class="bi bi-printer"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(error => console.error('Error al cargar ventas:', error));
 }
 
 // ==================== PESTAÑA SERVICIOS ====================
@@ -163,9 +146,9 @@ function inicializarPestanaServicios() {
     serviciosChart = new Chart(ctxServicios, {
         type: 'pie',
         data: {
-            labels: ['Pendientes', 'En Proceso', 'Listos para Entrega', 'Entregados'],
+            labels: [],
             datasets: [{
-                data: [0, 0, 0, 0],
+                data: [],
                 backgroundColor: colores,
                 borderWidth: 1
             }]
@@ -185,71 +168,52 @@ function inicializarPestanaServicios() {
 }
 
 function actualizarDatosServicios() {
-    // Simular carga de datos desde API
-    setTimeout(() => {
-        // Actualizar contadores
-        document.getElementById('totalServicios').textContent = '18';
-        document.getElementById('enProcesoServicios').textContent = '12';
-        document.getElementById('listosServicios').textContent = '6';
+    fetch('/api/informes/servicios')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
 
-        // Actualizar gráfico de servicios
-        serviciosChart.data.datasets[0].data = [5, 7, 6, 8];
-        serviciosChart.update();
+            const conteo = data.conteo_estados;
+            // Actualizar contadores
+            document.getElementById('totalServicios').textContent = conteo.Pendiente + conteo['En Proceso'] + conteo.Listo + conteo.Entregado || 0;
+            document.getElementById('enProcesoServicios').textContent = conteo['En Proceso'] || 0;
+            document.getElementById('listosServicios').textContent = conteo.Listo || 0;
 
-        // Actualizar tabla de servicios
-        const cuerpoTablaServicios = document.getElementById('cuerpoTablaServicios');
-        cuerpoTablaServicios.innerHTML = generarFilasTablaServicios();
-    }, 500);
-}
+            // Actualizar gráfico de servicios
+            const estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado'];
+            const datos = estados.map(e => conteo[e] || 0);
 
-function generarFilasTablaServicios() {
-    // Datos de ejemplo para servicios
-    const servicios = [
-        { id: 'S-001', cliente: 'Juan Pérez', descripcion: 'Reparación de pantalla', fecha: '10/05/2025', estado: 'En Proceso', acciones: '' },
-        { id: 'S-002', cliente: 'María López', descripcion: 'Cambio de batería', fecha: '11/05/2025', estado: 'Pendiente', acciones: '' },
-        { id: 'S-003', cliente: 'Carlos Gómez', descripcion: 'Actualización de software', fecha: '11/05/2025', estado: 'Listo', acciones: '' },
-        { id: 'S-004', cliente: 'Ana Martínez', descripcion: 'Limpieza de hardware', fecha: '12/05/2025', estado: 'Pendiente', acciones: '' },
-        { id: 'S-005', cliente: 'Luis Rodríguez', descripcion: 'Recuperación de datos', fecha: '12/05/2025', estado: 'En Proceso', acciones: '' },
-        { id: 'S-001', cliente: 'Juan Pérez', descripcion: 'Reparación de pantalla', fecha: '10/05/2025', estado: 'En Proceso', acciones: '' },
-        { id: 'S-002', cliente: 'María López', descripcion: 'Cambio de batería', fecha: '11/05/2025', estado: 'Pendiente', acciones: '' },
-        { id: 'S-003', cliente: 'Carlos Gómez', descripcion: 'Actualización de software', fecha: '11/05/2025', estado: 'Listo', acciones: '' },
-        { id: 'S-004', cliente: 'Ana Martínez', descripcion: 'Limpieza de hardware', fecha: '12/05/2025', estado: 'Pendiente', acciones: '' },
-        { id: 'S-005', cliente: 'Luis Rodríguez', descripcion: 'Recuperación de datos', fecha: '12/05/2025', estado: 'En Proceso', acciones: '' },
-    ];
+            serviciosChart.data.labels = estados;
+            serviciosChart.data.datasets[0].data = datos;
+            serviciosChart.update();
 
-    let html = '';
-    servicios.forEach(servicio => {
-        const estadoClase = getEstadoClase(servicio.estado);
-        html += `
-            <tr>
-                <td>${servicio.id}</td>
-                <td>${servicio.cliente}</td>
-                <td>${servicio.descripcion}</td>
-                <td>${servicio.fecha}</td>
-                <td><span class="badge ${estadoClase}">${servicio.estado}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalleServicio('${servicio.id}')">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    <button class="btn btn-sm btn-outline-success" onclick="actualizarEstadoServicio('${servicio.id}')">
-                        <i class="bi bi-arrow-clockwise"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-    });
-
-    return html;
-}
-
-function getEstadoClase(estado) {
-    switch(estado.toLowerCase()) {
-        case 'pendiente': return 'bg-warning text-dark';
-        case 'en proceso': return 'bg-info text-dark';
-        case 'listo': return 'bg-success';
-        case 'entregado': return 'bg-secondary';
-        default: return 'bg-light text-dark';
-    }
+            // Actualizar tabla de servicios
+            const cuerpoTablaServicios = document.getElementById('cuerpoTablaServicios');
+            cuerpoTablaServicios.innerHTML = data.servicios.map(servicio => {
+                const estadoClase = getEstadoClase(servicio.estado);
+                return `
+                    <tr>
+                        <td>${servicio.id}</td>
+                        <td>${servicio.cliente}</td>
+                        <td>${servicio.descripcion}</td>
+                        <td>${servicio.fecha}</td>
+                        <td><span class="badge ${estadoClase}">${servicio.estado}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalleServicio('${servicio.id}')">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="actualizarEstadoServicio('${servicio.id}')">
+                                <i class="bi bi-arrow-clockwise"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        })
+        .catch(error => console.error('Error al cargar servicios:', error));
 }
 
 // ==================== PESTAÑA RESUMEN ====================
@@ -260,10 +224,10 @@ function inicializarPestanaResumen() {
     ventasCategoriaChart = new Chart(ctxVentasCategoria, {
         type: 'bar',
         data: {
-            labels: ['Electrónicos', 'Accesorios', 'Servicios', 'Otros'],
+            labels: [],
             datasets: [{
                 label: 'Ventas por Categoría',
-                data: [0, 0, 0, 0],
+                data: [],
                 backgroundColor: colores,
                 borderWidth: 1
             }]
@@ -271,9 +235,7 @@ function inicializarPestanaResumen() {
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
             }
         }
     });
@@ -283,10 +245,10 @@ function inicializarPestanaResumen() {
     serviciosTipoChart = new Chart(ctxServiciosTipo, {
         type: 'bar',
         data: {
-            labels: ['Reparación', 'Mantenimiento', 'Instalación', 'Asesoría'],
+            labels: [],
             datasets: [{
                 label: 'Servicios por Tipo',
-                data: [0, 0, 0, 0],
+                data: [],
                 backgroundColor: colores,
                 borderWidth: 1
             }]
@@ -294,9 +256,7 @@ function inicializarPestanaResumen() {
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
             }
         }
     });
@@ -306,22 +266,31 @@ function inicializarPestanaResumen() {
 }
 
 function actualizarDatosResumen() {
-    // Simular carga de datos desde API
-    setTimeout(() => {
-        // Actualizar contadores de resumen
-        document.getElementById('totalVentasResumen').textContent = '$15,450.00';
-        document.getElementById('totalServiciosResumen').textContent = '18';
-        document.getElementById('totalProductosResumen').textContent = '156';
-        document.getElementById('totalClientesResumen').textContent = '45';
+    fetch('/api/informes/resumen')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
 
-        // Actualizar gráfico de ventas por categoría
-        ventasCategoriaChart.data.datasets[0].data = [6500, 4200, 3800, 950];
-        ventasCategoriaChart.update();
+            // Actualizar contadores de resumen
+            document.getElementById('totalVentasResumen').textContent = `$${parseFloat(data.totales.ventas).toFixed(2)}`;
+            document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
+            document.getElementById('totalProductosResumen').textContent = data.totales.productos;
+            document.getElementById('totalClientesResumen').textContent = data.totales.clientes;
 
-        // Actualizar gráfico de servicios por tipo
-        serviciosTipoChart.data.datasets[0].data = [8, 5, 3, 2];
-        serviciosTipoChart.update();
-    }, 500);
+            // Actualizar gráfico de ventas por categoría
+            ventasCategoriaChart.data.labels = data.ventas_categoria.categorias;
+            ventasCategoriaChart.data.datasets[0].data = data.ventas_categoria.datos;
+            ventasCategoriaChart.update();
+
+            // Actualizar gráfico de servicios por tipo
+            serviciosTipoChart.data.labels = data.servicios_tipo.tipos;
+            serviciosTipoChart.data.datasets[0].data = data.servicios_tipo.datos;
+            serviciosTipoChart.update();
+        })
+        .catch(error => console.error('Error al cargar resumen:', error));
 }
 
 // ==================== PESTAÑA HISTORIAL ====================
@@ -354,45 +323,7 @@ function buscarHistorial() {
         return;
     }
 
-    function crearFechaLocal(fechaStr) {
-        const [anio, mes, dia] = fechaStr.split('-');
-        return new Date(anio, mes - 1, dia);
-    }
-
-    const fechaInicio = crearFechaLocal(fechaInicioStr);
-    const fechaFin = crearFechaLocal(fechaFinStr);
-    fechaFin.setHours(23, 59, 59, 999); // incluir todo el día
-
-    // Datos de ejemplo para historial
-    const registros = [];
-
-    if (tipoRegistro === 'todos' || tipoRegistro === 'ventas') {
-        registros.push(
-            { id: 'V-001', tipo: 'Venta', fecha: '12/05/2025 10:15', descripcion: 'Venta de productos', total: '$450.00' },
-            { id: 'V-002', tipo: 'Venta', fecha: '12/05/2025 11:30', descripcion: 'Venta de productos', total: '$1,250.00' },
-            { id: 'V-003', tipo: 'Venta', fecha: '11/05/2025 12:45', descripcion: 'Venta de productos', total: '$320.00' }
-        );
-    }
-
-    if (tipoRegistro === 'todos' || tipoRegistro === 'servicios') {
-        registros.push(
-            { id: 'S-001', tipo: 'Servicio', fecha: '10/05/2025 09:30', descripcion: 'Reparación de pantalla', total: '$850.00' },
-            { id: 'S-002', tipo: 'Servicio', fecha: '11/05/2025 14:20', descripcion: 'Cambio de batería', total: '$350.00' },
-            { id: 'S-003', tipo: 'Servicio', fecha: '11/05/2025 16:15', descripcion: 'Actualización de software', total: '$200.00' }
-        );
-    }
-
-    function parseFecha(fechaStr) {
-        const [fechaPart, horaPart] = fechaStr.split(' ');
-        const [dia, mes, anio] = fechaPart.split('/');
-        const [hora, minutos] = horaPart.split(':');
-        return new Date(anio, mes - 1, dia, hora, minutos);
-    }
-
-    const registrosFiltrados = registros.filter(registro => {
-        const fechaRegistro = parseFecha(registro.fecha);
-        return fechaRegistro >= fechaInicio && fechaRegistro <= fechaFin;
-    });
+    const url = `/api/informes/historial?tipo=${encodeURIComponent(tipoRegistro)}&fecha_inicio=${fechaInicioStr}&fecha_fin=${fechaFinStr}`;
 
     const cuerpoTablaHistorial = document.getElementById('cuerpoTablaHistorial');
     cuerpoTablaHistorial.innerHTML = `
@@ -406,16 +337,26 @@ function buscarHistorial() {
         </tr>
     `;
 
-    setTimeout(() => {
-        if (registrosFiltrados.length === 0) {
-            cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
-            return;
-        }
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${data.error}</td></tr>`;
+                return;
+            }
 
-        cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(registrosFiltrados);
-    }, 800);
+            if (!data.registros || data.registros.length === 0) {
+                cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
+                return;
+            }
+
+            cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(data.registros);
+        })
+        .catch(error => {
+            console.error('Error al buscar historial:', error);
+            cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar registros</td></tr>`;
+        });
 }
-
 
 function generarFilasTablaHistorial(registros) {
     if (!registros || registros.length === 0) {
@@ -431,7 +372,7 @@ function generarFilasTablaHistorial(registros) {
                 <td><span class="${tipoClase}">${registro.tipo}</span></td>
                 <td>${registro.fecha}</td>
                 <td>${registro.descripcion}</td>
-                <td>${registro.total}</td>
+                <td>$${parseFloat(registro.total).toFixed(2)}</td>
                 <td>
                     <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalleHistorial('${registro.id}')">
                         <i class="bi bi-eye"></i>
@@ -446,7 +387,6 @@ function generarFilasTablaHistorial(registros) {
 
     return html;
 }
-
 
 // ==================== PESTAÑA ESTADÍSTICAS ====================
 
@@ -470,9 +410,7 @@ function inicializarPestanaEstadisticas() {
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
             }
         }
     });
@@ -496,9 +434,7 @@ function inicializarPestanaEstadisticas() {
         options: {
             responsive: true,
             scales: {
-                y: {
-                    beginAtZero: true
-                }
+                y: { beginAtZero: true }
             }
         }
     });
@@ -508,54 +444,49 @@ function inicializarPestanaEstadisticas() {
 }
 
 function actualizarEstadisticas() {
-    // Simular carga de datos desde API según el período seleccionado
-    let etiquetas, datosVentas, datosServicios;
+    fetch(`/api/informes/estadisticas?periodo=${periodoActual}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                console.error(data.error);
+                return;
+            }
 
-    switch(periodoActual) {
-        case 'semana':
-            etiquetas = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-            datosVentas = [1200, 1800, 1500, 2200, 1900, 2500, 1600];
-            datosServicios = [3, 5, 2, 4, 3, 6, 2];
-            break;
-        case 'mes':
-            etiquetas = ['Semana 1', 'Semana 2', 'Semana 3', 'Semana 4'];
-            datosVentas = [8500, 9200, 10500, 11800];
-            datosServicios = [12, 15, 18, 20];
-            break;
-        case 'trimestre':
-            etiquetas = ['Enero', 'Febrero', 'Marzo'];
-            datosVentas = [28500, 32200, 35500];
-            datosServicios = [45, 52, 58];
-            break;
-        case 'anio':
-            etiquetas = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-            datosVentas = [28500, 32200, 35500, 30800, 33500, 36200, 34500, 38000, 42500, 40000, 45000, 48000];
-            datosServicios = [45, 52, 58, 48, 55, 60, 57, 63, 70, 68, 75, 80];
-            break;
-    }
+            ventasPeriodoChart.data.labels = data.etiquetas;
+            ventasPeriodoChart.data.datasets[0].data = data.datos;
+            ventasPeriodoChart.update();
 
-    // Actualizar gráfico de ventas por período
-    ventasPeriodoChart.data.labels = etiquetas;
-    ventasPeriodoChart.data.datasets[0].data = datosVentas;
-    ventasPeriodoChart.update();
+            // Para servicios, si tienes datos similares, adapta aquí
+            // Por ejemplo, si la API devuelve datos de servicios, actualiza serviciosPeriodoChart
 
-    // Actualizar gráfico de servicios por período
-    serviciosPeriodoChart.data.labels = etiquetas;
-    serviciosPeriodoChart.data.datasets[0].data = datosServicios;
-    serviciosPeriodoChart.update();
+            // Actualmente no tenemos datos reales para servicios por período, así que dejamos vacío o simulado
+            serviciosPeriodoChart.data.labels = data.etiquetas;
+            serviciosPeriodoChart.data.datasets[0].data = data.datos.map(() => 0); // o datos reales si tienes
+            serviciosPeriodoChart.update();
 
-    // Actualizar KPIs
-    document.getElementById('ticketPromedio').textContent = '$367.86';
-    document.getElementById('ventasDiarias').textContent = '42';
-    document.getElementById('serviciosCompletados').textContent = '18';
-    document.getElementById('tasaConversion').textContent = '68%';
+            // Actualizar KPIs - si tienes datos reales, cámbialos aquí
+            document.getElementById('ticketPromedio').textContent = '$367.86';
+            document.getElementById('ventasDiarias').textContent = '42';
+            document.getElementById('serviciosCompletados').textContent = '18';
+            document.getElementById('tasaConversion').textContent = '68%';
+        })
+        .catch(error => console.error('Error al cargar estadísticas:', error));
 }
 
 // ==================== FUNCIONES AUXILIARES ====================
 
+function getEstadoClase(estado) {
+    switch(estado.toLowerCase()) {
+        case 'pendiente': return 'bg-warning text-dark';
+        case 'en proceso': return 'bg-info text-dark';
+        case 'listo': return 'bg-success';
+        case 'entregado': return 'bg-secondary';
+        default: return 'bg-light text-dark';
+    }
+}
+
 // Crear modal simple para mostrar detalles
 function mostrarModal(titulo, contenido) {
-    // Verificar si ya existe el modal
     let modal = document.getElementById('modalDetalle');
     if (!modal) {
         modal = document.createElement('div');
@@ -595,7 +526,6 @@ function mostrarModal(titulo, contenido) {
     }
 
     const modalContent = document.getElementById('modalContentDetalle');
-    // Insertar título y contenido antes del botón cerrar
     modalContent.innerHTML = `<h4>${titulo}</h4><div>${contenido}</div>`;
     // Añadir botón cerrar nuevamente
     const btnCerrar = document.createElement('button');
@@ -612,91 +542,109 @@ function mostrarModal(titulo, contenido) {
 
 // Función para ver detalle de venta
 function verDetalle(id) {
-    // Aquí puedes cargar datos reales, por ahora simulo contenido
-    const contenido = `<p>Detalles de la venta con ID: <strong>${id}</strong></p>
-                       <p>Fecha: 12/05/2025 10:15</p>
-                       <p>Total: $450.00</p>
-                       <p>Método de Pago: Efectivo</p>`;
-    mostrarModal('Detalle de Venta', contenido);
+    fetch(`/api/ventas/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                mostrarModal('Error', `<p>${data.error}</p>`);
+                return;
+            }
+            const contenido = `
+                <p>Detalles de la venta con ID: <strong>${id}</strong></p>
+                <p>Fecha: ${data.fecha || 'N/A'}</p>
+                <p>Total: $${parseFloat(data.total_venta || 0).toFixed(2)}</p>
+                <p>Método de Pago: ${data.metodo_pago || 'N/A'}</p>
+            `;
+            mostrarModal('Detalle de Venta', contenido);
+        })
+        .catch(() => {
+            mostrarModal('Error', '<p>No se pudo cargar el detalle de la venta.</p>');
+        });
 }
 
 // Función para imprimir ticket de venta (abre ventana nueva con contenido para imprimir)
 function imprimirTicket(id) {
-    // Generar contenido HTML para impresión (simulado)
-    const contenido = `
-        <html>
-        <head>
-            <title>Ticket Venta ${id}</title>
-            <style>
-                body { font-family: Arial, sans-serif; padding: 20px; }
-                h2 { text-align: center; }
-                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                td, th { border: 1px solid #000; padding: 8px; }
-            </style>
-        </head>
-        <body>
-            <h2>Ticket de Venta</h2>
-            <p><strong>ID:</strong> ${id}</p>
-            <p><strong>Fecha:</strong> 12/05/2025 10:15</p>
-            <p><strong>Total:</strong> $450.00</p>
-            <p><strong>Método de Pago:</strong> Efectivo</p>
-            <hr>
-            <p>Gracias por su compra.</p>
-        </body>
-        </html>
-    `;
+    // Para mejor integración, puedes hacer fetch para obtener datos reales antes de imprimir
+    fetch(`/api/ventas/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            const contenido = `
+                <html>
+                <head>
+                    <title>Ticket Venta ${id}</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; padding: 20px; }
+                        h2 { text-align: center; }
+                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                        td, th { border: 1px solid #000; padding: 8px; }
+                    </style>
+                </head>
+                <body>
+                    <h2>Ticket de Venta</h2>
+                    <p><strong>ID:</strong> ${id}</p>
+                    <p><strong>Fecha:</strong> ${data.fecha || 'N/A'}</p>
+                    <p><strong>Total:</strong> $${parseFloat(data.total_venta || 0).toFixed(2)}</p>
+                    <p><strong>Método de Pago:</strong> ${data.metodo_pago || 'N/A'}</p>
+                    <hr>
+                    <p>Gracias por su compra.</p>
+                </body>
+                </html>
+            `;
 
-    const ventanaImpresion = window.open('', '', 'width=600,height=400');
-    ventanaImpresion.document.write(contenido);
-    ventanaImpresion.document.close();
-    ventanaImpresion.focus();
-    ventanaImpresion.print();
-    ventanaImpresion.close();
+            const ventanaImpresion = window.open('', '', 'width=600,height=400');
+            ventanaImpresion.document.write(contenido);
+            ventanaImpresion.document.close();
+            ventanaImpresion.focus();
+            ventanaImpresion.print();
+            ventanaImpresion.close();
+        })
+        .catch(() => alert('No se pudo generar el ticket para imprimir.'));
 }
 
 // Función para ver detalle de servicio
 function verDetalleServicio(id) {
-    const contenido = `<p>Detalles del servicio con ID: <strong>${id}</strong></p>
-                       <p>Cliente: Juan Pérez</p>
-                       <p>Descripción: Reparación de pantalla</p>
-                       <p>Estado: En Proceso</p>`;
-    mostrarModal('Detalle de Servicio', contenido);
+    fetch(`/api/servicios/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                mostrarModal('Error', `<p>${data.error}</p>`);
+                return;
+            }
+            const contenido = `
+                <p>Detalles del servicio con ID: <strong>${id}</strong></p>
+                <p>Cliente: ${data.cliente || 'N/A'}</p>
+                <p>Descripción: ${data.descripcion || 'N/A'}</p>
+                <p>Estado: ${data.estado || 'N/A'}</p>
+            `;
+            mostrarModal('Detalle de Servicio', contenido);
+        })
+        .catch(() => {
+            mostrarModal('Error', '<p>No se pudo cargar el detalle del servicio.</p>');
+        });
 }
 
-// Función para actualizar estado de servicio
+// Función para actualizar estado de servicio (deberías implementar en backend)
 function actualizarEstadoServicio(id) {
     if (confirm(`¿Desea actualizar el estado del servicio ${id}?`)) {
-        // Simular actualización del estado en datos (puedes adaptar según tu backend)
-        // Para ejemplo, vamos a cambiar el estado en la tabla a "Listo" o "Entregado" de forma cíclica
-
-        // Buscar fila en la tabla
-        const filas = document.querySelectorAll('#cuerpoTablaServicios tr');
-        filas.forEach(fila => {
-            const celdaId = fila.children[0].textContent;
-            if (celdaId === id) {
-                const celdaEstado = fila.children[4];
-                const estadoActual = celdaEstado.textContent.trim().toLowerCase();
-                let nuevoEstado = 'pendiente';
-
-                if (estadoActual === 'pendiente') nuevoEstado = 'en proceso';
-                else if (estadoActual === 'en proceso') nuevoEstado = 'listo';
-                else if (estadoActual === 'listo') nuevoEstado = 'entregado';
-                else if (estadoActual === 'entregado') nuevoEstado = 'pendiente';
-
-                // Actualizar badge y texto
-                celdaEstado.innerHTML = `<span class="badge ${getEstadoClase(nuevoEstado)}">${nuevoEstado.charAt(0).toUpperCase() + nuevoEstado.slice(1)}</span>`;
-            }
-        });
-
-        alert(`Estado del servicio ${id} actualizado.`);
+        // Aquí debes hacer una llamada a la API para actualizar el estado
+        // Ejemplo:
+        fetch(`/api/servicios/${id}/actualizar_estado`, { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    return;
+                }
+                alert(`Estado del servicio ${id} actualizado.`);
+                actualizarDatosServicios();
+            })
+            .catch(() => alert('Error al actualizar el estado del servicio.'));
     }
 }
 
 // Función para ver detalle de historial
 function verDetalleHistorial(id) {
-    const contenido = `<p>Detalles del registro con ID: <strong>${id}</strong></p>
-                       <p>Descripción detallada del registro histórico.</p>`;
-    mostrarModal('Detalle de Historial', contenido);
+    mostrarModal('Detalle de Historial', `<p>Detalles del registro con ID: <strong>${id}</strong></p><p>Descripción detallada del registro histórico.</p>`);
 }
 
 // Función para imprimir historial (similar a imprimirTicket)
