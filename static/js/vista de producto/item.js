@@ -23,7 +23,7 @@ class Item {
         <p class="item-total">$${precio}</p>
       </div>
     `;
-    
+    console.log("parentElement:", parentElement);
     parentElement.appendChild(this.element);
     
     // Event listeners
