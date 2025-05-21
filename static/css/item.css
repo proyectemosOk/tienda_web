@@ -95,7 +95,6 @@
 
 /* Items del ticket - Diseño mejorado */
 .items-container {
-  display: flex;
   position: absolute;
   margin-top: 4vw;
   width: 22vw;
