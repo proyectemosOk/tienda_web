@@ -7,8 +7,7 @@
 }
 
 /* Botón individual con layout horizontal */
-#monederos, #ventas, #inventario, #cuentas, #personal, 
-#configuraciones, #empresa, #informes, #casa {
+.boton-menu div {
     display: flex;
     flex-direction: row; /* ← cambio clave: horizontal */
     align-items: center;
@@ -23,10 +22,8 @@
 }
 
 /* Estilo al hacer hover */
-#monederos:hover, #ventas:hover, #inventario:hover, #cuentas:hover, 
-#personal:hover, #configuraciones:hover, #empresa:hover, 
-#informes:hover, #casa:hover {
-    width: 9.3vw;
+.boton-menu div:hover{
+    width: 9.5vw;
     transform: scale(1.05);
     box-shadow: 0 0 10px rgba(0, 0, 255, 0.3);
     background-color: rgba(0, 0, 255, 0.05);
@@ -34,10 +31,9 @@
 }
 
 /* Mostrar el texto al hacer hover */
-#monederos:hover .texto, #ventas:hover .texto, #inventario:hover .texto, 
-#cuentas:hover .texto, #personal:hover .texto, #configuraciones:hover .texto, 
-#empresa:hover .texto, #informes:hover .texto, #casa:hover .texto {
+.boton-menu div:hover .texto{
     opacity: 1;
+    width: 9.5vw;
 }
 
 /* Imagen */
@@ -48,7 +44,7 @@
 
 /* Texto a la derecha de la imagen */
 .texto {
-    margin-left: 0.6vw;
+    margin-left: 0.4vw;
     opacity: 0;
     white-space: nowrap;
     transition: opacity 0.6s ease;
