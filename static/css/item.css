@@ -195,7 +195,7 @@
 .item-price-input{
   all: unset; /* Reinicia todos los estilos por defecto del input */
   padding: 0.5rem 1.25rem;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   height: 0.5vw;
   display: inline-block;
@@ -536,4 +536,50 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+@media (max-width: 1800px), (min-width: 1500px){
+  .item-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition);
+    position: relative;
+    width: 18vw;
+    margin-left: 1vw;
+  }
+  .item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .item-quantity-input{
+    all: unset;
+    font-size: 1.3rem;
+    transition: border-bottom 0.3s ease;
+    margin-top: -1.5vw;
+    text-align: center;
+    width: 2vw;;
+    margin-left: 1vw;
+  }
+  .item-price-input{
+    all: unset; /* Reinicia todos los estilos por defecto del input */
+    padding: 0.5rem 1.25rem;
+    font-size: 1.3rem;
+    font-weight: 700;
+    height: 0.5vw;
+    display: inline-block;
+    border: 0;
+    text-align: center;
+    width: 4.5vw;
+    margin-left: -0.5vw;
+    margin-top: -1.5vw;
+  }
+  .item-quantity-input:focus,
+  .item-quantity-input:hover {
+  border-radius: 0;
+  height: 1vw;
+  border-bottom: 1px solid black;
+}
 }
