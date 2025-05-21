@@ -62,7 +62,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
-  height: 1vw;
+  height: 1.8vw;
   width: 17vw;
   background: white;
   padding: 1.5rem;
@@ -76,7 +76,7 @@
 }
 #clienteSearch{
   position: relative;
-  top: -70%;
+  top: -15%;
   margin-top: -0.4vw;
   width: 5vw;
   flex: 1;
@@ -123,7 +123,6 @@
   transition: var(--transition);
   position: relative;
   width: 18vw;
-  margin-left: -0.5vw;
 }
 
 .item-card:hover {
@@ -195,12 +194,10 @@
 .item-price-input{
   all: unset; /* Reinicia todos los estilos por defecto del input */
   padding: 0.5rem 1.25rem;
-  font-size: 1rem;
-  font-weight: 700;
   height: 0.5vw;
   display: inline-block;
   width: 5vw;
-  margin-left: -0.5vw;
+  margin-left: -2vw;
   margin-top: -1.5vw;
 }
 .item-price-input:focus,
@@ -557,22 +554,23 @@
   .item-quantity-input{
     all: unset;
     font-size: 1.3rem;
+    font-weight: 700;
     transition: border-bottom 0.3s ease;
     margin-top: -1.5vw;
     text-align: center;
-    width: 2vw;;
-    margin-left: 1vw;
+    width: 3vw;;
+    margin-left: 2vw;
   }
   .item-price-input{
     all: unset; /* Reinicia todos los estilos por defecto del input */
-    padding: 0.5rem 1.25rem;
-    font-size: 1.3rem;
     font-weight: 700;
-    height: 0.5vw;
+    font-size: 20px;
+    font-size: clamp(12px, 1.3, 20px);
+    height: 1.5vw;
     display: inline-block;
     border: 0;
     text-align: center;
-    width: 4.5vw;
+    width: 7.5vw;
     margin-left: -0.5vw;
     margin-top: -1.5vw;
   }
@@ -581,5 +579,74 @@
   border-radius: 0;
   height: 1vw;
   border-bottom: 1px solid black;
+}
+.item-total {
+  position: absolute;
+  height: 1vw;
+  font-size: 1.2rem;
+  font-weight: 700;
+  width: 9vw;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-xl);
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 3vw;
+  text-align: center;
+}
+.btn-quantity-plus{
+  font-size: 1.7vw;
+  position: absolute;
+  margin-left: -1vw;
+  cursor: pointer;
+  top: -2.6vw;
+  margin-left: 12.5vw;
+  color: rgb(57, 238, 57);
+}
+.btn-quantity-minus{
+  font-size: 2vw;
+  position: absolute;
+  margin-top: -0.1px;
+  margin-left: 8.5vw;
+  cursor: pointer;
+  color: #dc2626;
+}
+.items-container {
+  position: absolute;
+  margin-top: 4vw;
+  width: 22vw;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+  max-height: 57vh;
+  margin-left: -3.35vw;
+  overflow-y: auto;
+}
+#clienteSearch{
+  position: relative;
+  top: -15%;
+  margin-top: -0.4vw;
+  width: 5vw;
+  flex: 1;
+  padding: 0.8rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  transition: var(--transition);
+  background-color: white;
+}
+.ticket-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  height: 1vw;
+  width: 17vw;
+  background: white;
+  padding-top: 1vw;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #e2e8f0;
 }
 }
