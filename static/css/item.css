@@ -46,8 +46,8 @@
 }
 
 .ticket-section {
-   width: var(--ticket-width);
-  min-height: 58vh;
+  width: 20vw;
+  min-height: 70vh;
   position: sticky;
   top: 0;
   padding: 1.5rem;
@@ -95,11 +95,18 @@
   border-radius: var(--radius-md);
   padding: 1rem;
   margin-bottom: 1.5rem;
-  max-height: 48vh;
   overflow-y: auto;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
+  max-height: 60vh;
 }
-
+.pagos-section {
+  position: fixed;
+  bottom: 5vh;
+  width: 20vw;
+  padding: 1.5rem;
+  background-color: white;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+}
 .item-card {
   background: white;
   border-radius: var(--radius-md);
@@ -110,7 +117,8 @@
   border-left: 4px solid var(--primary-color);
   transition: var(--transition);
   position: relative;
-  width: 33vw;
+  width: 20vw;
+  margin-left: -2.5vw;
 }
 
 .item-card:hover {
@@ -119,7 +127,7 @@
 }
 
 .item-name {
-  font-size: 1.1rem;
+  font-size: 1rem;
   display: flex;
   justify-content: space-between;
   font-weight: 600;
@@ -131,7 +139,6 @@
 }
 
 .item-name::before {
-  content: "•";
   color: var(--primary-color);
   font-size: 1.5rem;
   margin-right: 0.5rem;
@@ -148,10 +155,10 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(90, 179, 190, 0.1);
   padding: 0.5rem 1rem;
   border-radius: 50px;
   font-size: 0.95rem;
+  width: 10vw;
 }
 .item-price{
   position: relative;
@@ -169,17 +176,21 @@
   z-index: 9999;
   border-radius: 50px;
   cursor: pointer;
+  margin-top: -1vw;
 }
 .item-price-input{
-  font-size: 1.2rem;
+  font-size: 1rem;
   font-weight: 700;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-xl);
   display: flex;
-  width: 7vw;
+  width: 5vw;
+  margin-left: -0.5vw;
   align-items: center;
+}
+.precio-texto{
+  margin-left: -1vw;
+  color: black;
 }
 .item-quantity-input{
   left: 3%;
@@ -214,18 +225,20 @@
 }
 
 .item-total {
-  margin-left: auto;
+  position: absolute;
+  height: 1vw;
   font-size: 1.2rem;
   font-weight: 700;
-  color: white;
-  width: 8vw;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  width: 9vw;
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  display: flex;
   align-items: center;
+  justify-content: center;
+  align-content: center;
+  display: flex;
   gap: 0.3rem;
+  margin-top: 5vw;
+  margin-left: -4vw;
 }
 
 .item-total::before {
@@ -459,7 +472,7 @@
   }
 
   .ticket-section {
-    width: 100%;
+    width: 20vw;
     position: static;
     max-height: none;
   }
@@ -499,14 +512,4 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-}
-.pagos-section {
-  position: fixed;
-  bottom: 5vh;
-  width: 40%;
-  width: var(--ticket-width);
-  padding: 1.5rem;
-  background-color: white;
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
 }

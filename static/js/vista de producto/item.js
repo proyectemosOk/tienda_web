@@ -16,12 +16,11 @@ class Item {
        <a class="btn-delete">❌</a>
        </div>
       <div class="item-price">
-        <span>Precio:</span>
         <input type="text" class="item-price-input" value="$${precio}">
         <p class="btn-quantity-minus"><b>-</b></p>
         <input type="text" class="item-quantity-input" value="1">
-        <p class="btn-quantity-plus"><b>+</b></p>
-        <div class="item-total">$${precio}</div>
+        <p class="btn-quantity-plus"><b>+</b></p><br>
+        <p class="item-total">$${precio}</p>
       </div>
     `;
     
