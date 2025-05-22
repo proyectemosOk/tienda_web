@@ -166,12 +166,15 @@ class TicketDeVenta {
   
     // Obtener métodos de pago visibles con valor
     let metodosPago = Array.from(document.querySelectorAll('.payment-input'))
-      .filter(input => input.style.display !== 'none' && input.value.trim() !== '')
+      .filter(input => input.value.trim() !== '')
       .map(input => ({
-        metodo: input.dataset.method.toUpperCase(),
+        metodo: input.dataset.method,
         valor: parseFloat(input.value)
       }));
-
+    let items =  Array.from(document.querySelectorAll('.payment-input'))
+    for (let i =0; i< items.length;i++){
+      console.log(items[i].value);
+    }
     // Si no hay ningún método de pago, usar efectivo por defecto con el total
     if (metodosPago.length === 0) {
       metodosPago = [{
@@ -324,7 +327,7 @@ function mostrarInputPago(metodo) {
     input.className = 'payment-input';
     input.id = inputId;
     input.placeholder = '$0';
-    input.dataset.method = metodo.id;
+    input.dataset.method = metodo.nombre;
 
     // Insertar después del botón
     let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
