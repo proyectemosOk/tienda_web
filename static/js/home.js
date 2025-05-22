@@ -4,7 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'ventas': '/ventas',
         'inventario': '/inventarios',
         'cuentas': '/cierre_dia',
-        'personal': 'personal.html',
+        'personal': '/personal',
         'configuraciones': 'configuraciones.html',
         'empresa': 'empresa.html',
         'informes': 'informes.html'
