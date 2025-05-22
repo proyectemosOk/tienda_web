@@ -3,7 +3,7 @@
     flex-direction: column;
     float: left;
     justify-content: space-around;
-    height: 30vw;
+    height: 40vw;
 }
 
 /* Botón individual con layout horizontal */
@@ -13,8 +13,8 @@
     align-items: center;
     text-align: left;
     margin-top: 0.5vw;
-    font-size: 1vw;
-    width: 2.5vw;
+    font-size: 1.18vw;
+    width: 3vw;
     overflow: hidden; /* ocultar texto cuando no se hace hover */
     transition: all 0.6s ease;
     border-radius: 0.5vw;
@@ -23,7 +23,7 @@
 
 /* Estilo al hacer hover */
 .boton-menu div:hover{
-    width: 9.5vw;
+    width: 10vw;
     transform: scale(1.05);
     box-shadow: 0 0 10px rgba(0, 0, 255, 0.3);
     background-color: rgba(0, 0, 255, 0.05);
@@ -38,7 +38,7 @@
 
 /* Imagen */
 .boton-menu img {
-    width: 2vw;
+    width: 3vw;
     transition: transform 0.4s;
 }
 

@@ -33,7 +33,9 @@ body {
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   }
-  
+  .product h2{
+    font-size: 1.2rem;
+  }
   .product:hover {
     transform: translateY(-6px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
@@ -57,12 +59,12 @@ body {
     color: #4f46e5;
     font-weight: 600;
     margin: 0.5rem 0;
-    font-size: 0.95rem;
+    font-size: 1.2rem;
   }
   
   /* Botón Agregar mejorado */
   .product button {
-    background-color: #4f46e5;
+    background-color: rgb(20, 18, 18);
     color: white;
     border: none;
     padding: 0.5rem 1rem;

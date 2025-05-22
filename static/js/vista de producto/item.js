@@ -214,6 +214,17 @@ class TicketDeVenta {
   
       const data = JSON.parse(responseText);
       alert('✅ Venta registrada correctamente');
+      this.items = {};
+      this.total = 0;
+      this.totalLabel.textContent = '$0.00';
+      this.itemsContainer.innerHTML = '';
+
+      
+      // Limpiar inputs de métodos de pago
+document.querySelectorAll('.payment-input').forEach(input => {
+  input.value = '';
+})
+// Actualizar visual del total (ajusta según cómo lo estés mostrando)
       console.log(data);
     })
     .catch(err => {
@@ -223,103 +234,105 @@ class TicketDeVenta {
   }
   
 }
-
 async function cargarMetodosPago() {
-    try {
-        const response = await fetch('/api/metodos_pago');
-        const data = await response.json();
-        
-        if (!response.ok) {
-            console.error('Error:', data.mensaje);
-            return;
-        }
-        
-        const paymentMethodsContainer = document.querySelector('.payment-methods');
-        paymentMethodsContainer.innerHTML = ''; // Limpiar contenedor
-        
-        if (data.total <= 3) {
-            // Mostrar todos como botones
-            data.metodos.forEach(metodo => {
-                const metodoElement = crearElementoMetodoPago(metodo);
-                paymentMethodsContainer.appendChild(metodoElement);
-            });
-        } else {
-            // Mostrar solo Efectivo y CXC como botones, el resto en select
-            const efectivo = data.metodos.find(m => m.nombre.toLowerCase() === 'efectivo');
-            const cxc = data.metodos.find(m => m.nombre.toLowerCase() === 'cxc');
-            
-            // Agregar Efectivo si existe
-            if (efectivo) {
-                paymentMethodsContainer.appendChild(crearElementoMetodoPago(efectivo));
-            }
-            
-            // Agregar CXC si existe
-            if (cxc) {
-                paymentMethodsContainer.appendChild(crearElementoMetodoPago(cxc));
-            }
-            
-            // Crear select para los demás métodos
-            const otrosMetodos = data.metodos.filter(m => 
-                m.nombre.toLowerCase() !== 'efectivo' && 
-                m.nombre.toLowerCase() !== 'cxc'
-            );
-            
-            if (otrosMetodos.length > 0) {
-                const selectContainer = document.createElement('div');
-                selectContainer.className = 'payment-option';
-                
-                const select = document.createElement('select');
-                select.className = 'form-select otros-metodos';
-                select.innerHTML = '<option value="">Otros métodos</option>';
-                
-                otrosMetodos.forEach(metodo => {
-                    const option = document.createElement('option');
-                    option.value = metodo.id;
-                    option.textContent = metodo.nombre;
-                    select.appendChild(option);
-                });
-                
-                select.addEventListener('change', function() {
-                    if (this.value) {
-                        const metodoSeleccionado = otrosMetodos.find(m => m.id == this.value);
-                        mostrarInputPago(metodoSeleccionado);
-                        this.value = '';
-                    }
-                });
-                
-                selectContainer.appendChild(select);
-                paymentMethodsContainer.appendChild(selectContainer);
-            }
-        }
-    } catch (error) {
-        console.error('Error al cargar métodos de pago:', error);
-    }
+  try {
+      const response = await fetch('/api/metodos_pago');
+      const data = await response.json();
+      
+      if (!response.ok) {
+          console.error('Error:', data.mensaje);
+          return;
+      }
+      
+      const paymentMethodsContainer = document.querySelector('.payment-methods');
+      paymentMethodsContainer.innerHTML = ''; // Limpiar contenedor
+      
+      if (data.total <= 3) {
+          // Mostrar todos como botones
+          data.metodos.forEach(metodo => {
+              const metodoElement = crearElementoMetodoPago(metodo);
+              paymentMethodsContainer.appendChild(metodoElement);
+          });
+      } else {
+          // Mostrar solo Efectivo y CXC como botones, el resto en select
+          const efectivo = data.metodos.find(m => m.nombre.toLowerCase() === 'efectivo');
+          const cxc = data.metodos.find(m => m.nombre.toLowerCase() === 'cxc');
+          
+          // Agregar Efectivo si existe
+          if (efectivo) {
+              paymentMethodsContainer.appendChild(crearElementoMetodoPago(efectivo));
+          }
+          
+          // Agregar CXC si existe
+          if (cxc) {
+              paymentMethodsContainer.appendChild(crearElementoMetodoPago(cxc));
+          }
+          
+          // Crear select para los demás métodos
+          const otrosMetodos = data.metodos.filter(m => 
+              m.nombre.toLowerCase() !== 'efectivo' && 
+              m.nombre.toLowerCase() !== 'cxc'
+          );
+          
+          if (otrosMetodos.length > 0) {
+              const selectContainer = document.createElement('div');
+              selectContainer.className = 'payment-option';
+              
+              const select = document.createElement('select');
+              select.className = 'form-select otros-metodos';
+              select.innerHTML = '<option value="">Otros métodos</option>';
+              
+              otrosMetodos.forEach(metodo => {
+                  const option = document.createElement('option');
+                  option.value = metodo.id;
+                  option.textContent = metodo.nombre;
+                  select.appendChild(option);
+              });
+              
+              select.addEventListener('change', function() {
+                  if (this.value) {
+                      const metodoSeleccionado = otrosMetodos.find(m => m.id == this.value);
+                      mostrarInputPago(metodoSeleccionado);
+                      this.value = '';
+                  }
+              });
+              
+              selectContainer.appendChild(select);
+              paymentMethodsContainer.appendChild(selectContainer);
+          }
+      }
+  } catch (error) {
+      console.error('Error al cargar métodos de pago:', error);
+  }
 }
 
 function crearElementoMetodoPago(metodo) {
-    const div = document.createElement('div');
-    div.className = 'payment-option';
-    
-    const button = document.createElement('button');
-    button.className = 'btn btn-payment';
-    button.dataset.method = metodo.nombre.toLowerCase().replace(' ', '-');
-    button.dataset.id = metodo.id;
-    button.textContent = metodo.nombre;
-    
-    button.addEventListener('click', (e) => {
-        e.preventDefault();
-        mostrarInputPago(metodo);
-    });
-    
-    div.appendChild(button);
-    return div;
+  const div = document.createElement('div');
+  div.className = 'payment-option';
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'payment-input';
+  input.id = `input-${metodo.id}`;
+  input.placeholder = `${metodo.nombre}`;
+  input.dataset.method = metodo.id;
+
+  // Evento opcional: enfocar al hacer clic en el campo
+  input.addEventListener('focus', () => {
+    input.style.display = 'block'; // opcional, solo si se quiere asegurar
+  });
+
+  div.appendChild(input);
+  return div;
 }
 
 
-function mostrarInputPago(metodo) {
-  const inputId = `input-${metodo.id}`;
-  let input = document.getElementById(inputId);
 
+function mostrarInputPago(metodo) {
+const inputId = `input-${metodo.id}`;
+let input = document.getElementById(inputId);
+
+<<<<<<< HEAD
   // Si no existe el input, lo creamos
   if (!input) {
     input = document.createElement('input');
@@ -328,24 +341,34 @@ function mostrarInputPago(metodo) {
     input.id = inputId;
     input.placeholder = '$0';
     input.dataset.method = metodo.nombre;
+=======
+// Si no existe el input, lo creamos
+if (!input) {
+  input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'payment-input';
+  input.id = inputId;
+  input.placeholder = '$0';
+  input.dataset.method = metodo.id;
+>>>>>>> 14a5c61634cb8ee775002af12c70809933110e9f
 
-    // Insertar después del botón
-    let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
-    parentElement.appendChild(input);
-  }
+  // Insertar después del botón
+  let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
+  parentElement.appendChild(input);
+}
 
-  // Alternar visibilidad solo de este input
-  const visible = input.style.display === 'block';
+// Alternar visibilidad solo de este input
+const visible = input.style.display === 'block';
 
-  // Ocultar todos los inputs primero
-  document.querySelectorAll('.payment-input').forEach(el => el.style.display = 'none');
+// Ocultar todos los inputs primero
+document.querySelectorAll('.payment-input').forEach(el => el.style.display = 'none');
 
-  // Si ya estaba visible, lo ocultamos. Si no, lo mostramos.
-  input.style.display = visible ? 'none' : 'block';
+// Si ya estaba visible, lo ocultamos. Si no, lo mostramos.
+input.style.display = visible ? 'none' : 'block';
 
-  if (!visible) {
-    input.focus();
-  }
+if (!visible) {
+  input.focus();
+}
 }
 
 
@@ -354,6 +377,7 @@ const ticket = new TicketDeVenta();
 
 // Llamar la función al cargar la página
 document.addEventListener('DOMContentLoaded', cargarMetodosPago);
+
 
 // Modificar el evento change del select
 // document.querySelector('.otros-metodos').addEventListener('change', function() {
@@ -376,7 +400,6 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 // });
 
 document.addEventListener('DOMContentLoaded', () => {
-  alert("vamos bien")
     const clienteCombo = document.getElementById('clientes');
 
     // Función para cargar los clientes desde la API

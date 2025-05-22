@@ -35,7 +35,52 @@
   padding: 1.5rem;
   background-color: #f5f7fa;
 }
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
 
+::-webkit-scrollbar-track {
+  background: #121212;
+  border-radius: 10px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2a2a2a, #3f3f3f);
+  border-radius: 10px;
+  border: 1px solid #444;
+  box-shadow:
+    inset 0 0 4px rgba(255, 255, 255, 0.05),
+    0 0 6px rgba(80, 80, 80, 0.4);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #444, #555);
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.08),
+    0 0 10px rgba(130, 130, 130, 0.5);
+  border-color: #666;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #666, #444);
+  box-shadow:
+    0 0 12px rgba(200, 200, 200, 0.4);
+  animation: scroll-glow 1.5s infinite;
+}
+
+::-webkit-scrollbar-corner {
+  background: #121212;
+}
+
+@keyframes scroll-glow {
+  0%   { box-shadow: 0 0 4px rgba(160, 160, 160, 0); }
+  50%  { box-shadow: 0 0 8px rgba(160, 160, 160, 0.3); }
+  100% { box-shadow: 0 0 4px rgba(160, 160, 160, 0); }
+}
 .product-list-container {
   flex: 1;
   min-width: 0;
@@ -47,8 +92,9 @@
 
 .ticket-section {
   display: flex;
+  overflow: visible;
   width: 20vw;
-  min-height: 70vh;
+  min-height: 87vh;
   top: 0;
   padding: 1.5rem;
   background-color: white;
@@ -62,7 +108,7 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
-  height: 1.8vw;
+  height: 2vw;
   width: 17vw;
   background: white;
   padding: 1.5rem;
@@ -76,8 +122,7 @@
 }
 #clienteSearch{
   position: relative;
-  top: -15%;
-  margin-top: -0.4vw;
+  margin-top: -0.67vw;
   width: 5vw;
   flex: 1;
   padding: 0.8rem 1.5rem;
@@ -105,12 +150,11 @@
   overflow-y: auto;
 }
 .pagos-section {
-  position: fixed;
   bottom: 5vh;
   width: 20vw;
+  margin-top: -10vw;
   padding: 1.5rem;
   background-color: white;
-  border-radius: var(--radius-md);
   box-shadow: var(--shadow-md);
 }
 .item-card {
@@ -374,7 +418,6 @@
   width: 100%;
   padding: 1rem;
   background: linear-gradient(135deg, var(--success-color), var(--success-hover));
-  color: white;
   border: none;
   border-radius: var(--radius-md);
   font-size: 1.1rem;
@@ -423,13 +466,15 @@
 }
 
 .btn-payment {
-  background-color: var(--primary-color);
+  background-color: rgb(20, 18, 18);
+  display: flex;
+  flex-direction: row;
   color: white;
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  width: 100%;
+  width: 10vw;
   font-weight: 500;
   transition: var(--transition);
   display: flex;
@@ -443,25 +488,45 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
-
 .payment-input {
-  width: 100%;
+  width: 17vw;
   padding: 0.75rem 1.25rem;
   margin-top: 0.75rem;
-  border: 2px solid var(--primary-color);
-  border-radius: var(--radius-xl);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl, 1rem);
   font-size: 1rem;
   text-align: center;
-  display: none;
-  transition: var(--transition);
+  background-color: #f1f1f1;
+  color: #333;
+  box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+  transform: scale(0.95);
+  opacity: 0;
+  animation: fadeInScale 0.6s ease forwards;
+  transition: all 0.3s ease;
 }
 
 .payment-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+  border-color: var(--primary-color, #4361ee);
+  box-shadow: 0 0 12px rgba(67, 97, 238, 0.6);
+  background-color: #fff;
+  transform: scale(1.05);
+  color: #000;
 }
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .btn-btn-success{
-  background-color: var(--primary-color);
+  background-color: rgb(20, 18, 18);
   color: white;
   padding: 0.75rem 1.25rem;
   border: none;
@@ -469,6 +534,7 @@
   cursor: pointer;
   width: 100%;
   font-weight: 500;
+  font-size: 1.15vw;
   transition: var(--transition);
   display: flex;
   align-items: center;
