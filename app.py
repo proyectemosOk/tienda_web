@@ -198,44 +198,108 @@ def obtener_producto(codigo):
     
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
-def obtener_ventas_dia():
+def obtener_resumen_ventas():
     try:
-        # Obtener la fecha actual
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-        # Total de ventas del día
-        total_ventas = conn_db.seleccionar(
-            tabla="ventas",
-            columnas="SUM(total_venta)",
-            condicion="estado = ?",
-            parametros=('1',)
-        )[0][0] or 0
-
-        # Desglose por método de pago
+        # Desglose global por método de pago
         desglose_pagos = conn_db.ejecutar_personalizado('''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = ? 
+            WHERE v.estado = 1
             GROUP BY tp.nombre
-        ''', ('1',))
-        print(desglose_pagos)
-        # Formatear el desglose en un diccionario
+        ''')
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
+        ventas = conn_db.ejecutar_personalizado('''
+            SELECT v.id, v.fecha, v.total_venta, c.nombre
+            FROM ventas v
+            JOIN clientes c ON v.cliente_id = c.id
+            WHERE v.estado = 1
+        ''')
 
-        # Respuesta JSON
+        resumen = [
+            {
+                "id": id_venta,
+                "fecha": fecha,
+                "cliente": cliente_nombre,
+                "total": float(total)
+            }
+            for id_venta, fecha, total, cliente_nombre in ventas
+        ]
+
         return jsonify({
-            "fecha": fecha_hoy,
-            "total_ventas": total_ventas,
-            "desglose_pagos": desglose
+            "desglose_pagos": desglose,
+            "ventas": resumen
         })
 
     except Exception as e:
-        print(f"Error al obtener las ventas del día: {e}")
-        return jsonify({"error": "Ocurrió un error al obtener las ventas del día."}), 500
+        print(f"Error al obtener resumen de ventas: {e}")
+        return jsonify({"error": "Error al obtener ventas."}), 500
+
+# API para obtener detalles de venta por ID
+@app.route('/api/ventas/<int:id_venta>/detalle', methods=['GET'])
+def obtener_detalle_venta(id_venta):
+    try:
+        # Datos generales de la venta con cliente y vendedor
+        venta_info = conn_db.ejecutar_personalizado('''
+            SELECT v.id, v.fecha, v.total_venta, c.nombre AS cliente, u.nombre AS vendedor
+            FROM ventas v
+            JOIN clientes c ON v.cliente_id = c.id
+            JOIN usuarios u ON v.vendedor_id = u.id
+            WHERE v.id = ?
+        ''', (id_venta,))
+
+        if not venta_info:
+            return jsonify({"error": "Venta no encontrada"}), 404
+
+        id_venta, fecha, total, cliente, vendedor = venta_info[0]
+
+        # Productos de la venta
+        detalles = conn_db.ejecutar_personalizado('''
+            SELECT dv.cantidad, p.id, p.nombre, dv.precio_unitario
+            FROM detalles_ventas dv
+            JOIN productos p ON dv.producto_id = p.id
+            WHERE dv.venta_id = ?
+        ''', (id_venta,))
+
+        productos = [
+            {
+                "cantidad": cant,
+                "id_producto": id_prod,
+                "nombre": nombre,
+                "precio_unitario": float(precio_u),
+                "total": round(cant * precio_u, 2)
+            }
+            for cant, id_prod, nombre, precio_u in detalles
+        ]
+
+        # Desglose de pagos de la venta
+        desglose = conn_db.ejecutar_personalizado('''
+            SELECT metodo_pago, SUM(valor)
+            FROM pagos_venta
+            WHERE venta_id = ?
+            GROUP BY metodo_pago
+        ''', (id_venta,))
+
+        desglose_pagos = {m: float(v) for m, v in desglose}
+
+        return jsonify({
+            "id": id_venta,
+            "fecha": fecha,
+            "cliente": cliente,
+            "vendedor": vendedor,
+            "total": float(total),
+            "productos": productos,
+            "desglose_pagos": desglose_pagos
+        })
+
+    except Exception as e:
+        print(f"Error al obtener detalle de venta {id_venta}: {e}")
+        return jsonify({"error": "Error al obtener detalle de venta."}), 500
+
 
 @app.route('/api/ventas/cargar', methods=['GET'])
-def cargar_ventas_dia():
+def cargar_ventas():
     try:
         # Obtener la fecha actual
         fecha_hoy = datetime.now().strftime('%Y-%m-%d')
@@ -807,7 +871,6 @@ def crear_venta():
             conn_db.insertar("detalles_ventas", detalles_ventas)
             can_sum = conn_db.seleccionar("productos","stock","id= ?",(producto["codigo"],))[0][0]
             print(producto["codigo"], can_sum, type(can_sum))
-            input()
             actulizar = {"stock":float(can_sum) if can_sum else 0 - float(producto["cantidad"])}
             conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
             
@@ -817,7 +880,7 @@ def crear_venta():
             
         for pago in data["metodos_pago"]:
             detalles_pagos ={"venta_id": id,
-                               "metodo":pago["metodo"],
+                               "metodo_pago":pago["metodo"],
                                "valor":pago["valor"]}
             conn_db.insertar("pagos_venta", detalles_pagos)
             

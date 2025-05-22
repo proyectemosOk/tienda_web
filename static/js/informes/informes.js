@@ -1,19 +1,53 @@
-function obtenerDatosJSONVentas() {
-    return {
-        desglose_pagos: {
-            Efectivo: 2000,
-            Tarjeta: 3000,
-            Transferencia: 1000
-        },
-        ventas: [
-            { id: 'V001', fecha: '2025-05-20', total: 300.00, metodos_pago: 'Efectivo' },
-            { id: 'V002', fecha: '2025-05-19', total: 800.00, metodos_pago: 'Tarjeta' },
-            { id: 'V003', fecha: '2025-05-18', total: 1200.00, metodos_pago: 'Transferencia' },
-            { id: 'V004', fecha: '2025-05-17', total: 1500.00, metodos_pago: 'Tarjeta' },
-            { id: 'V005', fecha: '2025-05-16', total: 200.00, metodos_pago: 'Efectivo' }
-        ]
-    };
+async function obtenerDatosJSONVentas() {
+    try {
+        const response = await fetch("api/ventas/dia");
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;  // Usa objeto JS normal
+        // return new Map(Object.entries(data)); // solo si prefieres Map
+    } catch (error) {
+        console.error("Error al obtener datos de ventas:", error);
+        return {
+            desglose_pagos: {},
+            ventas: []
+        };
+    }
 }
+
+async function obtenerDatosJSONVentasPorID(id) {
+    try {
+        const response = await fetch(`/api/ventas/${id}/detalle`);
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;  // Usa objeto JS normal
+        // return new Map(Object.entries(data)); // solo si prefieres Map
+    } catch (error) {
+        console.error("Error al obtener datos de ventas:", error);
+        return {
+            desglose_pagos: {},
+            productos: []
+        };
+    }
+}
+//     return {
+//         desglose_pagos: {
+//             Efectivo: 2000,
+//             Tarjeta: 3000,
+//             Transferencia: 1000
+//         },
+//         ventas: [
+//             { id: 'V001', fecha: '2025-05-20', total: 300.00, metodos_pago: 'Efectivo' },
+//             { id: 'V002', fecha: '2025-05-19', total: 800.00, metodos_pago: 'Tarjeta' },
+//             { id: 'V003', fecha: '2025-05-18', total: 1200.00, metodos_pago: 'Transferencia' },
+//             { id: 'V004', fecha: '2025-05-17', total: 1500.00, metodos_pago: 'Tarjeta' },
+//             { id: 'V005', fecha: '2025-05-16', total: 200.00, metodos_pago: 'Efectivo' }
+//         ]
+//     };
+// }
 
 function obtenerDatosJSONServicios() {
     return {
@@ -298,9 +332,8 @@ function inicializarPestanaVentas() {
     actualizarDatosVentas();
 }
 
-function actualizarDatosVentas() {
-    const data = obtenerDatosJSONVentas();
-
+async function actualizarDatosVentas() {
+    const data = await obtenerDatosJSONVentas();
     const pagos = data.desglose_pagos;
     const etiquetas = Object.keys(pagos);
     const valores = Object.values(pagos);
@@ -310,12 +343,15 @@ function actualizarDatosVentas() {
     ventasChart.update();
 
     const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
-    cuerpoTablaVentas.innerHTML = data.ventas.map(venta => `
+
+    cuerpoTablaVentas.innerHTML = data.ventas
+    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))  // 🧠 Ordena por fecha descendente
+    .map(venta => `
         <tr>
             <td>${venta.id}</td>
             <td>${venta.fecha}</td>
-            <td>$${parseFloat(venta.total).toFixed(2)}</td>
-            <td>${venta.metodos_pago}</td>
+            <td>${venta.cliente}</td>
+            <td>${parseFloat(venta.total).toFixed(2)}</td>
             <td>
                 <button onclick="verDetalle('${venta.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
                     <i class="bi bi-eye"></i>
@@ -697,31 +733,167 @@ function mostrarModal(titulo, contenido) {
 }
 
 // Funciones para ver detalle extendido de venta y servicio
-function verDetalle(id) {
-    const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === id);
-    if (!venta) return mostrarModal('Error', '<p>Venta no encontrada</p>');
+async function verDetalle(id) {
+    try {
+        const venta = await obtenerDatosJSONVentasPorID(id);
+        if (!venta) return mostrarModal('Error', '<p class="text-danger">❌ Venta no encontrada</p>');
 
-    const detallesExtras = obtenerDetallesExtrasVenta(id);
-    let productosHTML = '<ul>';
-    detallesExtras.productos.forEach(p => {
-        productosHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad} - Precio unitario: $${p.precio_unitario.toFixed(2)}</li>`;
-    });
-    productosHTML += '</ul>';
+        // 👉 Productos en tabla con mejor formato
+        const productosHTML = venta.productos.map(p => `
+            <tr class="align-middle">
+                <td class="text-center fw-bold text-primary">#${p.id_producto}</td>
+                <td class="fw-semibold">${p.nombre}</td>
+                <td class="text-center">
+                    <span class="badge bg-secondary rounded-pill">${p.cantidad}</span>
+                </td>
+                <td class="text-end text-success fw-semibold">$${p.precio_unitario.toFixed(2)}</td>
+                <td class="text-end fw-bold text-dark">$${p.total.toFixed(2)}</td>
+            </tr>
+        `).join('');
 
-    const contenido = `
-        <p><strong>ID:</strong> ${venta.id}</p>
-        <p><strong>Fecha:</strong> ${venta.fecha}</p>
-        <p><strong>Total:</strong> $${venta.total.toFixed(2)}</p>
-        <p><strong>Método de Pago:</strong> ${venta.metodos_pago}</p>
-        <hr>
-        <p><strong>Productos:</strong> ${productosHTML}</p>
-        <p><strong>Impuestos:</strong> $${detallesExtras.impuestos.toFixed(2)}</p>
-        <p><strong>Descuento:</strong> $${detallesExtras.descuento.toFixed(2)}</p>
-        <p><strong>Vendedor:</strong> ${detallesExtras.vendedor}</p>
-        <p><strong>Notas:</strong> ${detallesExtras.notas}</p>
-    `;
-    mostrarModal('Detalle Extendido de Venta', contenido);
+        // Métodos de pago con iconos y colores
+        const iconosPago = {
+            'Efectivo': '💵',
+            'Tarjeta': '💳',
+            'Transferencia': '🏦',
+            'Cheque': '📄',
+            'Débito': '💳',
+            'Crédito': '💎'
+        };
+
+        const desgloseHTML = Object.entries(venta.desglose_pagos).map(([metodo, valor]) => `
+            <li class="d-flex justify-content-between align-items-center py-1">
+                <span>
+                    ${iconosPago[metodo] || '💰'} 
+                    <strong>${metodo}</strong>
+                </span>
+                <span class="badge bg-success rounded-pill fs-6">$${valor.toFixed(2)}</span>
+            </li>
+        `).join('');
+
+        const contenido = `
+            <div class="container-fluid">
+                <!-- Encabezado con información principal -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-receipt me-2 text-primary"></i>
+                                            <span class="text-muted">ID de Venta:</span>
+                                            <span class="ms-2 fw-bold text-primary fs-5">#${venta.id}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-calendar3 me-2 text-info"></i>
+                                            <span class="text-muted">Fecha:</span>
+                                            <span class="ms-2 fw-semibold">${venta.fecha}</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-person-fill me-2 text-warning"></i>
+                                            <span class="text-muted">Cliente:</span>
+                                            <span class="ms-2 fw-semibold">${venta.cliente}</span>
+                                        </div>
+                                        <div class="d-flex align-items-center mb-2">
+                                            <i class="bi bi-person-badge me-2 text-success"></i>
+                                            <span class="text-muted">Vendedor:</span>
+                                            <span class="ms-2 fw-semibold">${venta.vendedor}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Total destacado -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="alert alert-success d-flex justify-content-between align-items-center mb-0">
+                            <span class="fs-4 fw-bold">💰 Total de la Venta</span>
+                            <span class="fs-3 fw-bold text-success">$${venta.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Métodos de pago -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h6 class="mb-0">💳 Métodos de Pago Utilizados</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-unstyled mb-0">
+                                    ${desgloseHTML}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla de productos -->
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0">🛍️ Productos Vendidos</h6>
+                                <span class="badge bg-light text-dark">${venta.productos.length} productos</span>
+                            </div>
+                            <div class="card-body p-0">
+                                <div class="table-responsive">
+                                    <table class="table table-hover table-striped mb-0">
+                                        <thead class="table-dark text-dark">
+                                            <tr>
+                                                <th class="text-center">ID</th>
+                                                <th>Producto</th>
+                                                <th class="text-center">Cantidad</th>
+                                                <th class="text-end">Precio Unit.</th>
+                                                <th class="text-end">Subtotal</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${productosHTML}
+                                        </tbody>
+                                        <tfoot class="table-light">
+                                            <tr>
+                                                <td colspan="4" class="text-end fw-bold">Total Final:</td>
+                                                <td class="text-end fw-bold fs-5 text-success">$${venta.total.toFixed(2)}</td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .modal-dialog { max-width: 900px; }
+                .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                .table th { font-weight: 600; }
+                .badge { font-size: 0.85em; }
+                .alert-success { border-left: 4px solid #28a745; }
+            </style>
+        `;
+
+        mostrarModal('📋 Detalle de Venta', contenido);
+
+    } catch (error) {
+        console.error("Error mostrando detalle de venta:", error);
+        mostrarModal('❌ Error', `
+            <div class="alert alert-danger">
+                <h6>⚠️ Error al cargar la información</h6>
+                <p class="mb-0">No se pudo cargar la información de la venta. Por favor, intenta nuevamente.</p>
+            </div>
+        `);
+    }
 }
+
 
 function verDetalleServicio(id) {
     const servicio = obtenerDatosJSONServicios().servicios.find(s => s.id === id);
