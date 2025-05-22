@@ -353,30 +353,32 @@ const ticket = new TicketDeVenta();
 document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 
 // Modificar el evento change del select
-document.querySelector('.otros-metodos').addEventListener('change', function() {
-    const metodoSeleccionado = this.value;
-    if (metodoSeleccionado) {
-        // Remover selección previa
-        document.querySelectorAll('.otros-metodos option').forEach(opt => {
-            opt.style.fontWeight = 'normal';
-        });
+// document.querySelector('.otros-metodos').addEventListener('change', function() {
+//     const metodoSeleccionado = this.value;
+//     if (metodoSeleccionado) {
+//         // Remover selección previa
+//         document.querySelectorAll('.otros-metodos option').forEach(opt => {
+//             opt.style.fontWeight = 'normal';
+//         });
         
-        // Resaltar opción seleccionada
-        this.querySelector(`option[value="${metodoSeleccionado}"]`).style.fontWeight = 'bold';
+//         // Resaltar opción seleccionada
+//         this.querySelector(`option[value="${metodoSeleccionado}"]`).style.fontWeight = 'bold';
         
-        // Mostrar input para este método
-        mostrarInputPago({ 
-            id: metodoSeleccionado, 
-            nombre: this.options[this.selectedIndex].text 
-        });
-    }
-});
+//         // Mostrar input para este método
+//         mostrarInputPago({ 
+//             id: metodoSeleccionado, 
+//             nombre: this.options[this.selectedIndex].text 
+//         });
+//     }
+// });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const clienteCombo = document.getElementById('clienteCombo');
+  alert("vamos bien")
+    const clienteCombo = document.getElementById('clientes');
 
     // Función para cargar los clientes desde la API
     const cargarClientes = async () => {
+      
         try {
             const response = await fetch('/api/clientes');
             if (!response.ok) {
@@ -390,8 +392,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Llenar el combo con los clientes
             clientes.forEach(cliente => {
                 const option = document.createElement('option');
-                option.value = cliente.documento;
-                option.textContent = cliente.nombre;
+                option.value = cliente.nombre;
+                option.textContent = cliente.documento;
                 clienteCombo.appendChild(option);
             });
         } catch (error) {
