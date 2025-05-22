@@ -315,7 +315,7 @@ function crearElementoMetodoPago(metodo) {
   input.className = 'payment-input';
   input.id = `input-${metodo.id}`;
   input.placeholder = `${metodo.nombre}`;
-  input.dataset.method = metodo.id;
+  input.dataset.method = metodo.nombre;
 
   // Evento opcional: enfocar al hacer clic en el campo
   input.addEventListener('focus', () => {
@@ -332,7 +332,6 @@ function mostrarInputPago(metodo) {
 const inputId = `input-${metodo.id}`;
 let input = document.getElementById(inputId);
 
-<<<<<<< HEAD
   // Si no existe el input, lo creamos
   if (!input) {
     input = document.createElement('input');
@@ -341,16 +340,6 @@ let input = document.getElementById(inputId);
     input.id = inputId;
     input.placeholder = '$0';
     input.dataset.method = metodo.nombre;
-=======
-// Si no existe el input, lo creamos
-if (!input) {
-  input = document.createElement('input');
-  input.type = 'text';
-  input.className = 'payment-input';
-  input.id = inputId;
-  input.placeholder = '$0';
-  input.dataset.method = metodo.id;
->>>>>>> 14a5c61634cb8ee775002af12c70809933110e9f
 
   // Insertar después del botón
   let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;

@@ -806,9 +806,11 @@ def crear_venta():
                                "precio_unitario":producto["precio_unitario"]}
             conn_db.insertar("detalles_ventas", detalles_ventas)
             can_sum = conn_db.seleccionar("productos","stock","id= ?",(producto["codigo"],))[0][0]
-            print(can_sum)
-            actulizar = {"stock":float(can_sum) - float(producto["cantidad"])}
+            print(producto["codigo"], can_sum, type(can_sum))
+            input()
+            actulizar = {"stock":float(can_sum) if can_sum else 0 - float(producto["cantidad"])}
             conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
+            
             
             # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
             # print(can_sum)
