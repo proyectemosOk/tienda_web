@@ -64,7 +64,7 @@
                         <div class="col-md-6">
                             <div class="card mb-4">
                                 <div class="card-header gradient-primary" id="resumenVentas">
-                                    <h2 class="card-title">Resumen de Ventas del Día</h2>
+                                    <h2 class="card-title">Resumen de Ventas</h2>
                                 </div>
                                 <div class="card-body">
                                     <div class="table-responsive">
@@ -110,17 +110,27 @@
                                 <div class="card-body">
                                     <div id="resumenServicios">
                                         <div class="d-flex justify-content-between mb-3">
-                                            <div class="stat-card">
+                                            <div class="stat-card" id="totalServiciosCard" style="display: none;">
                                                 <h3>Total</h3>
                                                 <p id="totalServicios">0</p>
                                             </div>
-                                            <div class="stat-card">
+                                            <div class="stat-card" id="enProcesoCard">
                                                 <h3>En Proceso</h3>
                                                 <p id="enProcesoServicios">0</p>
                                             </div>
-                                            <div class="stat-card">
+                                            <div class="stat-card" id="listosCard">
                                                 <h3>Listos</h3>
                                                 <p id="listosServicios">0</p>
+                                            </div>
+
+                                            <div class="stat-card" id="pendientesCard">
+                                                <h3>Pendientes</h3>
+                                                <p id="pendientesServicios">0</p>
+                                            </div>
+
+                                            <div class="stat-card" id="entregadosCard">
+                                                <h3>Entregados</h3>
+                                                <p id="entregadosServicios">0</p>
                                             </div>
                                         </div>
                                     </div>
@@ -133,7 +143,6 @@
                                                 <thead>
                                                     <tr>
                                                         <th>ID</th>
-                                                        <th>Cliente</th>
                                                         <th>Descripción</th>
                                                         <th>Fecha Ingreso</th>
                                                         <th>Estado</th>
@@ -170,8 +179,8 @@
                                 <div class="card-header gradient-primary">
                                     <h2 class="card-title">Resumen General</h2>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row">
+                                <div class="card-body" >
+                                    <div class="row" id="center_res_general">
                                         <div class="col-md-3">
                                             <div class="info-card">
                                                 <div class="info-icon"><i class="bi bi-cash"></i></div>
@@ -196,15 +205,6 @@
                                                 <div class="info-content">
                                                     <h3>Productos</h3>
                                                     <p id="totalProductosResumen">0</p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-md-3">
-                                            <div class="info-card">
-                                                <div class="info-icon"><i class="bi bi-people"></i></div>
-                                                <div class="info-content">
-                                                    <h3>Clientes</h3>
-                                                    <p id="totalClientesResumen">0</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -361,7 +361,6 @@
                                                 <div class="kpi-title">Ticket Promedio</div>
                                                 <div class="kpi-value" id="ticketPromedio">$0.00</div>
                                                 <div class="kpi-change positive">
-                                                    <i class="bi bi-arrow-up"></i> 0%
                                                 </div>
                                             </div>
                                         </div>
@@ -370,7 +369,6 @@
                                                 <div class="kpi-title">Ventas Diarias</div>
                                                 <div class="kpi-value" id="ventasDiarias">0</div>
                                                 <div class="kpi-change positive">
-                                                    <i class="bi bi-arrow-up"></i> 0%
                                                 </div>
                                             </div>
                                         </div>
@@ -379,7 +377,6 @@
                                                 <div class="kpi-title">Servicios Completados</div>
                                                 <div class="kpi-value" id="serviciosCompletados">0</div>
                                                 <div class="kpi-change negative">
-                                                    <i class="bi bi-arrow-down"></i> 0%
                                                 </div>
                                             </div>
                                         </div>
@@ -388,7 +385,6 @@
                                                 <div class="kpi-title">Tasa de Conversión</div>
                                                 <div class="kpi-value" id="tasaConversion">0%</div>
                                                 <div class="kpi-change positive">
-                                                    <i class="bi bi-arrow-up"></i> 0%
                                                 </div>
                                             </div>
                                         </div>
