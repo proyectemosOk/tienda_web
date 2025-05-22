@@ -33,6 +33,10 @@ def login_sesion():
 def orden():
     return render_template('orden.html')
 
+@app.route('/empresa')
+def empresa():
+    return render_template('datos_empresa.html')
+
 @app.route('/ventas')
 def ventas():
     return render_template('vista_de_producto.html')

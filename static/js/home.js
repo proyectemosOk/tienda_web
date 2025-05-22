@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', function() {
         'cuentas': '/cierre_dia',
         'personal': 'personal.html',
         'configuraciones': 'configuraciones.html',
-        'empresa': 'empresa.html',
+        'empresa': '/empresa',
         'informes': '/informes',
         'casa': '/home',
     };
