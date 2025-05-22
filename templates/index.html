@@ -2,41 +2,38 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Inicio de Sesión - appTiendA</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio de Sesión</title>
   <link rel="stylesheet" href="/static/css/index.css">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
 <body>
 
-    <section class="home">
+  <div class="caja-login">
 
-        <div class="inicio-sesion">
+    <div class="lado-formulario">
 
-            <div class="anuncio-publicidad">
-                <img src="/static/img/home/flor.jpg" >
-            </div>
+      <div class="iconos">
+        <img src="/static/img/home/carrito.png" alt="carrito">
+        <img src="/static/img/home/datafono.png" alt="datafono">
+        <img src="/static/img/home/registradora.png" alt="">
+      </div>
+      <h2>🏠 Bienvenido</h2>
+      <p>Por favor ingresa tus datos.</p>
+      <input type="email" placeholder="Correo electrónico o usuario">
+      <input type="password" placeholder="Contraseña">
 
-            <h2>Iniciar Sesión</h2>
-
-            <input type="email" placeholder="Usuario" required >
-            <input type="password" placeholder="Contraseña" required>
-
-            <button id="boton-continuar">Continuar</button>
-
-            <div class="link">
-              Si aún no tiene su código de Empresa, Solicitelo <a href="" id="boton-registro">aquí</a>
-            </div>
-
-        </div>
-
-    </section>
-    <script>
-      document.getElementById('boton-continuar').addEventListener('click', function(e) {
-          e.preventDefault(); // Evita el envío de formulario si lo hay
-          window.location.href = '/login-sesion'; // Redirige a /inicio
-      });
+      <div class="recordar-olvido">
+        <a href="#">¿Olvidaste tu contraseña?</a>
+      </div>
       
-    </script>
+      <button id="boton-continuar">Iniciar sesión</button>
+    </div>
+    <div class="lado-imagen"></div>
+  </div>
+    
+  <script src="/static/js/index.js"></script>
+  <script src="{{ url_for('static', filename='js/cierre_dia/index.js') }}"></script>
 
 </body>
 </html>
