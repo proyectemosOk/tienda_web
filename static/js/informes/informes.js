@@ -1,3 +1,200 @@
+function obtenerDatosJSONVentas() {
+    return {
+        desglose_pagos: {
+            Efectivo: 2000,
+            Tarjeta: 3000,
+            Transferencia: 1000
+        },
+        ventas: [
+            { id: 'V001', fecha: '2025-05-20', total: 300.00, metodos_pago: 'Efectivo' },
+            { id: 'V002', fecha: '2025-05-19', total: 800.00, metodos_pago: 'Tarjeta' },
+            { id: 'V003', fecha: '2025-05-18', total: 1200.00, metodos_pago: 'Transferencia' },
+            { id: 'V004', fecha: '2025-05-17', total: 1500.00, metodos_pago: 'Tarjeta' },
+            { id: 'V005', fecha: '2025-05-16', total: 200.00, metodos_pago: 'Efectivo' }
+        ]
+    };
+}
+
+function obtenerDatosJSONServicios() {
+    return {
+        conteo_estados: {
+            'Pendiente': 1,
+            'En Proceso': 2,
+            'Listo': 1,
+            'Entregado': 1
+        },
+        servicios: [
+            { id: 'S001', descripcion: 'Reparación de pantalla', fecha: '2025-05-18', estado: 'Listo' },
+            { id: 'S002', descripcion: 'Mantenimiento preventivo', fecha: '2025-05-19', estado: 'En Proceso' },
+            { id: 'S003', descripcion: 'Instalación de sistema', fecha: '2025-05-20', estado: 'Pendiente' },
+            { id: 'S004', descripcion: 'Cambio de batería', fecha: '2025-05-17', estado: 'Entregado' },
+            { id: 'S005', descripcion: 'Revisión general', fecha: '2025-05-16', estado: 'En Proceso' }
+        ]
+    };
+}
+
+function obtenerDatosJSONResumen() {
+    return {
+        totales: {
+            ventas: 5700.00,
+            servicios: 5,
+            productos: 35
+        },
+        ventas_categoria: {
+            categorias: ['Electrónica', 'Hogar', 'Ropa', 'Accesorios'],
+            datos: [2500, 1500, 1200, 500]
+        },
+        servicios_tipo: {
+            tipos: ['Instalación', 'Reparación', 'Mantenimiento', 'Diagnóstico'],
+            datos: [1, 2, 1, 1]
+        }
+    };
+}
+
+function obtenerDatosJSONHistorial() {
+    return {
+        registros: [
+            { id: 'H001', tipo: 'Venta', fecha: '2025-05-20', descripcion: 'Venta ID V001', total: 300 },
+            { id: 'H002', tipo: 'Venta', fecha: '2025-05-19', descripcion: 'Venta ID V002', total: 800 },
+            { id: 'H003', tipo: 'Venta', fecha: '2025-05-18', descripcion: 'Venta ID V003', total: 1200 },
+            { id: 'H004', tipo: 'Venta', fecha: '2025-05-17', descripcion: 'Venta ID V004', total: 1500 },
+            { id: 'H005', tipo: 'Venta', fecha: '2025-05-16', descripcion: 'Venta ID V005', total: 200 },
+            { id: 'H006', tipo: 'Servicio', fecha: '2025-05-18', descripcion: 'Servicio ID S001 - Reparación de pantalla', total: 400 },
+            { id: 'H007', tipo: 'Servicio', fecha: '2025-05-19', descripcion: 'Servicio ID S002 - Mantenimiento preventivo', total: 350 },
+            { id: 'H008', tipo: 'Servicio', fecha: '2025-05-20', descripcion: 'Servicio ID S003 - Instalación de sistema', total: 500 },
+            { id: 'H009', tipo: 'Servicio', fecha: '2025-05-17', descripcion: 'Servicio ID S004 - Cambio de batería', total: 250 },
+            { id: 'H010', tipo: 'Servicio', fecha: '2025-05-16', descripcion: 'Servicio ID S005 - Revisión general', total: 300 }
+        ]
+    };
+}
+
+function obtenerDetallesExtrasVenta(id) {
+    return {
+        productos: [
+            { nombre: 'Producto 1', cantidad: 1, precio_unitario: 100 },
+            { nombre: 'Producto 2', cantidad: 2, precio_unitario: 100 }
+        ],
+        impuestos: 60,
+        descuento: 50,
+        vendedor: 'María Fernández',
+        notas: 'Entrega programada a domicilio.'
+    };
+}
+
+function obtenerDetallesExtrasServicio(id) {
+    const servicio = obtenerDatosJSONServicios().servicios.find(s => s.id === id);
+    return {
+        contacto: 'soporte@empresa.com',
+        telefono: '555-0000',
+        direccion: 'Zona Industrial 456',
+        comentarios: 'Revisión técnica detallada requerida.',
+        tecnico: 'Técnico asignado',
+        historialEstados: [
+            { fecha: '2025-05-15', estado: 'Pendiente' },
+            { fecha: '2025-05-16', estado: 'En Proceso' },
+            { fecha: '2025-05-18', estado: servicio.estado }
+        ]
+    };
+}
+
+function obtenerDatosEstadisticas(periodo) {
+    const datosPeriodos = {
+        semana: {
+            etiquetas: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+            ventas: [200, 300, 250, 280, 300, 350, 400],
+            servicios: [50, 60, 70, 80, 90, 100, 110]
+        },
+        mes: {
+            etiquetas: Array.from({ length: 30 }, (_, i) => `Día ${i + 1}`),
+            ventas: Array.from({ length: 30 }, () => Math.floor(Math.random() * 400) + 100),
+            servicios: Array.from({ length: 30 }, () => Math.floor(Math.random() * 200) + 50)
+        },
+        trimestre: {
+            etiquetas: ['Ene', 'Feb', 'Mar'],
+            ventas: [5000, 5500, 6000],
+            servicios: [2600, 2700, 2900]
+        },
+        año: {
+            etiquetas: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+            ventas: [16000, 16500, 17000, 18000, 17500, 18500, 19000, 20000, 21000, 21500, 22000, 23000],
+            servicios: [7200, 7300, 7500, 7800, 7700, 8000, 8100, 8300, 8500, 8700, 8900, 9100]
+        }
+    };
+
+    return datosPeriodos[periodo] || datosPeriodos['año'];
+}
+
+function verDetalleHistorial(id) {
+    const registro = obtenerDatosJSONHistorial().registros.find(r => r.id === id);
+    if (!registro) return mostrarModal('Error', '<p>Registro histórico no encontrado</p>');
+
+    // Obtener detalles adicionales si es una venta o un servicio
+    let detallesAdicionales = '';
+    if (registro.tipo === 'Venta') {
+        const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === registro.descripcion.split(' ')[2]);
+        if (venta) {
+            const detallesExtras = obtenerDetallesExtrasVenta(venta.id);
+            let productosHTML = '<ul>';
+            detallesExtras.productos.forEach(p => {
+                productosHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad} - Precio unitario: $${p.precio_unitario.toFixed(2)}</li>`;
+            });
+            productosHTML += '</ul>';
+
+            detallesAdicionales = `
+                <h5>Detalles de la Venta</h5>
+                <p><strong>ID:</strong> ${venta.id}</p>
+                <p><strong>Fecha:</strong> ${venta.fecha}</p>
+                <p><strong>Total:</strong> $${venta.total.toFixed(2)}</p>
+                <p><strong>Método de Pago:</strong> ${venta.metodos_pago}</p>
+                <hr>
+                <p><strong>Productos:</strong> ${productosHTML}</p>
+                <p><strong>Impuestos:</strong> $${detallesExtras.impuestos.toFixed(2)}</p>
+                <p><strong>Descuento:</strong> $${detallesExtras.descuento.toFixed(2)}</p>
+                <p><strong>Vendedor:</strong> ${detallesExtras.vendedor}</p>
+                <p><strong>Notas:</strong> ${detallesExtras.notas}</p>
+            `;
+        }
+    } else if (registro.tipo === 'Servicio') {
+        const servicio = obtenerDatosJSONServicios().servicios.find(s => s.id === registro.descripcion.split(' ')[2]);
+        if (servicio) {
+            const detallesExtras = obtenerDetallesExtrasServicio(servicio.id);
+            let historialHTML = '<ul>';
+            detallesExtras.historialEstados.forEach(h => {
+                historialHTML += `<li>${h.fecha}: ${h.estado}</li>`;
+            });
+            historialHTML += '</ul>';
+
+            detallesAdicionales = `
+                <h5>Detalles del Servicio</h5>
+                <p><strong>ID:</strong> ${servicio.id}</p>
+                <p><strong>Descripción:</strong> ${servicio.descripcion}</p>
+                <p><strong>Fecha:</strong> ${servicio.fecha}</p>
+                <p><strong>Estado actual:</strong> ${servicio.estado}</p>
+                <hr>
+                <p><strong>Contacto:</strong> ${detallesExtras.contacto}</p>
+                <p><strong>Teléfono:</strong> ${detallesExtras.telefono}</p>
+                <p><strong>Dirección:</strong> ${detallesExtras.direccion}</p>
+                <p><strong>Comentarios:</strong> ${detallesExtras.comentarios}</p>
+                <p><strong>Técnico asignado:</strong> ${detallesExtras.tecnico}</p>
+                <p><strong>Historial de estados:</strong> ${historialHTML}</p>
+            `;
+        }
+    }
+
+    const contenido = `
+        <p><strong>ID Registro:</strong> ${registro.id}</p>
+        <p><strong>Tipo:</strong> ${registro.tipo}</p>
+        <p><strong>Fecha:</strong> ${registro.fecha}</p>
+        <p><strong>Descripción:</strong> ${registro.descripcion}</p>
+        <p><strong>Total:</strong> $${parseFloat(registro.total).toFixed(2)}</p>
+        <hr>
+        ${detallesAdicionales}
+    `;
+    
+    mostrarModal('Detalle Ampliado del Registro Histórico', contenido);
+}
+
+
 // Variables globales
 let ventasChart = null;
 let serviciosChart = null;
@@ -7,28 +204,26 @@ let ventasPeriodoChart = null;
 let serviciosPeriodoChart = null;
 let periodoActual = 'semana';
 
-// Colores para gráficos
+// Colores para gráficos y estados
 const colores = [
-    'rgba(59, 130, 246, 0.7)',   // Azul
-    'rgba(239, 68, 68, 0.7)',    // Rojo
-    'rgba(34, 197, 94, 0.7)',    // Verde
-    'rgba(245, 158, 11, 0.7)',   // Amarillo
-    'rgba(14, 165, 233, 0.7)',   // Celeste
-    'rgba(168, 85, 247, 0.7)',   // Púrpura
-    'rgba(236, 72, 153, 0.7)',   // Rosa
-    'rgba(249, 115, 22, 0.7)'    // Naranja
+    'rgba(252, 211, 77, 0.7)',   // Pendiente - Amarillo (bg-warning)
+    'rgba(59, 130, 246, 0.7)',   // En Proceso - Azul (bg-info)
+    'rgba(34, 197, 94, 0.7)',    // Listo - Verde (bg-success)
+    'rgba(108, 117, 125, 0.7)'   // Entregado - Gris oscuro (bg-secondary)
 ];
+
+// Estado visual para servicios actualizado en memoria
+let serviciosEstadoMap = {};
 
 // Inicialización cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function() {
-    // Inicializar todas las pestañas
+    inicializarEstadoServicios();
     inicializarPestanaVentas();
     inicializarPestanaServicios();
     inicializarPestanaResumen();
     inicializarPestanaHistorial();
     inicializarPestanaEstadisticas();
 
-    // Manejar cambio de pestañas para actualizar gráficos
     const tabElems = document.querySelectorAll('button[data-bs-toggle="tab"]');
     tabElems.forEach(tab => {
         tab.addEventListener('shown.bs.tab', function(event) {
@@ -37,7 +232,6 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 
-    // Manejar cambio de período para estadísticas
     document.querySelectorAll('.periodo-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
@@ -47,6 +241,14 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+
+// Inicializa el estado visual de servicios en memoria
+function inicializarEstadoServicios() {
+    const servicios = obtenerDatosJSONServicios().servicios;
+    servicios.forEach(s => {
+        serviciosEstadoMap[s.id] = s.estado;
+    });
+}
 
 // Función para actualizar la pestaña activa
 function actualizarPestanaActiva(pestanaId) {
@@ -72,7 +274,6 @@ function actualizarPestanaActiva(pestanaId) {
 // ==================== PESTAÑA VENTAS ====================
 
 function inicializarPestanaVentas() {
-    // Crear gráfico de ventas
     const ctxVentas = document.getElementById('graficoVentas').getContext('2d');
     ventasChart = new Chart(ctxVentas, {
         type: 'doughnut',
@@ -94,54 +295,42 @@ function inicializarPestanaVentas() {
         }
     });
 
-    // Cargar datos iniciales
     actualizarDatosVentas();
 }
 
 function actualizarDatosVentas() {
-    fetch('/api/informes/ventas')
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error(data.error);
-                return;
-            }
+    const data = obtenerDatosJSONVentas();
 
-            // Actualizar gráfico de ventas con desglose_pagos
-            const pagos = data.desglose_pagos;
-            const etiquetas = Object.keys(pagos);
-            const valores = Object.values(pagos);
+    const pagos = data.desglose_pagos;
+    const etiquetas = Object.keys(pagos);
+    const valores = Object.values(pagos);
 
-            ventasChart.data.labels = etiquetas;
-            ventasChart.data.datasets[0].data = valores;
-            ventasChart.update();
+    ventasChart.data.labels = etiquetas;
+    ventasChart.data.datasets[0].data = valores;
+    ventasChart.update();
 
-            // Actualizar tabla de ventas
-            const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
-            cuerpoTablaVentas.innerHTML = data.ventas.map(venta => `
-                <tr>
-                    <td>${venta.id}</td>
-                    <td>${venta.fecha}</td>
-                    <td>$${parseFloat(venta.total).toFixed(2)}</td>
-                    <td>${venta.metodos_pago}</td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalle('${venta.id}')">
-                            <i class="bi bi-eye"></i>
-                        </button>
-                        <button class="btn btn-sm btn-outline-secondary" onclick="imprimirTicket('${venta.id}')">
-                            <i class="bi bi-printer"></i>
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
-        })
-        .catch(error => console.error('Error al cargar ventas:', error));
+    const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
+    cuerpoTablaVentas.innerHTML = data.ventas.map(venta => `
+        <tr>
+            <td>${venta.id}</td>
+            <td>${venta.fecha}</td>
+            <td>$${parseFloat(venta.total).toFixed(2)}</td>
+            <td>${venta.metodos_pago}</td>
+            <td>
+                <button onclick="verDetalle('${venta.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                    <i class="bi bi-eye"></i>
+                </button>
+                <button onclick="imprimirTicket('${venta.id}')" class="btn btn-sm btn-outline-secondary" title="Imprimir ticket">
+                    <i class="bi bi-printer"></i>
+                </button>
+            </td>
+        </tr>
+    `).join('');
 }
 
 // ==================== PESTAÑA SERVICIOS ====================
 
 function inicializarPestanaServicios() {
-    // Crear gráfico de servicios
     const ctxServicios = document.getElementById('graficoServicios').getContext('2d');
     serviciosChart = new Chart(ctxServicios, {
         type: 'pie',
@@ -163,63 +352,92 @@ function inicializarPestanaServicios() {
         }
     });
 
-    // Cargar datos iniciales
     actualizarDatosServicios();
 }
 
 function actualizarDatosServicios() {
-    fetch('/api/informes/servicios')
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error(data.error);
-                return;
-            }
+    const data = obtenerDatosJSONServicios();
 
-            const conteo = data.conteo_estados;
-            // Actualizar contadores
-            document.getElementById('totalServicios').textContent = conteo.Pendiente + conteo['En Proceso'] + conteo.Listo + conteo.Entregado || 0;
-            document.getElementById('enProcesoServicios').textContent = conteo['En Proceso'] || 0;
-            document.getElementById('listosServicios').textContent = conteo.Listo || 0;
+    const conteo = { Pendiente: 0, 'En Proceso': 0, Listo: 0, Entregado: 0 };
+    data.servicios.forEach(s => {
+        const estadoActual = serviciosEstadoMap[s.id] || s.estado;
+        serviciosEstadoMap[s.id] = estadoActual;
+        conteo[estadoActual]++;
+    });
 
-            // Actualizar gráfico de servicios
-            const estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado'];
-            const datos = estados.map(e => conteo[e] || 0);
+    const totalServicios = conteo.Pendiente + conteo['En Proceso'] + conteo.Listo + conteo.Entregado;
 
-            serviciosChart.data.labels = estados;
-            serviciosChart.data.datasets[0].data = datos;
-            serviciosChart.update();
+    if (totalServicios > 0) {
+        document.getElementById('totalServiciosCard').style.display = 'block';
+        document.getElementById('pendientesCard').style.display = conteo.Pendiente > 0 ? 'block' : 'none';
+        document.getElementById('enProcesoCard').style.display = conteo['En Proceso'] > 0 ? 'block' : 'none';
+        document.getElementById('listosCard').style.display = conteo.Listo > 0 ? 'block' : 'none';
+        document.getElementById('entregadosCard').style.display = conteo.Entregado > 0 ? 'block' : 'none';
 
-            // Actualizar tabla de servicios
-            const cuerpoTablaServicios = document.getElementById('cuerpoTablaServicios');
-            cuerpoTablaServicios.innerHTML = data.servicios.map(servicio => {
-                const estadoClase = getEstadoClase(servicio.estado);
-                return `
-                    <tr>
-                        <td>${servicio.id}</td>
-                        <td>${servicio.cliente}</td>
-                        <td>${servicio.descripcion}</td>
-                        <td>${servicio.fecha}</td>
-                        <td><span class="badge ${estadoClase}">${servicio.estado}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalleServicio('${servicio.id}')">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="actualizarEstadoServicio('${servicio.id}')">
-                                <i class="bi bi-arrow-clockwise"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        })
-        .catch(error => console.error('Error al cargar servicios:', error));
+        document.getElementById('totalServicios').textContent = totalServicios;
+        document.getElementById('pendientesServicios').textContent = conteo.Pendiente;
+        document.getElementById('enProcesoServicios').textContent = conteo['En Proceso'];
+        document.getElementById('listosServicios').textContent = conteo.Listo;
+        document.getElementById('entregadosServicios').textContent = conteo.Entregado;
+    } else {
+        document.getElementById('totalServiciosCard').style.display = 'none';
+        document.getElementById('pendientesCard').style.display = 'none';
+        document.getElementById('enProcesoCard').style.display = 'none';
+        document.getElementById('listosCard').style.display = 'none';
+        document.getElementById('entregadosCard').style.display = 'none';
+    }
+
+    const estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado'];
+    const datos = estados.map(e => conteo[e] || 0);
+
+    serviciosChart.data.labels = estados;
+    serviciosChart.data.datasets[0].data = datos;
+    serviciosChart.update();
+
+    const cuerpoTablaServicios = document.getElementById('cuerpoTablaServicios');
+    cuerpoTablaServicios.innerHTML = data.servicios.map(servicio => {
+        const estadoActual = serviciosEstadoMap[servicio.id] || servicio.estado;
+        const estadoClase = getEstadoClase(estadoActual);
+        return `
+            <tr>
+                <td>${servicio.id}</td>
+                <td>${servicio.descripcion}</td>
+                <td>${servicio.fecha}</td>
+                <td><span class="badge ${estadoClase}">${estadoActual}</span></td>
+                <td>
+                    <button onclick="verDetalleServicio('${servicio.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
+                        <i class="bi bi-eye"></i>
+                    </button>
+                    <button onclick="actualizarEstadoServicio('${servicio.id}')" class="btn btn-sm btn-outline-success" title="Actualizar estado">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                </td>
+            </tr>
+        `;
+    }).join('');
+}
+
+// Función para actualizar estado de servicio (local) con cambio visual inmediato y límite en 'Entregado'
+function actualizarEstadoServicio(id) {
+    const estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado'];
+    const estadoActual = serviciosEstadoMap[id] || 'Pendiente';
+    const indexActual = estados.indexOf(estadoActual);
+
+    if (indexActual === estados.length - 1) {
+        alert('El estado ya está en "Entregado" y no puede actualizarse más.');
+        return;
+    }
+
+    const siguienteEstado = estados[indexActual + 1];
+    serviciosEstadoMap[id] = siguienteEstado;
+
+    // Actualizar tabla y gráfico para reflejar cambio visual
+    actualizarDatosServicios();
 }
 
 // ==================== PESTAÑA RESUMEN ====================
 
 function inicializarPestanaResumen() {
-    // Crear gráfico de ventas por categoría
     const ctxVentasCategoria = document.getElementById('graficoVentasCategoria').getContext('2d');
     ventasCategoriaChart = new Chart(ctxVentasCategoria, {
         type: 'bar',
@@ -240,7 +458,6 @@ function inicializarPestanaResumen() {
         }
     });
 
-    // Crear gráfico de servicios por tipo
     const ctxServiciosTipo = document.getElementById('graficoServiciosTipo').getContext('2d');
     serviciosTipoChart = new Chart(ctxServiciosTipo, {
         type: 'bar',
@@ -261,52 +478,37 @@ function inicializarPestanaResumen() {
         }
     });
 
-    // Cargar datos iniciales
     actualizarDatosResumen();
 }
 
 function actualizarDatosResumen() {
-    fetch('/api/informes/resumen')
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error(data.error);
-                return;
-            }
+    const data = obtenerDatosJSONResumen();
 
-            // Actualizar contadores de resumen
-            document.getElementById('totalVentasResumen').textContent = `$${parseFloat(data.totales.ventas).toFixed(2)}`;
-            document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
-            document.getElementById('totalProductosResumen').textContent = data.totales.productos;
-            document.getElementById('totalClientesResumen').textContent = data.totales.clientes;
+    document.getElementById('totalVentasResumen').textContent = `$${parseFloat(data.totales.ventas).toFixed(2)}`;
+    document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
+    document.getElementById('totalProductosResumen').textContent = data.totales.productos;
 
-            // Actualizar gráfico de ventas por categoría
-            ventasCategoriaChart.data.labels = data.ventas_categoria.categorias;
-            ventasCategoriaChart.data.datasets[0].data = data.ventas_categoria.datos;
-            ventasCategoriaChart.update();
+    ventasCategoriaChart.data.labels = data.ventas_categoria.categorias;
+    ventasCategoriaChart.data.datasets[0].data = data.ventas_categoria.datos;
+    ventasCategoriaChart.update();
 
-            // Actualizar gráfico de servicios por tipo
-            serviciosTipoChart.data.labels = data.servicios_tipo.tipos;
-            serviciosTipoChart.data.datasets[0].data = data.servicios_tipo.datos;
-            serviciosTipoChart.update();
-        })
-        .catch(error => console.error('Error al cargar resumen:', error));
+    serviciosTipoChart.data.labels = data.servicios_tipo.tipos;
+    serviciosTipoChart.data.datasets[0].data = data.servicios_tipo.datos;
+    serviciosTipoChart.update();
 }
 
 // ==================== PESTAÑA HISTORIAL ====================
 
 function inicializarPestanaHistorial() {
-    // Configurar fecha actual en los campos de fecha
     const hoy = new Date();
     const inicioMes = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
 
     const fechaInicioInput = document.getElementById('fechaInicio');
     const fechaFinInput = document.getElementById('fechaFin');
 
-    fechaInicioInput.valueAsDate = inicioMes;
+        fechaInicioInput.valueAsDate = inicioMes;
     fechaFinInput.valueAsDate = hoy;
 
-    // Configurar evento de envío del formulario de filtro
     document.getElementById('filtroHistorialForm').addEventListener('submit', function(e) {
         e.preventDefault();
         buscarHistorial();
@@ -314,48 +516,24 @@ function inicializarPestanaHistorial() {
 }
 
 function buscarHistorial() {
-    const tipoRegistro = document.getElementById('tipoRegistro').value;
-    const fechaInicioStr = document.getElementById('fechaInicio').value;
-    const fechaFinStr = document.getElementById('fechaFin').value;
+    const fechaInicio = document.getElementById('fechaInicio').value;
+    const fechaFin = document.getElementById('fechaFin').value;
 
-    if (!fechaInicioStr || !fechaFinStr) {
-        alert('Por favor, seleccione ambas fechas de inicio y fin.');
-        return;
+    if (!fechaInicio || !fechaFin || new Date(fechaInicio) > new Date(fechaFin)) {
+        return alert('Fechas inválidas. Por favor verifica.');
     }
 
-    const url = `/api/informes/historial?tipo=${encodeURIComponent(tipoRegistro)}&fecha_inicio=${fechaInicioStr}&fecha_fin=${fechaFinStr}`;
+    const registros = obtenerDatosJSONHistorial().registros.filter(r => {
+        const fecha = new Date(r.fecha);
+        return fecha >= new Date(fechaInicio) && fecha <= new Date(fechaFin);
+    });
 
     const cuerpoTablaHistorial = document.getElementById('cuerpoTablaHistorial');
-    cuerpoTablaHistorial.innerHTML = `
-        <tr>
-            <td colspan="6" class="text-center">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Cargando...</span>
-                </div>
-                <p class="mt-2">Buscando registros...</p>
-            </td>
-        </tr>
-    `;
-
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${data.error}</td></tr>`;
-                return;
-            }
-
-            if (!data.registros || data.registros.length === 0) {
-                cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
-                return;
-            }
-
-            cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(data.registros);
-        })
-        .catch(error => {
-            console.error('Error al buscar historial:', error);
-            cuerpoTablaHistorial.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Error al cargar registros</td></tr>`;
-        });
+    if (!registros.length) {
+        cuerpoTablaHistorial.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>';
+    } else {
+        cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(registros);
+    }
 }
 
 function generarFilasTablaHistorial(registros) {
@@ -363,10 +541,9 @@ function generarFilasTablaHistorial(registros) {
         return `<tr><td colspan="6" class="text-center">No se encontraron registros</td></tr>`;
     }
 
-    let html = '';
-    registros.forEach(registro => {
+    return registros.map(registro => {
         const tipoClase = registro.tipo === 'Venta' ? 'text-primary' : 'text-success';
-        html += `
+        return `
             <tr>
                 <td>${registro.id}</td>
                 <td><span class="${tipoClase}">${registro.tipo}</span></td>
@@ -374,24 +551,21 @@ function generarFilasTablaHistorial(registros) {
                 <td>${registro.descripcion}</td>
                 <td>$${parseFloat(registro.total).toFixed(2)}</td>
                 <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="verDetalleHistorial('${registro.id}')">
+                    <button onclick="verDetalleHistorial('${registro.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
                         <i class="bi bi-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="imprimirHistorial('${registro.id}')">
+                    <button onclick="imprimirHistorial('${registro.id}')" class="btn btn-sm btn-outline-secondary" title="Imprimir">
                         <i class="bi bi-printer"></i>
                     </button>
                 </td>
             </tr>
         `;
-    });
-
-    return html;
+    }).join('');
 }
 
 // ==================== PESTAÑA ESTADÍSTICAS ====================
 
 function inicializarPestanaEstadisticas() {
-    // Crear gráfico de ventas por período
     const ctxVentasPeriodo = document.getElementById('graficoVentasPeriodo').getContext('2d');
     ventasPeriodoChart = new Chart(ctxVentasPeriodo, {
         type: 'line',
@@ -400,7 +574,7 @@ function inicializarPestanaEstadisticas() {
             datasets: [{
                 label: 'Ventas',
                 data: [],
-                borderColor: colores[0],
+                borderColor: colores[1],
                 backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderWidth: 2,
                 fill: true,
@@ -415,7 +589,6 @@ function inicializarPestanaEstadisticas() {
         }
     });
 
-    // Crear gráfico de servicios por período
     const ctxServiciosPeriodo = document.getElementById('graficoServiciosPeriodo').getContext('2d');
     serviciosPeriodoChart = new Chart(ctxServiciosPeriodo, {
         type: 'line',
@@ -439,38 +612,31 @@ function inicializarPestanaEstadisticas() {
         }
     });
 
-    // Cargar datos iniciales
     actualizarEstadisticas();
 }
 
 function actualizarEstadisticas() {
-    fetch(`/api/informes/estadisticas?periodo=${periodoActual}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                console.error(data.error);
-                return;
-            }
+    const data = obtenerDatosEstadisticas(periodoActual);
+    const etiquetas = data.etiquetas;
+    const datosVentas = data.ventas;
+    const datosServicios = data.servicios;
 
-            ventasPeriodoChart.data.labels = data.etiquetas;
-            ventasPeriodoChart.data.datasets[0].data = data.datos;
-            ventasPeriodoChart.update();
+    const totalVentas = datosVentas.reduce((acc, val) => acc + val, 0);
+    const promedio = totalVentas / datosVentas.length;
 
-            // Para servicios, si tienes datos similares, adapta aquí
-            // Por ejemplo, si la API devuelve datos de servicios, actualiza serviciosPeriodoChart
+    ventasPeriodoChart.data.labels = etiquetas;
+    ventasPeriodoChart.data.datasets[0].data = datosVentas;
+    ventasPeriodoChart.update();
 
-            // Actualmente no tenemos datos reales para servicios por período, así que dejamos vacío o simulado
-            serviciosPeriodoChart.data.labels = data.etiquetas;
-            serviciosPeriodoChart.data.datasets[0].data = data.datos.map(() => 0); // o datos reales si tienes
-            serviciosPeriodoChart.update();
+    serviciosPeriodoChart.data.labels = etiquetas;
+    serviciosPeriodoChart.data.datasets[0].data = datosServicios;
+    serviciosPeriodoChart.update();
 
-            // Actualizar KPIs - si tienes datos reales, cámbialos aquí
-            document.getElementById('ticketPromedio').textContent = '$367.86';
-            document.getElementById('ventasDiarias').textContent = '42';
-            document.getElementById('serviciosCompletados').textContent = '18';
-            document.getElementById('tasaConversion').textContent = '68%';
-        })
-        .catch(error => console.error('Error al cargar estadísticas:', error));
+    // Mostrar solo valores actuales sin indicar aumento o disminución
+    document.getElementById('ticketPromedio').textContent = `$${promedio.toFixed(2)}`;
+    document.getElementById('ventasDiarias').textContent = `${Math.round(promedio / 10)}`;
+    document.getElementById('serviciosCompletados').textContent = `${datosServicios.filter(d => d > 100).length}`;
+    document.getElementById('tasaConversion').textContent = `${Math.round((promedio / 500) * 100)}%`;
 }
 
 // ==================== FUNCIONES AUXILIARES ====================
@@ -485,7 +651,6 @@ function getEstadoClase(estado) {
     }
 }
 
-// Crear modal simple para mostrar detalles
 function mostrarModal(titulo, contenido) {
     let modal = document.getElementById('modalDetalle');
     if (!modal) {
@@ -508,147 +673,111 @@ function mostrarModal(titulo, contenido) {
         modalContent.style.padding = '20px';
         modalContent.style.borderRadius = '8px';
         modalContent.style.width = '90%';
-        modalContent.style.maxWidth = '500px';
+        modalContent.style.maxWidth = '600px';
         modalContent.style.boxShadow = '0 2px 10px rgba(0,0,0,0.3)';
         modal.appendChild(modalContent);
-
-        // Botón cerrar
-        const btnCerrar = document.createElement('button');
-        btnCerrar.textContent = 'Cerrar';
-        btnCerrar.style.marginTop = '15px';
-        btnCerrar.className = 'btn btn-primary';
-        btnCerrar.onclick = () => {
-            modal.style.display = 'none';
-        };
-        modalContent.appendChild(btnCerrar);
 
         document.body.appendChild(modal);
     }
 
     const modalContent = document.getElementById('modalContentDetalle');
     modalContent.innerHTML = `<h4>${titulo}</h4><div>${contenido}</div>`;
-    // Añadir botón cerrar nuevamente
-    const btnCerrar = document.createElement('button');
-    btnCerrar.textContent = 'Cerrar';
-    btnCerrar.style.marginTop = '15px';
-    btnCerrar.className = 'btn btn-primary';
-    btnCerrar.onclick = () => {
-        modal.style.display = 'none';
-    };
-    modalContent.appendChild(btnCerrar);
+
+    // Botón cerrar (solo uno)
+    if (!modalContent.querySelector('button')) {
+        const btnCerrar = document.createElement('button');
+        btnCerrar.textContent = 'Cerrar';
+        btnCerrar.style.marginTop = '15px';
+        btnCerrar.className = 'btn btn-primary';
+        btnCerrar.onclick = () => { modal.style.display = 'none'; };
+        modalContent.appendChild(btnCerrar);
+    }
 
     modal.style.display = 'flex';
 }
 
-// Función para ver detalle de venta
+// Funciones para ver detalle extendido de venta y servicio
 function verDetalle(id) {
-    fetch(`/api/ventas/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                mostrarModal('Error', `<p>${data.error}</p>`);
-                return;
-            }
-            const contenido = `
-                <p>Detalles de la venta con ID: <strong>${id}</strong></p>
-                <p>Fecha: ${data.fecha || 'N/A'}</p>
-                <p>Total: $${parseFloat(data.total_venta || 0).toFixed(2)}</p>
-                <p>Método de Pago: ${data.metodo_pago || 'N/A'}</p>
-            `;
-            mostrarModal('Detalle de Venta', contenido);
-        })
-        .catch(() => {
-            mostrarModal('Error', '<p>No se pudo cargar el detalle de la venta.</p>');
-        });
+    const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === id);
+    if (!venta) return mostrarModal('Error', '<p>Venta no encontrada</p>');
+
+    const detallesExtras = obtenerDetallesExtrasVenta(id);
+    let productosHTML = '<ul>';
+    detallesExtras.productos.forEach(p => {
+        productosHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad} - Precio unitario: $${p.precio_unitario.toFixed(2)}</li>`;
+    });
+    productosHTML += '</ul>';
+
+    const contenido = `
+        <p><strong>ID:</strong> ${venta.id}</p>
+        <p><strong>Fecha:</strong> ${venta.fecha}</p>
+        <p><strong>Total:</strong> $${venta.total.toFixed(2)}</p>
+        <p><strong>Método de Pago:</strong> ${venta.metodos_pago}</p>
+        <hr>
+        <p><strong>Productos:</strong> ${productosHTML}</p>
+        <p><strong>Impuestos:</strong> $${detallesExtras.impuestos.toFixed(2)}</p>
+        <p><strong>Descuento:</strong> $${detallesExtras.descuento.toFixed(2)}</p>
+        <p><strong>Vendedor:</strong> ${detallesExtras.vendedor}</p>
+        <p><strong>Notas:</strong> ${detallesExtras.notas}</p>
+    `;
+    mostrarModal('Detalle Extendido de Venta', contenido);
 }
 
-// Función para imprimir ticket de venta (abre ventana nueva con contenido para imprimir)
-function imprimirTicket(id) {
-    // Para mejor integración, puedes hacer fetch para obtener datos reales antes de imprimir
-    fetch(`/api/ventas/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            const contenido = `
-                <html>
-                <head>
-                    <title>Ticket Venta ${id}</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; padding: 20px; }
-                        h2 { text-align: center; }
-                        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-                        td, th { border: 1px solid #000; padding: 8px; }
-                    </style>
-                </head>
-                <body>
-                    <h2>Ticket de Venta</h2>
-                    <p><strong>ID:</strong> ${id}</p>
-                    <p><strong>Fecha:</strong> ${data.fecha || 'N/A'}</p>
-                    <p><strong>Total:</strong> $${parseFloat(data.total_venta || 0).toFixed(2)}</p>
-                    <p><strong>Método de Pago:</strong> ${data.metodo_pago || 'N/A'}</p>
-                    <hr>
-                    <p>Gracias por su compra.</p>
-                </body>
-                </html>
-            `;
-
-            const ventanaImpresion = window.open('', '', 'width=600,height=400');
-            ventanaImpresion.document.write(contenido);
-            ventanaImpresion.document.close();
-            ventanaImpresion.focus();
-            ventanaImpresion.print();
-            ventanaImpresion.close();
-        })
-        .catch(() => alert('No se pudo generar el ticket para imprimir.'));
-}
-
-// Función para ver detalle de servicio
 function verDetalleServicio(id) {
-    fetch(`/api/servicios/${id}`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) {
-                mostrarModal('Error', `<p>${data.error}</p>`);
-                return;
-            }
-            const contenido = `
-                <p>Detalles del servicio con ID: <strong>${id}</strong></p>
-                <p>Cliente: ${data.cliente || 'N/A'}</p>
-                <p>Descripción: ${data.descripcion || 'N/A'}</p>
-                <p>Estado: ${data.estado || 'N/A'}</p>
-            `;
-            mostrarModal('Detalle de Servicio', contenido);
-        })
-        .catch(() => {
-            mostrarModal('Error', '<p>No se pudo cargar el detalle del servicio.</p>');
-        });
+    const servicio = obtenerDatosJSONServicios().servicios.find(s => s.id === id);
+    if (!servicio) return mostrarModal('Error', '<p>Servicio no encontrado</p>');
+
+    const detallesExtras = obtenerDetallesExtrasServicio(id);
+    let historialHTML = '<ul>';
+    detallesExtras.historialEstados.forEach(h => {
+        historialHTML += `<li>${h.fecha}: ${h.estado}</li>`;
+    });
+    historialHTML += '</ul>';
+
+    const contenido = `
+        <p><strong>ID:</strong> ${servicio.id}</p>
+        <p><strong>Descripción:</strong> ${servicio.descripcion}</p>
+        <p><strong>Fecha:</strong> ${servicio.fecha}</p>
+        <p><strong>Estado actual:</strong> ${servicio.estado}</p>
+        <hr>
+        <p><strong>Contacto:</strong> ${detallesExtras.contacto}</p>
+        <p><strong>Teléfono:</strong> ${detallesExtras.telefono}</p>
+        <p><strong>Dirección:</strong> ${detallesExtras.direccion}</p>
+        <p><strong>Comentarios:</strong> ${detallesExtras.comentarios}</p>
+        <p><strong>Técnico asignado:</strong> ${detallesExtras.tecnico}</p>
+        <p><strong>Historial de estados:</strong> ${historialHTML}</p>
+    `;
+    mostrarModal('Detalle Extendido de Servicio', contenido);
 }
 
-// Función para actualizar estado de servicio (deberías implementar en backend)
-function actualizarEstadoServicio(id) {
-    if (confirm(`¿Desea actualizar el estado del servicio ${id}?`)) {
-        // Aquí debes hacer una llamada a la API para actualizar el estado
-        // Ejemplo:
-        fetch(`/api/servicios/${id}/actualizar_estado`, { method: 'POST' })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(`Error: ${data.error}`);
-                    return;
-                }
-                alert(`Estado del servicio ${id} actualizado.`);
-                actualizarDatosServicios();
-            })
-            .catch(() => alert('Error al actualizar el estado del servicio.'));
-    }
+// Funciones para imprimir ticket e historial
+function imprimirTicket(id) {
+    const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === id);
+    if (!venta) return alert('Venta no encontrada');
+
+    const contenido = `
+        <html><head><title>Ticket Venta ${id}</title></head>
+        <body>
+            <h2>Ticket de Venta</h2>
+            <p>ID: ${venta.id}</p>
+            <p>Fecha: ${venta.fecha}</p>
+            <p>Total: $${venta.total.toFixed(2)}</p>
+            <p>Método de Pago: ${venta.metodos_pago}</p>
+            <hr><p>Gracias por su compra.</p>
+        </body></html>
+    `;
+
+    const win = window.open('', '', 'width=600,height=400');
+    win.document.write(contenido);
+    win.document.close();
+    win.print();
+    win.close();
 }
 
-// Función para ver detalle de historial
-function verDetalleHistorial(id) {
-    mostrarModal('Detalle de Historial', `<p>Detalles del registro con ID: <strong>${id}</strong></p><p>Descripción detallada del registro histórico.</p>`);
-}
-
-// Función para imprimir historial (similar a imprimirTicket)
 function imprimirHistorial(id) {
+    const registro = obtenerDatosJSONHistorial().registros.find(r => r.id === id);
+    if (!registro) return alert('Registro histórico no encontrado');
+
     const contenido = `
         <html>
         <head>
@@ -662,8 +791,11 @@ function imprimirHistorial(id) {
         </head>
         <body>
             <h2>Registro Histórico</h2>
-            <p><strong>ID:</strong> ${id}</p>
-            <p><strong>Descripción:</strong> Detalle del registro histórico.</p>
+            <p><strong>ID:</strong> ${registro.id}</p>
+            <p><strong>Descripción:</strong> ${registro.descripcion}</p>
+            <p><strong>Tipo:</strong> ${registro.tipo}</p>
+            <p><strong>Fecha:</strong> ${registro.fecha}</p>
+            <p><strong>Total:</strong> $${parseFloat(registro.total).toFixed(2)}</p>
             <hr>
             <p>Documento generado para impresión.</p>
         </body>
@@ -673,7 +805,7 @@ function imprimirHistorial(id) {
     const ventanaImpresion = window.open('', '', 'width=600,height=400');
     ventanaImpresion.document.write(contenido);
     ventanaImpresion.document.close();
-    ventanaImpresion.focus();
     ventanaImpresion.print();
     ventanaImpresion.close();
 }
+
