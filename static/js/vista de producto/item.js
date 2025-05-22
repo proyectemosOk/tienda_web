@@ -373,7 +373,6 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 // });
 
 document.addEventListener('DOMContentLoaded', () => {
-  alert("vamos bien")
     const clienteCombo = document.getElementById('clientes');
 
     // Función para cargar los clientes desde la API
