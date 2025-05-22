@@ -24,6 +24,10 @@ def index():
 def home():
     return render_template('home.html')
 
+@app.route('/personal')
+def personal():
+    return render_template('personal.html')
+
 @app.route('/login-sesion')
 def login_sesion():
     return render_template('login-sesion.html')
