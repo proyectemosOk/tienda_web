@@ -216,6 +216,7 @@ class TicketDeVenta {
       this.totalLabel.textContent = '$0.00';
       this.itemsContainer.innerHTML = '';
 
+      
       // Limpiar inputs de métodos de pago
 document.querySelectorAll('.payment-input').forEach(input => {
   input.value = '';
