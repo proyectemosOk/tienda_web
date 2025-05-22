@@ -211,6 +211,16 @@ class TicketDeVenta {
   
       const data = JSON.parse(responseText);
       alert('✅ Venta registrada correctamente');
+      this.items = {};
+      this.total = 0;
+      this.totalLabel.textContent = '$0.00';
+      this.itemsContainer.innerHTML = '';
+
+      // Limpiar inputs de métodos de pago
+document.querySelectorAll('.payment-input').forEach(input => {
+  input.value = '';
+})
+// Actualizar visual del total (ajusta según cómo lo estés mostrando)
       console.log(data);
     })
     .catch(err => {
@@ -295,21 +305,23 @@ async function cargarMetodosPago() {
 function crearElementoMetodoPago(metodo) {
   const div = document.createElement('div');
   div.className = 'payment-option';
-  
-  const button = document.createElement('button');
-  button.className = 'btn btn-payment';
-  button.dataset.method = metodo.nombre.toLowerCase().replace(' ', '-');
-  button.dataset.id = metodo.id;
-  button.textContent = metodo.nombre;
-  
-  button.addEventListener('click', (e) => {
-      e.preventDefault();
-      mostrarInputPago(metodo);
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'payment-input';
+  input.id = `input-${metodo.id}`;
+  input.placeholder = `${metodo.nombre}`;
+  input.dataset.method = metodo.id;
+
+  // Evento opcional: enfocar al hacer clic en el campo
+  input.addEventListener('focus', () => {
+    input.style.display = 'block'; // opcional, solo si se quiere asegurar
   });
-  
-  div.appendChild(button);
+
+  div.appendChild(input);
   return div;
 }
+
 
 
 function mostrarInputPago(metodo) {
