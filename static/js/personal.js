@@ -13,12 +13,21 @@ async function cargarDatosApi() {
     };
   }
 }
-
+async function insertarUserTabla() {
+  const usuarios = await cargarDatosApi();
+  usuarios.forEach(usuario => {
+    // agregarFila(usuario);
+    console.log(usuario)
+  });
+  
+}
 function agregarFila(usuario) {
+  const form = document.getElementById('formUsuario');
+  const tabla = document.getElementById('tablaUsuarios');
   const fila = document.createElement('tr');
 
   fila.innerHTML = `
-      <td>${contador++}</td>
+      <td>${usuario.id}</td>
       <td>${usuario.nombre}</td>
       <td>${usuario.rol}</td>
       <td>
@@ -66,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let contador = 1;
   let modoEdicion = false;
   let filaEditando = null;
+  // insertarUserTabla();
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -84,33 +94,59 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const usuario = { nombre, email, telefono, rol };
+    const usuario = {nombre:nombre, email:email, telefono:telefono, rol:rol };
+    try {
+            const respuesta = await fetch("/api/new_usuario", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(usuario),
+            });
 
-    if (modoEdicion && filaEditando) {
-      filaEditando.cells[1].textContent = nombre;
-      filaEditando.cells[2].textContent = email;
-      filaEditando.cells[3].textContent = telefono;
-      filaEditando.cells[4].textContent = rol;
+            if (respuesta.ok) {
+                const resultado = await respuesta.json();
 
-      modoEdicion = false;
-      filaEditando = null;
-      form.querySelector('button[type="submit"]').textContent = "Guardar Usuario";
-
-      Swal.fire({
-        icon: 'success',
-        title: '✅ Usuario actualizado correctamente'
-      });
-
-    } else {
-
-      agregarFila(usuario);
-      Swal.fire({
-        icon: 'success',
-        title: '✅ Usuario guardado correctamente'
-      });
-    }
-
-    form.reset();
+                Swal.fire({
+                    title: 'Usuario Guardado',
+                    html: `
+                    <div class="text-start">
+                        <p><strong>ID:</strong> ${resultado.id}</p>
+                        <p><strong>Nombre:</strong> ${usuario.nombre}</p>
+                        <p><strong>Rol:</strong> ${usuario.rol}</p>
+                        <p><strong>Teléfono:</strong> ${usuario.telefono}</p>
+                        <p><strong>Email:</strong> ${usuario.email}</p>
+                    </div>
+                    `,
+                    icon: 'success'
+                });
+                
+                form.reset();
+                agregarFila(resultado);
+            } else {
+                const error = await respuesta.json();
+                if (error.columna) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: `El valor ya existe en la columna: ${error.columna}.`
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: `No se pudo guardar el proveedor: ${error.error}`
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Error al enviar los datos:", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Ocurrió un error al guardar el proveedor. Por favor, intenta nuevamente.'
+            });
+        }
   });
 
 

@@ -919,6 +919,20 @@ def cargar_usuarios():
             "mensaje": "Venta no registrada"
         }), 401        
         
+# API guardar usuario
+@app.route("/api/new_usuario", methods = ["POST"])
+def new_usuario():
+    datos = request.get_json()
+    print(datos)
+    id_usuario = conn_db.insertar(tabla="usuarios", datos=datos)
+    if id_usuario:        
+        usuario = [{"id":id_usuario, "nombre":datos["nombre"], "rol":datos["rol"]}]
+        return jsonify(usuario), 200
+    else:
+        return jsonify({
+            "valido": False,
+            "mensaje": "Usuario no registrado"
+        }), 401      
     
     
     

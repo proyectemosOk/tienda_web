@@ -3,6 +3,63 @@ import random
 from datetime import datetime, timedelta
 from firebase_config import ServicioFirebase
 # Función para conectar a la base de datos
+def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
+    conexion = sqlite3.connect(nombre_bd)
+    cursor = conexion.cursor()
+
+    try:
+        print("🔧 Iniciando modificación de la tabla 'usuarios'...")
+
+        # 1. Desactivar validación de claves foráneas temporalmente
+        cursor.execute("PRAGMA foreign_keys = OFF;")
+
+        # 2. Renombrar la tabla original
+        cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+
+        # 3. Crear nueva tabla sin CHECK en 'rol'
+        cursor.execute('''
+            CREATE TABLE usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL UNIQUE,
+                contrasena TEXT NOT NULL,
+                rol TEXT NOT NULL,
+                email TEXT,
+                telefono TEXT
+            );
+        ''')
+
+        # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
+        cursor.execute('''
+            INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+            SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+        ''')
+
+        # 5. Borrar la tabla original
+        cursor.execute("DROP TABLE usuarios_old;")
+
+        # 6. Volver a activar claves foráneas
+        cursor.execute("PRAGMA foreign_keys = ON;")
+
+        # 7. Comprobar integridad referencial
+        cursor.execute("PRAGMA foreign_key_check;")
+        errores_fk = cursor.fetchall()
+
+        conexion.commit()
+
+        if errores_fk:
+            print("⚠️ ¡Alerta! Se encontraron errores de claves foráneas:")
+            for err in errores_fk:
+                print("➡️", err)
+        else:
+            print("✅ Tabla 'usuarios' modificada correctamente. Integridad referencial OK.")
+
+    except Exception as e:
+        conexion.rollback()
+        print("❌ Error durante la modificación:", e)
+
+    finally:
+        conexion.close()
+
 def conectar_bd(nombre_bd):
     return sqlite3.connect(nombre_bd)
 
@@ -337,10 +394,8 @@ def crear_tablas(base):
             total_venta INTEGER DEFAULT 0,
             total_entregado INTEGER DEFAULT 0,
             faltante INTEGER DEFAULT 0
-        )
-    """)
-    
-    
+        )""")
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ordenes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -358,7 +413,7 @@ def crear_tablas(base):
         tipo_pago TEXT,
         pago REAL,
         estado INTEGER,
-        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
+        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre)
     )""")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servicios (
@@ -402,26 +457,10 @@ def crear_tablas(base):
     conexion.commit()
     conexion.close()
 
-# Conexión a la base de datos (cambia el nombre si es diferente)
-conexion = sqlite3.connect("tienda_jfleong6_1.db")
-cursor = conexion.cursor()
 
-# Intentar agregar la columna 'activo'
-try:
-    cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
-except sqlite3.OperationalError as e:
-    if "duplicate column name" in str(e):
-        pass
-    else:
-        raise
-# Intentar agregar la columna 'actual'
-try:
-    cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
-except sqlite3.OperationalError as e:
-    if "duplicate column name" in str(e):
-        pass
-    else:
-        raise
+
+
+
 # Ruta a tu archivo de credenciales Firebase
 # firebase = ServicioFirebase("../proyectemosok-31150-firebase-adminsdk-fbsvc-fdae62578b.json")
 
@@ -463,6 +502,29 @@ except sqlite3.OperationalError as e:
 
 if __name__ == "__main__":
     crear_tablas("tienda_jfleong6_1.db")
+    modificar_tabla_usuarios_sin_check()
+    
+    
+    # Conexión a la base de datos (cambia el nombre si es diferente)
+    conexion = sqlite3.connect("tienda_jfleong6_1.db")
+    cursor = conexion.cursor()
+
+    # Intentar agregar la columna 'activo'
+    try:
+        cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" in str(e):
+            pass
+        else:
+            raise
+    # Intentar agregar la columna 'actual'
+    try:
+        cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
+    except sqlite3.OperationalError as e:
+        if "duplicate column name" in str(e):
+            pass
+        else:
+            raise
     print("Tablas creadas exitosamente.")
 
     
