@@ -904,6 +904,25 @@ def crear_venta():
             "mensaje": "Venta no registrada"
         }), 401
 
+
+# API cargar usuarios
+@app.route("/api/cargar/usuarios", methods = ["GET"])
+def cargar_usuarios():
+    usuarios = conn_db.seleccionar(tabla = "usuarios",
+                                   columnas= "id, nombre, rol")
+    if usuarios:        
+        lista_usuarios = [{"id":id, "nombre":nombre, "rol":rol} for id, nombre, rol in usuarios]
+        return jsonify(lista_usuarios), 200
+    else:
+        return jsonify({
+            "valido": False,
+            "mensaje": "Venta no registrada"
+        }), 401        
+        
+    
+    
+    
+    
 if __name__ == '__main__':
     
     host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
