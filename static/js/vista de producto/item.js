@@ -312,7 +312,7 @@ function crearElementoMetodoPago(metodo) {
   input.className = 'payment-input';
   input.id = `input-${metodo.id}`;
   input.placeholder = `${metodo.nombre}`;
-  input.dataset.method = metodo.id;
+  input.dataset.method = metodo.nombre;
 
   // Evento opcional: enfocar al hacer clic en el campo
   input.addEventListener('focus', () => {
