@@ -7,8 +7,6 @@ body {
   
   .container {
     max-width: 100%;
-    margin: 0 auto;
-    padding: 1rem;
   }
   
   .product-list {
@@ -16,6 +14,8 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 1.25rem;
     margin-top: 1.5rem;
+    max-height: 71vh;
+    overflow-y: auto;
   }
   
   .product {
@@ -59,6 +59,7 @@ body {
     color: #4f46e5;
     font-weight: 600;
     margin: 0.5rem 0;
+    margin-top: -1vw;
     font-size: 1.2rem;
   }
   

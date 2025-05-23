@@ -32,8 +32,8 @@
   display: flex;
   gap: 2rem;
   align-items: flex-start;
-  padding: 1.5rem;
   background-color: #f5f7fa;
+  margin: 0;
 }
 ::-webkit-scrollbar {
   width: 10px;
@@ -93,9 +93,10 @@
 .ticket-section {
   display: flex;
   overflow: visible;
-  width: 20vw;
-  min-height: 87vh;
+  width: 27vw;
+  min-height: 83vh;
   top: 0;
+  margin-left: -1.5vw;
   padding: 1.5rem;
   background-color: white;
   border-radius: var(--radius-md);
@@ -109,7 +110,7 @@
   gap: 1rem;
   margin-bottom: 2rem;
   height: 2vw;
-  width: 17vw;
+  width: 22vw;
   background: white;
   padding: 1.5rem;
   border-radius: var(--radius-md);
@@ -122,7 +123,7 @@
 }
 #clienteSearch{
   position: relative;
-  margin-top: -0.67vw;
+  margin-top: -2vw;
   width: 5vw;
   flex: 1;
   padding: 0.8rem 1.5rem;
@@ -142,20 +143,18 @@
 .items-container {
   position: absolute;
   margin-top: 4vw;
-  width: 22vw;
   padding: 1rem;
   margin-bottom: 1.5rem;
-  max-height: 48vh;
+  max-height: 45vh;
   margin-left: -3.35vw;
   overflow-y: auto;
 }
 .pagos-section {
   bottom: 5vh;
-  width: 20vw;
-  margin-top: -10vw;
+  width: 25vw;
+  height: 8vw;
+  margin-top: -13vw;
   padding: 1.5rem;
-  background-color: white;
-  box-shadow: var(--shadow-md);
 }
 .item-card {
   background: white;
@@ -166,7 +165,8 @@
   border-left: 4px solid var(--primary-color);
   transition: var(--transition);
   position: relative;
-  width: 18vw;
+  width: 30vw;
+  height: 3vw;
 }
 
 .item-card:hover {
@@ -457,7 +457,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  overflow-y: auto;
   margin-bottom: 1.5rem;
+    max-height: 5vw;
 }
 
 .payment-method-group {
@@ -526,13 +528,15 @@
 }
 
 .btn-btn-success{
+  position: fixed;
   background-color: rgb(20, 18, 18);
   color: white;
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  width: 100%;
+  width: 27vw;
+  margin-left: -1vw;
   font-weight: 500;
   font-size: 1.15vw;
   transition: var(--transition);
@@ -610,8 +614,7 @@
     border-left: 4px solid var(--primary-color);
     transition: var(--transition);
     position: relative;
-    width: 18vw;
-    margin-left: 1vw;
+    width: 26vw;
   }
   .item-card:hover {
     transform: translateY(-3px);
@@ -659,7 +662,8 @@
   align-content: center;
   display: flex;
   gap: 0.3rem;
-  margin-top: 3vw;
+  margin-top: -0.1vw;
+  margin-left: 13vw;
   text-align: center;
 }
 .btn-quantity-plus{
@@ -682,16 +686,15 @@
 .items-container {
   position: absolute;
   margin-top: 4vw;
-  width: 22vw;
-  padding: 1rem;
+  width: 30;
   margin-bottom: 1.5rem;
-  max-height: 57vh;
+  max-height: 50vh;
   margin-left: -3.35vw;
   overflow-y: auto;
 }
 #clienteSearch{
   position: relative;
-  top: -15%;
+  top: -50%;
   margin-top: -0.4vw;
   width: 5vw;
   flex: 1;
@@ -707,8 +710,9 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
+  margin-left: -1vw;
   height: 1vw;
-  width: 17vw;
+  width: 25vw;
   background: white;
   padding-top: 1vw;
   border-radius: var(--radius-md);
