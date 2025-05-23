@@ -12,9 +12,19 @@ def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
 
         # 1. Desactivar validación de claves foráneas temporalmente
         cursor.execute("PRAGMA foreign_keys = OFF;")
+        # 6. Volver a activar claves foráneas
+        cursor.execute("PRAGMA foreign_keys = ON;")
+
+        # 7. Comprobar integridad referencial
+        cursor.execute("PRAGMA foreign_key_check;")
+        errores_fk = cursor.fetchall()
+        if True:
+            return
+        # 1.1. Borrar la tabla original
 
         # 2. Renombrar la tabla original
         cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+        
 
         # 3. Crear nueva tabla sin CHECK en 'rol'
         cursor.execute('''
@@ -96,9 +106,12 @@ def crear_tablas(base):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         usuario TEXT NOT NULL UNIQUE,  -- UNIQUE para evitar duplicados
         contrasena TEXT NOT NULL,
-        rol TEXT NOT NULL CHECK(rol IN ('admin', 'usuario'))
+        email TEXT NOT NULL,
+        celular TEXT NO NULL,
+        rol TEXT NOT NULL
     )
     ''')
+    
 
     # Crear tabla de productos
     cursor.execute('''

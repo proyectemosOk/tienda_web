@@ -81,11 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
 
     const nombre = document.getElementById('nombre').value.trim();
+    const pass = document.getElementById('pass').value.trim();
     const email = document.getElementById('email').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
     const rol = document.getElementById('rol').value;
 
-    if (!nombre || !email || !telefono || !rol) {
+    if (!nombre || pass || !email || !telefono || !rol) {
       Swal.fire({
         icon: 'error',
         title: '❌ Error',
@@ -94,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const usuario = {nombre:nombre, email:email, telefono:telefono, rol:rol };
+    const usuario = {usuario:nombre,contrasena:pass, email:email, telefono:telefono, rol:rol };
     try {
             const respuesta = await fetch("/api/new_usuario", {
                 method: "POST",

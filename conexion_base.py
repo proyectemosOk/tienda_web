@@ -183,7 +183,7 @@ class ConexionBase:
             resultado = self.seleccionar(
                 tabla=tabla,
                 columnas="id, contrasena, rol",
-                condicion="nombre = ?",
+                condicion="usuario = ?",
                 parametros=(usuario,)
             )
             print(resultado)
