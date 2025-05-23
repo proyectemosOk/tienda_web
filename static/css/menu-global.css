@@ -4,8 +4,14 @@
     float: left;
     justify-content: space-around;
     height: 40vw;
+    width: 5vw;
+    position: relative;
+    transition: all 0.6s ease;
 }
-
+.boton-menu:hover {
+    width: 11.5vw;
+    transform: scale(1.05);
+}
 /* Botón individual con layout horizontal */
 .boton-menu div {
     display: flex;
