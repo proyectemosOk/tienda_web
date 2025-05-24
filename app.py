@@ -937,6 +937,11 @@ def new_usuario():
             "valido": False,
             "mensaje": "Usuario no registrado"
         }), 401      
+
+@app.route("/api/monedero_dia_actual", methods = ["GET"])
+def cargar_monedero():
+    fecha =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    
     
 if __name__ == '__main__':
     
