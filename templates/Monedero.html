@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Monedero</title>
+  <link rel="stylesheet" href="/static/css/Monedero.css" />
+</head>
+<body>
+  <div class="contenedor">
+    
+    <section class="filtros">
+      <div class="filtros-header">Filtros de Búsqueda</div>
+      <div class="filtros-body">
+        <div class="filtro">
+          <label for="tipoRegistro">Tipo de Registro</label>
+          <select id="tipoRegistro">
+            <option value="todos">Todos</option>
+            <option value="venta">Ventas</option>
+            <option value="servicio">Servicios</option>
+            <option value="gasto">Gastos</option>
+          </select>
+        </div>
+        <div class="filtro">
+          <label for="metodoPago">Método de Pago</label>
+          <select id="metodoPago">
+            <option value="todos">Todos</option>
+            <option value="efectivo">Efectivo</option>
+            <option value="transferencia">Transferencia</option>
+            <option value="tarjeta">Tarjeta</option>
+          </select>
+        </div>
+        <div class="filtro">
+          <label for="fechaInicio">Fecha Inicio</label>
+          <input type="date" id="fechaInicio" />
+        </div>
+        <div class="filtro">
+          <label for="fechaFin">Fecha Fin</label>
+          <input type="date" id="fechaFin" />
+        </div>
+        <div class="filtro">
+          <button id="btnFiltrar">Buscar</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="resumen" id="resumenTarjetas">
+    ¿
+    </section>
+
+    <section class="grafica">
+      <h2>Comportamiento de la Caja</h2>
+      <canvas id="graficaCaja"></canvas>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/static/js/Monedero/Monedero.js"></script>
+</body>
+</html>
