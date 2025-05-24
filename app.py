@@ -49,6 +49,10 @@ def ventas():
 def inventarios():
     return render_template('gestor_inventario.html')
 
+@app.route("/monederos")
+def monedero():
+    return render_template('monedero.html')
+
 @app.route('/cierre_dia')
 def cierre_dia():
     return render_template('cierre_dia.html')
