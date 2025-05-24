@@ -1,15 +1,27 @@
-// Datos de ejemplo (simulando respuesta JSON)
-const registros = [
-  { id: 1, tipo: 'venta', valor: 20000, metodo: 'efectivo', fecha: '2025-05-20' },
-  { id: 2, tipo: 'servicio', valor: 15000, metodo: 'transferencia', fecha: '2025-05-21' },
-  { id: 3, tipo: 'gasto', valor: 8000, metodo: 'efectivo', fecha: '2025-05-21' },
-  { id: 4, tipo: 'venta', valor: 30000, metodo: 'tarjeta', fecha: '2025-05-22' },
-  { id: 5, tipo: 'servicio', valor: 120000, metodo: 'efectivo', fecha: '2025-05-22' },
-  { id: 6, tipo: 'gasto', valor: 50000, metodo: 'transferencia', fecha: '2025-05-22' },
-  { id: 7, tipo: 'venta', valor: 250000, metodo: 'efectivo', fecha: '2025-05-23' },
-  { id: 8, tipo: 'servicio', valor: 20000000, metodo: 'tarjeta', fecha: '2025-05-23' },
-  { id: 9, tipo: 'gasto', valor: 60000, metodo: 'tarjeta', fecha: '2025-05-23' }
-];
+// 1. JSON para datos del día actual (simulando respuesta API)
+const jsonDiaActual = {
+  fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
+  registros: [
+    { id: 1, tipo: 'venta', valor: 350, metodo: 'efectivo', fecha: new Date().toISOString().split('T')[0], descripcion: 'Venta al contado' },
+    { id: 2, tipo: 'servicio', valor: 180, metodo: 'tarjeta', fecha: new Date().toISOString().split('T')[0], descripcion: 'Servicio premium' },
+    { id: 3, tipo: 'gasto', valor: 75, metodo: 'transferencia', fecha: new Date().toISOString().split('T')[0], descripcion: 'Compra de materiales' }
+  ]
+};
+
+// 2. JSON para datos filtrados (simulando respuesta API)
+const jsonFiltrado = {
+  parametros: {
+    tipo: 'venta',
+    metodo: 'efectivo',
+    fechaInicio: '2025-05-20',
+    fechaFin: '2025-05-22'
+  },
+  registros: [
+    { id: 1, tipo: 'venta', valor: 200, metodo: 'efectivo', fecha: '2025-05-20', descripcion: 'Venta producto A' },
+    { id: 4, tipo: 'venta', valor: 300, metodo: 'efectivo', fecha: '2025-05-21', descripcion: 'Venta producto B' },
+    { id: 7, tipo: 'venta', valor: 250, metodo: 'efectivo', fecha: '2025-05-22', descripcion: 'Venta producto C' }
+  ]
+};
 
 // Variables globales
 const resumenTarjetas = document.getElementById('resumenTarjetas');
@@ -23,26 +35,57 @@ let datosAnteriores = {
   total: 0
 };
 
-// Evento para filtrar
-btnFiltrar.addEventListener('click', () => {
-  const tipo = document.getElementById('tipoRegistro').value;
-  const metodo = document.getElementById('metodoPago').value;
-  const desde = document.getElementById('fechaInicio').value;
-  const hasta = document.getElementById('fechaFin').value;
+// 1. Función para obtener datos del día actual desde JSON
+async function obtenerDatosDelDiaActual() {
+  try {
+    // Simulamos retardo de red
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // En producción, aquí iría:
+    // const response = await fetch('/api/registros/hoy');
+    // const data = await response.json();
+    // return data.registros;
+    
+    return jsonDiaActual.registros;
+  } catch (error) {
+    console.error('Error al obtener datos del día:', error);
+    return [];
+  }
+}
 
-  // Filtrar registros
-  const filtrados = registros.filter(r => {
-    const fechaValida = (!desde || r.fecha >= desde) && (!hasta || r.fecha <= hasta);
-    const tipoValido = tipo === 'todos' || r.tipo === tipo;
-    const metodoValido = metodo === 'todos' || r.metodo === metodo;
-    return fechaValida && tipoValido && metodoValido;
-  });
+// 2. Función para obtener datos filtrados desde JSON
+async function obtenerDatosFiltrados(filtros = {}) {
+  try {
+    // Simulamos retardo de red
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // En producción, aquí iría:
+    // const params = new URLSearchParams();
+    // if (filtros.tipo) params.append('tipo', filtros.tipo);
+    // if (filtros.metodo) params.append('metodo', filtros.metodo);
+    // if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
+    // if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
+    // const response = await fetch(`/api/registros?${params.toString()}`);
+    // return await response.json();
+    
+    // Simulamos filtrado básico para el ejemplo
+    const registrosFiltrados = jsonFiltrado.registros.filter(registro => {
+      const cumpleTipo = !filtros.tipo || filtros.tipo === 'todos' || registro.tipo === filtros.tipo;
+      const cumpleMetodo = !filtros.metodo || filtros.metodo === 'todos' || registro.metodo === filtros.metodo;
+      const cumpleFechaInicio = !filtros.fechaInicio || registro.fecha >= filtros.fechaInicio;
+      const cumpleFechaFin = !filtros.fechaFin || registro.fecha <= filtros.fechaFin;
+      
+      return cumpleTipo && cumpleMetodo && cumpleFechaInicio && cumpleFechaFin;
+    });
+    
+    return registrosFiltrados;
+  } catch (error) {
+    console.error('Error al obtener datos filtrados:', error);
+    return [];
+  }
+}
 
-  mostrarTarjetas(filtrados);
-  actualizarGrafica(filtrados);
-});
-
-// Mostrar tarjetas con comparativa
+// Función para mostrar tarjetas resumen
 function mostrarTarjetas(data) {
   resumenTarjetas.innerHTML = '';
 
@@ -87,7 +130,7 @@ function mostrarTarjetas(data) {
   });
 }
 
-// Calcular variación porcentual
+// Función para calcular variación porcentual
 function calcularVariacion(valorActual, valorAnterior) {
   if (valorAnterior === 0) {
     return {
@@ -106,7 +149,7 @@ function calcularVariacion(valorActual, valorAnterior) {
   };
 }
 
-// Actualizar gráfica con métodos de pago
+// Función para actualizar gráfica
 function actualizarGrafica(data) {
   const ingresos = data.filter(r => r.tipo === 'venta' || r.tipo === 'servicio');
   const egresos = data.filter(r => r.tipo === 'gasto');
@@ -209,6 +252,27 @@ function actualizarGrafica(data) {
   });
 }
 
-// Inicializar con todos los datos
-mostrarTarjetas(registros);
-actualizarGrafica(registros);
+// Función para aplicar filtros
+async function aplicarFiltros() {
+  const filtros = {
+    tipo: document.getElementById('tipoRegistro').value,
+    metodo: document.getElementById('metodoPago').value,
+    fechaInicio: document.getElementById('fechaInicio').value,
+    fechaFin: document.getElementById('fechaFin').value
+  };
+  
+  const datosFiltrados = await obtenerDatosFiltrados(filtros);
+  mostrarTarjetas(datosFiltrados);
+  actualizarGrafica(datosFiltrados);
+}
+
+// Inicialización al cargar la página
+document.addEventListener('DOMContentLoaded', async () => {
+  // Cargar datos del día actual
+  const datosIniciales = await obtenerDatosDelDiaActual();
+  mostrarTarjetas(datosIniciales);
+  actualizarGrafica(datosIniciales);
+  
+  // Configurar evento del botón filtrar
+  btnFiltrar.addEventListener('click', aplicarFiltros);
+});
