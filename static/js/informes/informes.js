@@ -1,3 +1,5 @@
+const puntos = new Intl.NumberFormat('es-CO').format;
+
 async function obtenerDatosJSONVentas() {
     try {
         const response = await fetch("api/ventas/dia");
@@ -6,7 +8,6 @@ async function obtenerDatosJSONVentas() {
         }
         const data = await response.json();
         return data;  // Usa objeto JS normal
-        // return new Map(Object.entries(data)); // solo si prefieres Map
     } catch (error) {
         console.error("Error al obtener datos de ventas:", error);
         return {
@@ -24,7 +25,6 @@ async function obtenerDatosJSONVentasPorID(id) {
         }
         const data = await response.json();
         return data;  // Usa objeto JS normal
-        // return new Map(Object.entries(data)); // solo si prefieres Map
     } catch (error) {
         console.error("Error al obtener datos de ventas:", error);
         return {
@@ -33,21 +33,6 @@ async function obtenerDatosJSONVentasPorID(id) {
         };
     }
 }
-//     return {
-//         desglose_pagos: {
-//             Efectivo: 2000,
-//             Tarjeta: 3000,
-//             Transferencia: 1000
-//         },
-//         ventas: [
-//             { id: 'V001', fecha: '2025-05-20', total: 300.00, metodos_pago: 'Efectivo' },
-//             { id: 'V002', fecha: '2025-05-19', total: 800.00, metodos_pago: 'Tarjeta' },
-//             { id: 'V003', fecha: '2025-05-18', total: 1200.00, metodos_pago: 'Transferencia' },
-//             { id: 'V004', fecha: '2025-05-17', total: 1500.00, metodos_pago: 'Tarjeta' },
-//             { id: 'V005', fecha: '2025-05-16', total: 200.00, metodos_pago: 'Efectivo' }
-//         ]
-//     };
-// }
 
 function obtenerDatosJSONServicios() {
     return {
@@ -162,7 +147,6 @@ function verDetalleHistorial(id) {
     const registro = obtenerDatosJSONHistorial().registros.find(r => r.id === id);
     if (!registro) return mostrarModal('Error', '<p>Registro histórico no encontrado</p>');
 
-    // Obtener detalles adicionales si es una venta o un servicio
     let detallesAdicionales = '';
     if (registro.tipo === 'Venta') {
         const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === registro.descripcion.split(' ')[2]);
@@ -170,7 +154,7 @@ function verDetalleHistorial(id) {
             const detallesExtras = obtenerDetallesExtrasVenta(venta.id);
             let productosHTML = '<ul>';
             detallesExtras.productos.forEach(p => {
-                productosHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad} - Precio unitario: $${p.precio_unitario.toFixed(2)}</li>`;
+                productosHTML += `<li>${p.nombre} - Cantidad: ${p.cantidad} - Precio unitario: $${puntos(p.precio_unitario)}</li>`;
             });
             productosHTML += '</ul>';
 
@@ -178,12 +162,12 @@ function verDetalleHistorial(id) {
                 <h5>Detalles de la Venta</h5>
                 <p><strong>ID:</strong> ${venta.id}</p>
                 <p><strong>Fecha:</strong> ${venta.fecha}</p>
-                <p><strong>Total:</strong> $${venta.total.toFixed(2)}</p>
+                <p><strong>Total:</strong> $${puntos(venta.total)}</p>
                 <p><strong>Método de Pago:</strong> ${venta.metodos_pago}</p>
                 <hr>
                 <p><strong>Productos:</strong> ${productosHTML}</p>
-                <p><strong>Impuestos:</strong> $${detallesExtras.impuestos.toFixed(2)}</p>
-                <p><strong>Descuento:</strong> $${detallesExtras.descuento.toFixed(2)}</p>
+                <p><strong>Impuestos:</strong> $${puntos(detallesExtras.impuestos)}</p>
+                <p><strong>Descuento:</strong> $${puntos(detallesExtras.descuento)}</p>
                 <p><strong>Vendedor:</strong> ${detallesExtras.vendedor}</p>
                 <p><strong>Notas:</strong> ${detallesExtras.notas}</p>
             `;
@@ -220,14 +204,13 @@ function verDetalleHistorial(id) {
         <p><strong>Tipo:</strong> ${registro.tipo}</p>
         <p><strong>Fecha:</strong> ${registro.fecha}</p>
         <p><strong>Descripción:</strong> ${registro.descripcion}</p>
-        <p><strong>Total:</strong> $${parseFloat(registro.total).toFixed(2)}</p>
+        <p><strong>Total:</strong> $${puntos(parseFloat(registro.total))}</p>
         <hr>
         ${detallesAdicionales}
     `;
     
     mostrarModal('Detalle Ampliado del Registro Histórico', contenido);
 }
-
 
 // Variables globales
 let ventasChart = null;
@@ -351,7 +334,7 @@ async function actualizarDatosVentas() {
             <td>${venta.id}</td>
             <td>${venta.fecha}</td>
             <td>${venta.cliente}</td>
-            <td>${parseFloat(venta.total).toFixed(2)}</td>
+            <td>$${puntos(parseFloat(venta.total))}</td>
             <td>
                 <button onclick="verDetalle('${venta.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
                     <i class="bi bi-eye"></i>
@@ -418,7 +401,7 @@ function actualizarDatosServicios() {
     } else {
         document.getElementById('totalServiciosCard').style.display = 'none';
         document.getElementById('pendientesCard').style.display = 'none';
-        document.getElementById('enProcesoCard').style.display = 'none';
+                document.getElementById('enProcesoCard').style.display = 'none';
         document.getElementById('listosCard').style.display = 'none';
         document.getElementById('entregadosCard').style.display = 'none';
     }
@@ -520,7 +503,7 @@ function inicializarPestanaResumen() {
 function actualizarDatosResumen() {
     const data = obtenerDatosJSONResumen();
 
-    document.getElementById('totalVentasResumen').textContent = `$${parseFloat(data.totales.ventas).toFixed(2)}`;
+    document.getElementById('totalVentasResumen').textContent = `$${puntos(parseFloat(data.totales.ventas))}`;
     document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
     document.getElementById('totalProductosResumen').textContent = data.totales.productos;
 
@@ -542,7 +525,7 @@ function inicializarPestanaHistorial() {
     const fechaInicioInput = document.getElementById('fechaInicio');
     const fechaFinInput = document.getElementById('fechaFin');
 
-        fechaInicioInput.valueAsDate = inicioMes;
+    fechaInicioInput.valueAsDate = inicioMes;
     fechaFinInput.valueAsDate = hoy;
 
     document.getElementById('filtroHistorialForm').addEventListener('submit', function(e) {
@@ -554,14 +537,24 @@ function inicializarPestanaHistorial() {
 function buscarHistorial() {
     const fechaInicio = document.getElementById('fechaInicio').value;
     const fechaFin = document.getElementById('fechaFin').value;
+    const tipoFiltro = document.getElementById('tipoRegistro').value; // ventas, servicios, todos
 
     if (!fechaInicio || !fechaFin || new Date(fechaInicio) > new Date(fechaFin)) {
         return alert('Fechas inválidas. Por favor verifica.');
     }
 
+    // Mapeo: valor del <select> => valor en el JSON
+    const tipoMap = {
+        'ventas': 'Venta',
+        'servicios': 'Servicio',
+        'todos': 'todos'
+    };
+
     const registros = obtenerDatosJSONHistorial().registros.filter(r => {
         const fecha = new Date(r.fecha);
-        return fecha >= new Date(fechaInicio) && fecha <= new Date(fechaFin);
+        const enRango = fecha >= new Date(fechaInicio) && fecha <= new Date(fechaFin);
+        const coincideTipo = tipoMap[tipoFiltro] === 'todos' || r.tipo === tipoMap[tipoFiltro];
+        return enRango && coincideTipo;
     });
 
     const cuerpoTablaHistorial = document.getElementById('cuerpoTablaHistorial');
@@ -571,6 +564,7 @@ function buscarHistorial() {
         cuerpoTablaHistorial.innerHTML = generarFilasTablaHistorial(registros);
     }
 }
+
 
 function generarFilasTablaHistorial(registros) {
     if (!registros || registros.length === 0) {
@@ -585,7 +579,7 @@ function generarFilasTablaHistorial(registros) {
                 <td><span class="${tipoClase}">${registro.tipo}</span></td>
                 <td>${registro.fecha}</td>
                 <td>${registro.descripcion}</td>
-                <td>$${parseFloat(registro.total).toFixed(2)}</td>
+                <td>$${puntos(parseFloat(registro.total))}</td>
                 <td>
                     <button onclick="verDetalleHistorial('${registro.id}')" class="btn btn-sm btn-outline-primary" title="Ver detalle">
                         <i class="bi bi-eye"></i>
@@ -669,7 +663,7 @@ function actualizarEstadisticas() {
     serviciosPeriodoChart.update();
 
     // Mostrar solo valores actuales sin indicar aumento o disminución
-    document.getElementById('ticketPromedio').textContent = `$${promedio.toFixed(2)}`;
+    document.getElementById('ticketPromedio').textContent = `$${puntos(promedio.toFixed(2))}`;
     document.getElementById('ventasDiarias').textContent = `${Math.round(promedio / 10)}`;
     document.getElementById('serviciosCompletados').textContent = `${datosServicios.filter(d => d > 100).length}`;
     document.getElementById('tasaConversion').textContent = `${Math.round((promedio / 500) * 100)}%`;
@@ -739,17 +733,20 @@ async function verDetalle(id) {
         if (!venta) return mostrarModal('Error', '<p class="text-danger">❌ Venta no encontrada</p>');
 
         // 👉 Productos en tabla con mejor formato
-        const productosHTML = venta.productos.map(p => `
+        const productosHTML = venta.productos.map(p => {
+            const total = p.cantidad * p.precio_unitario;
+            return `
             <tr class="align-middle">
                 <td class="text-center fw-bold text-primary">#${p.id_producto}</td>
                 <td class="fw-semibold">${p.nombre}</td>
                 <td class="text-center">
                     <span class="badge bg-secondary rounded-pill">${p.cantidad}</span>
                 </td>
-                <td class="text-end text-success fw-semibold">$${p.precio_unitario.toFixed(2)}</td>
-                <td class="text-end fw-bold text-dark">$${p.total.toFixed(2)}</td>
+                <td class="text-end text-success fw-semibold">$${puntos(p.precio_unitario.toFixed(2))}</td>
+                <td class="text-end fw-bold text-dark">$${puntos(total.toFixed(2))}</td>
             </tr>
-        `).join('');
+            `;
+        }).join('');
 
         // Métodos de pago con iconos y colores
         const iconosPago = {
@@ -767,12 +764,12 @@ async function verDetalle(id) {
                     ${iconosPago[metodo] || '💰'} 
                     <strong>${metodo}</strong>
                 </span>
-                <span class="badge bg-success rounded-pill fs-6">$${valor.toFixed(2)}</span>
+                <span class="badge bg-success rounded-pill fs-6">$${puntos(valor.toFixed(2))}</span>
             </li>
         `).join('');
 
         const contenido = `
-            <div class="container-fluid">
+            <div class="container-fluid modal-scrollable-content">
                 <!-- Encabezado con información principal -->
                 <div class="row mb-4">
                     <div class="col-12">
@@ -814,7 +811,7 @@ async function verDetalle(id) {
                     <div class="col-12">
                         <div class="alert alert-success d-flex justify-content-between align-items-center mb-0">
                             <span class="fs-4 fw-bold">💰 Total de la Venta</span>
-                            <span class="fs-3 fw-bold text-success">$${venta.total.toFixed(2)}</span>
+                            <span class="fs-3 fw-bold text-success">$${puntos(venta.total.toFixed(2))}</span>
                         </div>
                     </div>
                 </div>
@@ -861,7 +858,7 @@ async function verDetalle(id) {
                                         <tfoot class="table-light">
                                             <tr>
                                                 <td colspan="4" class="text-end fw-bold">Total Final:</td>
-                                                <td class="text-end fw-bold fs-5 text-success">$${venta.total.toFixed(2)}</td>
+                                                <td class="text-end fw-bold fs-5 text-success">$${puntos(venta.total.toFixed(2))}</td>
                                             </tr>
                                         </tfoot>
                                     </table>
@@ -874,7 +871,13 @@ async function verDetalle(id) {
 
             <style>
                 .modal-dialog { max-width: 900px; }
-                .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+                .modal-scrollable-content {
+                    max-height: 80vh;
+                    overflow-y: scroll;
+                    overflow-x: hidden;
+                    padding-right: 10px;
+                }
+                                .card { box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
                 .table th { font-weight: 600; }
                 .badge { font-size: 0.85em; }
                 .alert-success { border-left: 4px solid #28a745; }
@@ -893,7 +896,6 @@ async function verDetalle(id) {
         `);
     }
 }
-
 
 function verDetalleServicio(id) {
     const servicio = obtenerDatosJSONServicios().servicios.find(s => s.id === id);
@@ -923,27 +925,62 @@ function verDetalleServicio(id) {
 }
 
 // Funciones para imprimir ticket e historial
-function imprimirTicket(id) {
-    const venta = obtenerDatosJSONVentas().ventas.find(v => v.id === id);
-    if (!venta) return alert('Venta no encontrada');
+async function imprimirTicket(id) {
+    const venta = await obtenerDatosJSONVentasPorID(id);
+    if (!venta || !venta.productos) {
+        alert('❌ Venta no encontrada o sin productos');
+        return;
+    }
 
-    const contenido = `
-        <html><head><title>Ticket Venta ${id}</title></head>
-        <body>
-            <h2>Ticket de Venta</h2>
-            <p>ID: ${venta.id}</p>
-            <p>Fecha: ${venta.fecha}</p>
-            <p>Total: $${venta.total.toFixed(2)}</p>
-            <p>Método de Pago: ${venta.metodos_pago}</p>
-            <hr><p>Gracias por su compra.</p>
-        </body></html>
-    `;
+    const fecha = venta.fecha;
+    const cliente = venta.cliente || 'Consumidor Final';
+    const vendedor = venta.vendedor || 'N/D';
+    const productos = venta.productos;
+    const desglose = venta.desglose_pagos || {};
 
-    const win = window.open('', '', 'width=600,height=400');
-    win.document.write(contenido);
-    win.document.close();
-    win.print();
-    win.close();
+    let productosTexto = productos.map(p => {
+        const total = p.cantidad * p.precio_unitario;
+        return `${p.nombre}\n  ${p.cantidad} x $${puntos(p.precio_unitario.toFixed(2))}  =  $${puntos(total.toFixed(2))}`;
+    }).join('\n');
+
+    let pagoTexto = Object.entries(desglose).map(
+        ([metodo, monto]) => `${metodo}: $${puntos(monto.toFixed(2))}`
+    ).join('\n');
+
+    const totalVenta = productos.reduce((sum, p) => sum + p.precio_unitario * p.cantidad, 0);
+    const impuestos = venta.impuestos || 0;
+    const descuento = venta.descuento || 0;
+    const totalFinal = totalVenta + impuestos - descuento;
+
+    const ticket = `
+<pre style="font-family: monospace; font-size: 11px;">
+        *** TICKET DE VENTA ***
+-------------------------------
+Venta ID: ${venta.id}
+Fecha: ${fecha}
+Cliente: ${cliente}
+Vendedor: ${vendedor}
+-------------------------------
+Productos:
+${productosTexto}
+-------------------------------
+Subtotal:       $${puntos(totalVenta.toFixed(2))}
+Descuento:      $${puntos(descuento.toFixed(2))}
+IVA:            $${puntos(impuestos.toFixed(2))}
+-------------------------------
+TOTAL:          $${puntos(totalFinal.toFixed(2))}
+
+Métodos de Pago:
+${pagoTexto}
+-------------------------------
+Gracias por su compra
+</pre>`;
+
+    const ventana = window.open('', '', 'width=400,height=600');
+    ventana.document.write(`<html><head><title>Ticket ${venta.id}</title></head><body>${ticket}</body></html>`);
+    ventana.document.close();
+    ventana.print();
+    ventana.close();
 }
 
 function imprimirHistorial(id) {
@@ -967,7 +1004,7 @@ function imprimirHistorial(id) {
             <p><strong>Descripción:</strong> ${registro.descripcion}</p>
             <p><strong>Tipo:</strong> ${registro.tipo}</p>
             <p><strong>Fecha:</strong> ${registro.fecha}</p>
-            <p><strong>Total:</strong> $${parseFloat(registro.total).toFixed(2)}</p>
+            <p><strong>Total:</strong> $${puntos(parseFloat(registro.total))}</p>
             <hr>
             <p>Documento generado para impresión.</p>
         </body>
@@ -980,4 +1017,5 @@ function imprimirHistorial(id) {
     ventanaImpresion.print();
     ventanaImpresion.close();
 }
+
 
