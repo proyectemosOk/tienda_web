@@ -23,6 +23,30 @@ const jsonFiltrado = {
   ]
 };
 
+// 1.1. JSON para datos del día actual (simulando respuesta API)
+const data = [
+  {
+    bolsillo: "Bolsillo A",
+    total: 1000000,
+    porcentaje: 15,
+    comportamiento: 1,
+    modulos: {
+      ventas: { porcentaje: 10, sub_comportamiento: 1 },
+      servicios: { porcentaje: 5, sub_comportamiento: 0 }
+    }
+  },
+  {
+    bolsillo: "Bolsillo B",
+    total: 800000,
+    porcentaje: 8,
+    comportamiento: 0,
+    modulos: {
+      ventas: { porcentaje: 20, sub_comportamiento: 0 },
+      servicios: { porcentaje: 25, sub_comportamiento: 1 }
+    }
+  }
+];
+
 // Variables globales
 const resumenTarjetas = document.getElementById('resumenTarjetas');
 const btnFiltrar = document.getElementById('btnFiltrar');
@@ -39,26 +63,39 @@ let datosAnteriores = {
 async function obtenerDatosDelDiaActual() {
   try {
     // Simulamos retardo de red
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
+    // await new Promise(resolve => setTimeout(resolve, 500));
+
     // En producción, aquí iría:
-    // const response = await fetch('/api/registros/hoy');
-    // const data = await response.json();
-    // return data.registros;
-    
-    return jsonDiaActual.registros;
+    const response = await fetch('/api/tarjetas-resumen');
+    return await response.json();
+    // return data
   } catch (error) {
     console.error('Error al obtener datos del día:', error);
     return [];
   }
 }
-
+async function cargarTarjetas() {
+  try {
+    const response = await fetch('/api/tarjetas-resumen');
+    const result = await response.json();
+    console.log(result)
+    if (result.success) {
+      mostrarTarjetas_1(result.data);
+    } else {
+      document.getElementById('contenido').innerHTML =
+        `<div class="error">Error: ${result.error}</div>`;
+    }
+  } catch (error) {
+    document.getElementById('resumenTarjetas').innerHTML =
+      `<div class="error">Error de conexión: ${error.message}</div>`;
+  }
+}
 // 2. Función para obtener datos filtrados desde JSON
 async function obtenerDatosFiltrados(filtros = {}) {
   try {
     // Simulamos retardo de red
     await new Promise(resolve => setTimeout(resolve, 800));
-    
+
     // En producción, aquí iría:
     // const params = new URLSearchParams();
     // if (filtros.tipo) params.append('tipo', filtros.tipo);
@@ -67,17 +104,17 @@ async function obtenerDatosFiltrados(filtros = {}) {
     // if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
     // const response = await fetch(`/api/registros?${params.toString()}`);
     // return await response.json();
-    
+
     // Simulamos filtrado básico para el ejemplo
     const registrosFiltrados = jsonFiltrado.registros.filter(registro => {
       const cumpleTipo = !filtros.tipo || filtros.tipo === 'todos' || registro.tipo === filtros.tipo;
       const cumpleMetodo = !filtros.metodo || filtros.metodo === 'todos' || registro.metodo === filtros.metodo;
       const cumpleFechaInicio = !filtros.fechaInicio || registro.fecha >= filtros.fechaInicio;
       const cumpleFechaFin = !filtros.fechaFin || registro.fecha <= filtros.fechaFin;
-      
+
       return cumpleTipo && cumpleMetodo && cumpleFechaInicio && cumpleFechaFin;
     });
-    
+
     return registrosFiltrados;
   } catch (error) {
     console.error('Error al obtener datos filtrados:', error);
@@ -130,6 +167,85 @@ function mostrarTarjetas(data) {
   });
 }
 
+// Función para mostrar tarjetas resumen
+function mostrarTarjetas_1(datos) {
+  const contenedor = document.getElementById('resumenTarjetas');
+
+  if (datos.length === 0) {
+    contenedor.innerHTML = '<div class="error">No hay datos disponibles</div>';
+    return;
+  }
+
+  let html = '<div class="tarjetas-container">';
+
+  let gastos = 0;
+  let total = 0;
+  datos.forEach(bolsillo => {
+    total += (bolsillo.bolsillo !== "CXC") ? bolsillo.total : 0;
+    gastos += bolsillo.modulos.gastos.valor_hoy;
+
+    const iconoTotal = bolsillo.comportamiento === 1 ? '↗' : '↘';
+    const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
+
+    const iconoVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? '↗' : '↘';
+    const colorVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
+
+    const iconoServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? '↗' : '↘';
+    const colorServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
+
+    const iconoGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? '↗' : '↘';
+    const colorGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
+
+    html += `
+                        <div class="tarjeta-bolsillo">
+                            <div class="encabezado">${bolsillo.bolsillo}</div>
+                            <div class="total ${colorTotal}">
+                                <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
+                                <span>${iconoTotal}</span>
+                            </div>
+                            <div class="modulos">
+                                <div class="modulo">
+                                    <div><strong>Ventas</strong></div>
+                                    <div class="${colorVentas}">
+                                        ${bolsillo.modulos.ventas.porcentaje}% ${iconoVentas}
+                                    </div>
+                                </div>
+                                <div class="modulo">
+                                    <div><strong>Servicios</strong></div>
+                                    <div class="${colorServicios}">
+                                        ${bolsillo.modulos.servicios.porcentaje}% ${iconoServicios}
+                                    </div>
+                                </div>
+                                <div class="modulo">
+                                    <div><strong>Gastos</strong></div>
+                                    <div class="${colorGastos}">
+                                        ${bolsillo.modulos.gastos.porcentaje}% ${iconoGastos}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+  });
+  html +=`
+                        <div class="tarjeta-bolsillo">
+                            <div class="encabezado">Total</div>
+                            <div class="total color-verde">
+                                <strong>$${total.toLocaleString('es-ES')}</strong>
+                            </div>
+                            <div class="modulos">
+                              <div class="modulo">
+                                  <div><strong>Gastos</strong></div>
+                                  <div class= color-rojo>
+                                      ${gastos}
+                                  </div>
+                              </div>
+                            </div>
+                        </div>
+                    `;
+  html += '</div>';
+  contenedor.innerHTML = html;
+}
+
 // Función para calcular variación porcentual
 function calcularVariacion(valorActual, valorAnterior) {
   if (valorAnterior === 0) {
@@ -141,7 +257,7 @@ function calcularVariacion(valorActual, valorAnterior) {
   }
 
   const variacion = ((valorActual - valorAnterior) / valorAnterior) * 100;
-  
+
   return {
     valor: Math.abs(variacion).toFixed(2),
     tipo: variacion >= 0 ? 'incremento' : 'decremento',
@@ -160,11 +276,11 @@ function actualizarGrafica(data) {
   const efectivoIngresos = labels.map(fecha =>
     ingresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
   );
-  
+
   const transferenciaIngresos = labels.map(fecha =>
     ingresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
   );
-  
+
   const tarjetaIngresos = labels.map(fecha =>
     ingresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
   );
@@ -173,11 +289,11 @@ function actualizarGrafica(data) {
   const efectivoEgresos = labels.map(fecha =>
     egresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
   );
-  
+
   const transferenciaEgresos = labels.map(fecha =>
     egresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
   );
-  
+
   const tarjetaEgresos = labels.map(fecha =>
     egresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
   );
@@ -260,7 +376,7 @@ async function aplicarFiltros() {
     fechaInicio: document.getElementById('fechaInicio').value,
     fechaFin: document.getElementById('fechaFin').value
   };
-  
+
   const datosFiltrados = await obtenerDatosFiltrados(filtros);
   mostrarTarjetas(datosFiltrados);
   actualizarGrafica(datosFiltrados);
@@ -269,10 +385,13 @@ async function aplicarFiltros() {
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', async () => {
   // Cargar datos del día actual
-  const datosIniciales = await obtenerDatosDelDiaActual();
-  mostrarTarjetas(datosIniciales);
-  actualizarGrafica(datosIniciales);
-  
+  cargarTarjetas();
+  // const datosIniciales = await obtenerDatosDelDiaActual();
+  // mostrarTarjetas_1(datosIniciales);
+  // actualizarGrafica(datosIniciales);
+
+
+
   // Configurar evento del botón filtrar
   btnFiltrar.addEventListener('click', aplicarFiltros);
 });

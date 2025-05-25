@@ -7,8 +7,10 @@ from datetime import datetime, timedelta
 import json
 import socket
 from werkzeug.utils import secure_filename
+from tarjetas import *
 
 app = Flask(__name__)
+app.register_blueprint(extras)  # lo registramos
 UPLOAD_FOLDER = 'uploads'
 
 IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
@@ -114,6 +116,11 @@ def submit():
 
     # Guardar localmente
     conn_db.insertar("ordenes", orden_dict)
+    
+    can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(orden_dict["tipo_pago"],))[0][0]
+            
+    actulizar = {"actual":float(orden_dict["pago"])+float(can_sum)}
+    conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (orden_dict["tipo_pago"],))
 
     print("✅ Orden registrada correctamente.")
     return redirect(url_for('index'))
@@ -940,7 +947,7 @@ def new_usuario():
 
 @app.route("/api/monedero_dia_actual", methods = ["GET"])
 def cargar_monedero():
-    fecha =  datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    fecha =  datetime.now().strftime("%Y-%m-%d")
     
     
 if __name__ == '__main__':
