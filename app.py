@@ -4,6 +4,7 @@ from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
 from datetime import datetime, timedelta
+from datetime import date
 import json
 import socket
 from werkzeug.utils import secure_filename
@@ -216,21 +217,22 @@ def obtener_producto(codigo):
 def obtener_resumen_ventas():
     try:
         # Desglose global por método de pago
+        fecha_hoy = date.today().isoformat()
         desglose_pagos = conn_db.ejecutar_personalizado('''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = 1
+            WHERE v.estado = 1 AND fecha = ?
             GROUP BY tp.nombre
-        ''')
+        ''',((fecha_hoy),))
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
         ventas = conn_db.ejecutar_personalizado('''
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
-            WHERE v.estado = 1
-        ''')
+            WHERE v.estado = 1 AND fecha = ?
+        ''',((fecha_hoy),))
 
         resumen = [
             {
@@ -317,26 +319,25 @@ def obtener_detalle_venta(id_venta):
 def cargar_ventas():
     try:
         # Obtener la fecha actual
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+        fecha_hoy = date.today().isoformat()
 
         # Consulta para obtener las ventas del día y sus métodos de pago
         consulta = '''
-            SELECT 
-                v.id AS id_venta,
-                v.fecha,
-                v.total_venta,
-                GROUP_CONCAT(tp.nombre, ', ') AS metodos_pago
-            FROM ventas v
-            LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
-            LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = ?
-            GROUP BY v.id
-        '''
+                SELECT 
+                    v.id AS id_venta,
+                    v.fecha,
+                    v.total_venta,
+                    GROUP_CONCAT(tp.nombre, ', ') AS metodos_pago
+                FROM ventas v
+                LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
+                LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+                WHERE DATE(v.fecha) = ?
+                GROUP BY v.id
+            '''
+
 
         # Ejecutar la consulta
-        ventas = conn_db.ejecutar_personalizado(consulta, ("1",))
-        
-
+        ventas = conn_db.ejecutar_personalizado(consulta, (fecha_hoy,))
         # Formatear los datos en una lista de diccionarios
         resultado = [
             {

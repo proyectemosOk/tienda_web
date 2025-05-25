@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Cargar datos del día actual
   cargarTarjetas();
   // const datosIniciales = await obtenerDatosDelDiaActual();
-  // mostrarTarjetas_1(datosIniciales);
+  // mostrarTarjetas(datosIniciales);
   // actualizarGrafica(datosIniciales);
 
 
