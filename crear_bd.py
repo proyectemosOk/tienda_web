@@ -363,6 +363,14 @@ def crear_tablas(base):
             descripcion TEXT
         )
     ''')
+    # Tabla de Tipos de Pago
+    cursor.execute('''CREATE TABLE IF NOT EXISTS caja_mayor (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            monto INTEGER
+        )
+    ''')
     cursor.executemany("INSERT OR IGNORE INTO tipos_pago (id, nombre, descripcion) VALUES (?, ?, ?)", 
 ((1,'EFECTIVO', 'Pago en efectivo'),
 (2,'TRANSFERENCIA', 'Transferencia bancaria'),
@@ -380,15 +388,52 @@ def crear_tablas(base):
         )
     ''')
     # Confirmar los cambios y cerrar la conexión
-    # Crear tabla si no existe
+    # Crear tabla si no existe    
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS cierre_dia (
+        CREATE TABLE IF NOT EXISTS cierres_dia (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha_entrada DATE DEFAULT CURRENT_DATE,
-            ids_ventas NOT NULL,
-            monto REAL NOT NULL
-        )
+            fecha DATE NOT NULL UNIQUE,
+            total_ingresos REAL DEFAULT 0,
+            total_egresos REAL DEFAULT 0,
+            total_neto REAL DEFAULT 0,
+            observaciones TEXT,
+            creado_por TEXT,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
     ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cierres_dia_detalle_pagos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cierre_id INTEGER NOT NULL,
+            tipo_pago TEXT NOT NULL,
+            monto REAL NOT NULL,
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+        );
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cierres_dia_detalle_categorias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cierre_id INTEGER NOT NULL,
+            descripcion TEXT NOT NULL, 
+            monto REAL NOT NULL,
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+        );
+    ''')
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS cierres_dia_movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cierre_id INTEGER NOT NULL,
+    tipo_pago TEXT,
+    categoria TEXT,
+    referencia_id TEXT,
+    monto REAL,
+    FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+);
+''')
+
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS entregas_diarias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -604,7 +604,7 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion, codigo, stock")
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_venta, categoria, descripcion, codigo, stock")
     productos_list = []
 
     for prod in productos:
@@ -863,59 +863,106 @@ def login():
    
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
-    data = request.get_json()
-    # Validación inicial
+    data = request.get_json()    
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
     
-    new_venta = {'vendedor_id': data['vendedor_id'],
-                "cliente_id": data["cliente_id"],
-                "total_venta": data["total_venta"],
-                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-    print(data)
-    id, error = conn_db.insertar("ventas", new_venta)
+    new_venta = {
+        'vendedor_id': data['vendedor_id'],
+        "cliente_id": data["cliente_id"],
+        "total_venta": data["total_venta"],
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_compra": 0,
+        "total_utilidad": 0
+    }
     
-    # Limpiar datos sensibles en la respuesta
-    if id:
-        
-        for producto in data["productos"]:
-            detalles_ventas = {"venta_id": id,
-                               "producto_id":producto["codigo"],
-                               "cantidad":producto["cantidad"],
-                               "precio_unitario":producto["precio_unitario"]}
-            conn_db.insertar("detalles_ventas", detalles_ventas)
-            can_sum = conn_db.seleccionar("productos","stock","id= ?",(producto["codigo"],))[0][0]
-            print(producto["codigo"], can_sum, type(can_sum))
-            actulizar = {"stock":float(can_sum) if can_sum else 0 - float(producto["cantidad"])}
-            conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
-            
-            
-            # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
-            # print(can_sum)
-            
-        for pago in data["metodos_pago"]:
-            detalles_pagos ={"venta_id": id,
-                               "metodo_pago":pago["metodo"],
-                               "valor":pago["valor"]}
-            conn_db.insertar("pagos_venta", detalles_pagos)
-            
-            can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(pago["metodo"],))[0][0]
-            
-            actulizar = {"actual":float(pago["valor"])+float(can_sum)}
-            conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (pago["metodo"],))
-            
-        respuesta = {
-            "valido": True,
-            "mensaje": f"Venta exitosa {id}"
+    id, error = conn_db.insertar("ventas", new_venta)
+    if not id:
+        return jsonify({"valido": False, "mensaje": "Venta no registrada"}), 401
+    
+    total_precio_compra = 0
+    
+    for producto in data["productos"]:
+        detalles_ventas = {
+            "venta_id": id,
+            "producto_id": producto["codigo"],
+            "cantidad": producto["cantidad"],
+            "precio_unitario": producto["precio_unitario"]
         }
-        return jsonify(respuesta), 200
-    else:
-        return jsonify({
-            "valido": False,
-            "mensaje": "Venta no registrada"
-        }), 401
-
+        conn_db.insertar("detalles_ventas", detalles_ventas)
+        
+        # Actualizar stock en tabla productos
+        can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
+        nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
+        conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
+        
+        cantidad_a_descontar = float(producto["cantidad"])
+        lotes = conn_db.ejecutar_personalizado("""
+                SELECT 
+                    l.id, l.cantidad, l.precio_compra
+                FROM 
+                    lotes_productos l
+                JOIN 
+                    productos p ON l.id_producto = p.codigo
+                WHERE 
+                    p.id = ?
+                ORDER BY 
+                    l.fecha_ingreso ASC
+            """, (producto["codigo"],))
+        print(lotes)
+        for lote in lotes:
+            if cantidad_a_descontar <= 0:
+                break
+            
+            id_lote, cantidad_lote, precio_compra = lote
+            descontar = min(cantidad_lote, cantidad_a_descontar)
+            nuevo_cantidad_lote = cantidad_lote - descontar
+            
+            if nuevo_cantidad_lote == 0:
+                conn_db.eliminar("lotes_productos", "id = ?", (id_lote,))
+            else:
+                conn_db.actualizar("lotes_productos", {"cantidad": nuevo_cantidad_lote}, "id = ?", (id_lote,))
+            
+            compra_venta = {
+                "id_venta": id,
+                "id_lote": id_lote,
+                "precio_compra": precio_compra,
+                "cantidad": descontar
+            }
+            conn_db.insertar("compra_venta", compra_venta)
+            
+            total_precio_compra += precio_compra * descontar
+            print(total_precio_compra)
+            
+            cantidad_a_descontar -= descontar
+    
+    total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
+    total_utilidad = total_precio_venta - total_precio_compra
+    
+    for pago in data["metodos_pago"]:
+        detalles_pagos = {
+            "venta_id": id,
+            "metodo_pago": pago["metodo"],
+            "valor": pago["valor"]
+        }
+        conn_db.insertar("pagos_venta", detalles_pagos)
+        conn_db.actualizar(
+            "tipos_pago",
+            {"actual": f"actual + {pago['valor']}"},
+            "nombre = ?",
+            (pago["metodo"],),
+            expresion_sql=True
+        )
+    
+    conn_db.actualizar("ventas", {
+        "total_compra": total_precio_compra,
+        "total_utilidad": total_utilidad
+    }, "id = ?", (id,))
+    
+    return jsonify({
+        "valido": True,
+        "mensaje": f"Venta exitosa {id}"
+    }), 200
 
 # API cargar usuarios
 @app.route("/api/cargar/usuarios", methods = ["GET"])

@@ -102,19 +102,29 @@ class ConexionBase:
     def existe_registro(self, tabla, columna, valor):
         return bool(self.seleccionar(tabla, columnas=columna, condicion=f"{columna} = ?", parametros=(valor,)))
 
-    def actualizar(self, tabla, datos, condicion, parametros_condicion):
-        asignaciones = ", ".join(f"{col} = ?" for col in datos.keys())
-        valores = tuple(datos.values())
+    def actualizar(self, tabla, datos, condicion, parametros_condicion=(), expresion_sql=False):
+        """
+        Actualiza registros en la tabla.
+        
+        Si expresion_sql es True, los valores en 'datos' serán tratados como expresiones SQL sin comillas.
+        """
+        if expresion_sql:
+            asignaciones = ", ".join(f"{col} = {val}" for col, val in datos.items())
+            valores = parametros_condicion
+        else:
+            asignaciones = ", ".join(f"{col} = ?" for col in datos.keys())
+            valores = tuple(datos.values()) + tuple(parametros_condicion)
+        
         consulta = f"UPDATE {tabla} SET {asignaciones} WHERE {condicion}"
-        self.ejecutar_consulta(consulta, valores + parametros_condicion)
-
-        if self.firebase:
-            doc_id = str(parametros_condicion[0])
-            try:
-                self.firebase.db.collection(tabla).document(doc_id).update(datos)
-                print(f"🔁 Documento '{doc_id}' actualizado en Firebase colección '{tabla}'.")
-            except Exception as e:
-                print(f"⚠️ Error actualizando Firebase: {e}")
+        conexion = self.conectar()
+        cursor = conexion.cursor()
+        try:
+            cursor.execute(consulta, valores)
+            conexion.commit()
+        except sqlite3.Error as e:
+            print(f"❌ Error actualizando {tabla}: {e}")
+        finally:
+            conexion.close()
 
     def eliminar(self, tabla, condicion, parametros=()):
         consulta = f"DELETE FROM {tabla} WHERE {condicion}"
@@ -279,3 +289,73 @@ class ConexionBase:
                     "exito": False,
                     "error": f"Error al registrar cliente: {str(e)}"
                 }
+
+    def registrar_cierre_dia(self, data: dict):
+        try:
+            # Insertar en cierres_dia
+            cierre_data = {
+                "fecha": data["fecha"],
+                "total_ingresos": data["total_ingresos"],
+                "total_egresos": data["total_egresos"],
+                "total_neto": data["total_neto"],
+                "observaciones": data.get("observaciones", ""),
+                "creado_por": data.get("creado_por", "")
+            }
+            cierre_id, error = self.insertar("cierres_dia", cierre_data)
+            if error:
+                return {"exito": False, "error": error}
+
+            # Insertar en cierres_dia_detalle_pagos y movimientos
+            for tipo_pago, contenido in data["tipos_pago"].items():
+                monto_ingreso = contenido["monto"]
+                self.insertar("cierres_dia_detalle_pagos", {
+                    "cierre_id": cierre_id,
+                    "tipo_pago": tipo_pago,
+                    "monto": monto_ingreso
+                })
+
+                for tipo, ids in contenido["descripcion"].items():
+                    for id_ref, monto in ids.items():
+                        self.insertar("cierres_dia_movimientos", {
+                            "cierre_id": cierre_id,
+                            "tipo": tipo,
+                            "id_referencia": id_ref,
+                            "monto": monto,
+                            "tipo_pago": tipo_pago
+                        })
+
+                # Actualizar monto en caja_mayor sumando ingresos
+                self.actualizar("caja_mayor", {"monto": f"monto + {monto_ingreso}"}, {"nombre": tipo_pago}, expresion_sql=True)
+
+            # Insertar en cierres_dia_detalle_categorias
+            self.insertar("cierres_dia_detalle_categorias", {
+                "cierre_id": cierre_id,
+                "descripcion": "ventas_y_servicios",
+                "monto": data["total_ingresos"]
+            })
+            self.insertar("cierres_dia_detalle_categorias", {
+                "cierre_id": cierre_id,
+                "descripcion": "gastos",
+                "monto": data["total_egresos"]
+            })
+
+            # Restar gastos del monto en caja_mayor y registrar movimientos
+            for tipo_pago, items in data.get("gastos", {}).items():
+                if tipo_pago == "monto":
+                    continue
+                for id_ref, monto in items.items():
+                    self.insertar("cierres_dia_movimientos", {
+                        "cierre_id": cierre_id,
+                        "tipo": "gasto",
+                        "id_referencia": id_ref,
+                        "monto": monto,
+                        "tipo_pago": tipo_pago
+                    })
+
+                    # Actualizar monto en caja_mayor restando egresos
+                    self.actualizar("caja_mayor", {"monto": f"monto - {monto}"}, {"nombre": tipo_pago}, expresion_sql=True)
+
+            return {"exito": True, "cierre_id": cierre_id}
+
+        except Exception as e:
+            return {"exito": False, "error": str(e)}
