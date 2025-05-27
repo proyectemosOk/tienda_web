@@ -253,7 +253,7 @@ def crear_tablas(base):
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             id_producto INTEGER NOT NULL,         
             id_usuario INTEGER NOT NULL,          
-            fecha_hora TEXT NOT NULL,             
+            fecha_hora DATETIME NOT NULL,             
             detalle TEXT                         
         )
     ''')
