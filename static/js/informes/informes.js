@@ -2,7 +2,7 @@ const puntos = new Intl.NumberFormat('es-CO').format;
 
 async function obtenerDatosJSONVentas() {
     try {
-        const response = await fetch("/api/ventas/cargar");
+        const response = await fetch("/api/ventas/dia");
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
