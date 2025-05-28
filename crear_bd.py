@@ -399,6 +399,7 @@ def crear_tablas(base):
             observaciones TEXT,
             creado_por TEXT,
             creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+            FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
         );
     ''')
 
@@ -409,6 +410,7 @@ def crear_tablas(base):
             tipo_pago TEXT NOT NULL,
             monto REAL NOT NULL,
             FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+            FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
         );
     ''')
 
@@ -421,6 +423,7 @@ def crear_tablas(base):
             FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
         );
     ''')
+
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS cierres_dia_movimientos (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -430,6 +433,9 @@ def crear_tablas(base):
     referencia_id TEXT,
     monto REAL,
     FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+    FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
+    FOREIGN KEY (referencias_id) REFERENCES ordenes(id) ON DELETE CASCADE
+    FOREIGN KEY (referencias_id) REFERENCES ventas(id) ON DELETE CASCADE
 );
 ''')
 
@@ -472,6 +478,8 @@ def crear_tablas(base):
         pago REAL,
         estado INTEGER,
         FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre)
+        FOREIGN KEY (tipo) REFERENCES tipos(id)
+
     )""")
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servicios (
