@@ -21,7 +21,6 @@ function obtenerDatosJSONEmpresa() {
         nit: "900.123.456-1",
         añoFundacion: "2005",
         tamañoEmpresa: "mediana",
-        registroMercantil: "12345-67"
     };
 }
 
