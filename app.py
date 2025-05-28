@@ -8,11 +8,8 @@ from datetime import date
 import json
 import socket
 from werkzeug.utils import secure_filename
-<<<<<<< HEAD
 from tarjetas import *
-=======
 import bcrypt
->>>>>>> origin/jesus
 
 app = Flask(__name__)
 app.register_blueprint(extras)  # lo registramos
@@ -228,7 +225,7 @@ def obtener_resumen_ventas():
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE fecha = ?
+            WHERE DATE(fecha) = ?
             GROUP BY tp.nombre
         ''',((fecha_hoy),))
         print(desglose_pagos)
@@ -237,7 +234,7 @@ def obtener_resumen_ventas():
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
-            WHERE fecha = ?
+            WHERE DATE(fecha) = ?
         ''',((fecha_hoy),))
 
         resumen = [

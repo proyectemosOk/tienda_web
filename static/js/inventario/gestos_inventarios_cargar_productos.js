@@ -15,6 +15,7 @@ function cargar_productos() {
 
         // Iterar sobre los productos y crear filas
         data.productos.forEach(producto => {
+            
             const fila = document.createElement('tr');
             fila.innerHTML = `
             <td>${producto.codigo}</td>
@@ -37,6 +38,7 @@ function cargar_productos() {
                 </div>
             </td>
         `;
+
             tbody.appendChild(fila);
         });
     })
