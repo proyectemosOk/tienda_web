@@ -218,20 +218,22 @@ def obtener_resumen_ventas():
     try:
         # Desglose global por método de pago
         fecha_hoy = date.today().isoformat()
+        print(fecha_hoy)
         desglose_pagos = conn_db.ejecutar_personalizado('''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = 1 AND fecha = ?
+            WHERE fecha = ?
             GROUP BY tp.nombre
         ''',((fecha_hoy),))
+        print(desglose_pagos)
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
         ventas = conn_db.ejecutar_personalizado('''
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
-            WHERE v.estado = 1 AND fecha = ?
+            WHERE fecha = ?
         ''',((fecha_hoy),))
 
         resumen = [
@@ -958,7 +960,7 @@ def crear_venta():
         "total_compra": total_precio_compra,
         "total_utilidad": total_utilidad
     }, "id = ?", (id,))
-    
+    print("vamos bien")
     return jsonify({
         "valido": True,
         "mensaje": f"Venta exitosa {id}"
@@ -998,6 +1000,24 @@ def cargar_monedero():
     fecha =  datetime.now().strftime("%Y-%m-%d")
     
     
+# Api guardar monederos
+@app.route('/api/tipos_pago', methods=['POST'])
+def insertar_tipo_pago():
+    data = request.get_json()
+
+    nombre = data.get('nombre')
+    descripcion = data.get('descripcion', '')
+
+    if not nombre:
+        return jsonify({'ok': False, 'error': 'El nombre es obligatorio'}), 400
+
+    try:
+        id_pagos = conn_db.insertar("tipos_pago", {"nombre":nombre, "descripcion":descripcion});
+        conn_db.insertar("caja_mayor", {"nombre":nombre, "descripcion":descripcion});
+        return jsonify({'ok': True, 'id': id_pagos}), 201
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     
     host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
