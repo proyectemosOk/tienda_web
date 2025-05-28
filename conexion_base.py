@@ -62,6 +62,7 @@ class ConexionBase:
         placeholders = ", ".join("?" for _ in datos)
         consulta = f"INSERT INTO {tabla} ({columnas}) VALUES ({placeholders})"
         resultado = self.ejecutar_consulta(consulta, valores)
+        print(resultado)
 
         # Verificar si hubo error por restricción UNIQUE
         if isinstance(resultado, dict) and "error" in resultado:

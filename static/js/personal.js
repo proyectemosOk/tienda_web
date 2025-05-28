@@ -13,14 +13,16 @@ async function cargarDatosApi() {
     };
   }
 }
+
 async function insertarUserTabla() {
   const usuarios = await cargarDatosApi();
   usuarios.forEach(usuario => {
-    // agregarFila(usuario);
+    agregarFila(usuario);
     console.log(usuario)
   });
   
 }
+
 function agregarFila(usuario) {
   const form = document.getElementById('formUsuario');
   const tabla = document.getElementById('tablaUsuarios');
@@ -69,13 +71,14 @@ function agregarFila(usuario) {
 // ];
 // return usuarios;
 
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formUsuario');
   const tabla = document.getElementById('tablaUsuarios');
   let contador = 1;
   let modoEdicion = false;
   let filaEditando = null;
-  // insertarUserTabla();
+  insertarUserTabla();
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -86,7 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const telefono = document.getElementById('telefono').value.trim();
     const rol = document.getElementById('rol').value;
 
-    if (!nombre || pass || !email || !telefono || !rol) {
+    if (!nombre || !pass || !email || !telefono || !rol) {
       Swal.fire({
         icon: 'error',
         title: '❌ Error',
@@ -95,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const usuario = {usuario:nombre,contrasena:pass, email:email, telefono:telefono, rol:rol };
+    const usuario = {usuario:nombre,contrasena:pass, email:email, celular:telefono, rol:rol };
     try {
             const respuesta = await fetch("/api/new_usuario", {
                 method: "POST",
