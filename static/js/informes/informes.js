@@ -2,11 +2,13 @@ const puntos = new Intl.NumberFormat('es-CO').format;
 
 async function obtenerDatosJSONVentas() {
     try {
-        const response = await fetch("api/ventas/dia");
+        const response = await fetch("/api/ventas/cargar");
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
+        
         const data = await response.json();
+        console.log(data);
         return data;  // Usa objeto JS normal
     } catch (error) {
         console.error("Error al obtener datos de ventas:", error);

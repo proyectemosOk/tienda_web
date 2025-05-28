@@ -26,8 +26,7 @@ class TarjetasEmpresariales:
         try:
             consulta = """
                 SELECT id, nombre, descripcion, actual 
-                FROM tipos_pago 
-                WHERE actual IS NOT NULL AND actual > 0
+                FROM tipos_pago
                 ORDER BY nombre
             """
             
@@ -60,6 +59,7 @@ class TarjetasEmpresariales:
                     ) AND v.estado = 1
                 """
                 parametros = (fecha, tipo_pago_id)
+                
             else:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) as total
@@ -70,6 +70,7 @@ class TarjetasEmpresariales:
                 parametros = (fecha,)
             
             resultado = self.conn.ejecutar_personalizado(consulta, parametros)
+            
             return resultado[0][0] if resultado else 0
         except Exception as e:
             print(f"Error obteniendo ventas por tipo de pago: {e}")
@@ -193,6 +194,7 @@ generador_tarjetas = TarjetasEmpresariales(conn_db)
 
 @extras.route('/api/tarjetas-resumen', methods=['GET'])
 def obtener_tarjetas_resumen():
+    
     """Endpoint principal para obtener datos de tarjetas resumen"""
     try:
         datos = generador_tarjetas.generar_datos_tarjetas()

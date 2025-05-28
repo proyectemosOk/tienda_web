@@ -1,22 +1,22 @@
 {
     "fecha": "2025-05-25",
-    "total_ingresos": 170000,
-    "total_egresos": 140000,
-    "total_neto": 30000,
+    "total_ingresos": 370000,
+    "total_egresos": 280000,
+    "total_neto": 90000,
     "observaciones": "Cierre sin novedades",
     "creado_por": "admin",
     "tipos_pago": {
         "Efectivo": {
             "descripcion": {
                 "ventas": {
-                    "id_1": 50000,
+                    "id_1": 150000,
                     "id_2": 20000
                 },
                 "servicios": {
-                    "id_2": 30000
+                    "id_2": 130000
                 }
             },
-            "monto": 100000
+            "monto": 300000
         },
         "Tarjeta": {
             "descripcion": {
@@ -29,6 +29,17 @@
         }
     },
     "gastos": {
+        "Efectivo": {
+            "id_1": 50000,
+            "id_2": 20000
+        },
+        "Transferencia": {
+            "id_1": 50000,
+            "id_2": 20000
+        },
+        "monto":140000
+    },
+    "facturas": {
         "Efectivo": {
             "id_1": 50000,
             "id_2": 20000
