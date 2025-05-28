@@ -224,7 +224,11 @@ def obtener_resumen_ventas():
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+<<<<<<< HEAD
             WHERE fecha = ?
+=======
+            WHERE v.estado = 1 AND DATE(fecha) = ?
+>>>>>>> b2ea4f864798ec0363c6d6c6e09afc1d5f8cf486
             GROUP BY tp.nombre
         ''',((fecha_hoy),))
         print(desglose_pagos)
@@ -233,7 +237,11 @@ def obtener_resumen_ventas():
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
+<<<<<<< HEAD
             WHERE fecha = ?
+=======
+            WHERE v.estado = 1 AND DATE(fecha) = ?
+>>>>>>> b2ea4f864798ec0363c6d6c6e09afc1d5f8cf486
         ''',((fecha_hoy),))
 
         resumen = [
@@ -261,7 +269,7 @@ def obtener_detalle_venta(id_venta):
     try:
         # Datos generales de la venta con cliente y vendedor
         venta_info = conn_db.ejecutar_personalizado('''
-            SELECT v.id, v.fecha, v.total_venta, c.nombre AS cliente, u.usuario AS vendedor
+            SELECT v.id, v.fecha, v.total_venta, c.nombre AS cliente, u.nombre AS vendedor
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
             JOIN usuarios u ON v.vendedor_id = u.id
@@ -641,7 +649,7 @@ def obtener_metodos_pago():
         metodos_formateados = [{
             "id": metodo[0],
             "nombre": metodo[1]
-        } for metodo in metodos[0:3]]
+        } for metodo in metodos]
         
         return jsonify({
             'metodos': metodos_formateados,

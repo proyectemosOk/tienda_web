@@ -246,61 +246,11 @@ async function cargarMetodosPago() {
       
       const paymentMethodsContainer = document.querySelector('.payment-methods');
       paymentMethodsContainer.innerHTML = ''; // Limpiar contenedor
-      
-      if (data.total <= 3) {
-          // Mostrar todos como botones
-          data.metodos.forEach(metodo => {
-              const metodoElement = crearElementoMetodoPago(metodo);
-              paymentMethodsContainer.appendChild(metodoElement);
-          });
-      } else {
-          // Mostrar solo Efectivo y CXC como botones, el resto en select
-          const efectivo = data.metodos.find(m => m.nombre.toLowerCase() === 'efectivo');
-          const cxc = data.metodos.find(m => m.nombre.toLowerCase() === 'cxc');
-          
-          // Agregar Efectivo si existe
-          if (efectivo) {
-              paymentMethodsContainer.appendChild(crearElementoMetodoPago(efectivo));
-          }
-          
-          // Agregar CXC si existe
-          if (cxc) {
-              paymentMethodsContainer.appendChild(crearElementoMetodoPago(cxc));
-          }
-          
-          // Crear select para los demás métodos
-          const otrosMetodos = data.metodos.filter(m => 
-              m.nombre.toLowerCase() !== 'efectivo' && 
-              m.nombre.toLowerCase() !== 'cxc'
-          );
-          
-          if (otrosMetodos.length > 0) {
-              const selectContainer = document.createElement('div');
-              selectContainer.className = 'payment-option';
-              
-              const select = document.createElement('select');
-              select.className = 'form-select otros-metodos';
-              select.innerHTML = '<option value="">Otros métodos</option>';
-              
-              otrosMetodos.forEach(metodo => {
-                  const option = document.createElement('option');
-                  option.value = metodo.id;
-                  option.textContent = metodo.nombre;
-                  select.appendChild(option);
-              });
-              
-              select.addEventListener('change', function() {
-                  if (this.value) {
-                      const metodoSeleccionado = otrosMetodos.find(m => m.id == this.value);
-                      mostrarInputPago(metodoSeleccionado);
-                      this.value = '';
-                  }
-              });
-              
-              selectContainer.appendChild(select);
-              paymentMethodsContainer.appendChild(selectContainer);
-          }
-      }
+       // Mostrar todos como botones
+        data.metodos.forEach(metodo => {
+            const metodoElement = crearElementoMetodoPago(metodo);
+            paymentMethodsContainer.appendChild(metodoElement);
+        });
   } catch (error) {
       console.error('Error al cargar métodos de pago:', error);
   }
