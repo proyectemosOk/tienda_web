@@ -12,7 +12,7 @@
 </head>
 
 <body>
-    <label for="menu-toggle" class="boton-menu" style="background-color: #f8fafc;">
+    <div for="menu-toggle" class="boton-menu" style="background-color: #f8fafc;" id="cont_menu">
         <div id="casa">
             <img src="/static/Iconos/app.png" alt="CASA" class="casa">
             <br>
@@ -74,7 +74,7 @@
             <br>
             <div class="texto"><span><b>Informes</b></span></div>
         </div>
-    </label>
+    </div>
     <form id="formDatosEmpresa" novalidate>
         <!-- Logo en esquina superior derecha -->
         <label for="logoInput" class="logo-container" title="Haz clic para cambiar logo">
@@ -84,24 +84,44 @@
 
         <!-- Datos generales -->
         <h2>Información General</h2>
-        <div class="form-grid">
-            <div>
-                <label for="nombreEmpresa">Nombre Legal</label>
-                <input type="text" id="nombreEmpresa" name="nombreEmpresa" required placeholder="Ej: Constructora Andina S.A." />
-            </div>
-            <div>
-                <label for="razonSocial">Razón Social</label>
-                <input type="text" id="razonSocial" name="razonSocial" required placeholder="Ej: Constructora Andina Sociedad Anónima" />
-            </div>
-            <div>
-                <label for="nombreFantasia">Nombre de Fantasía</label>
-                <input type="text" id="nombreFantasia" name="nombreFantasia" placeholder="Ej: Andina Proyectos" />
-            </div>
-            <div>
-                <label for="giro">Giro Comercial</label>
-                <input type="text" id="giro" name="giro" required placeholder="Ej: Construcción de edificios" />
-            </div>
-        </div>
+        <!-- Modificación en la sección de Información General -->
+<div class="form-grid">
+    <div>
+        <label for="nombreEmpresa">Nombre Legal</label>
+        <input type="text" id="nombreEmpresa" name="nombreEmpresa" required placeholder="Ej: Constructora Andina S.A." />
+    </div>
+    <div>
+        <label for="razonSocial">Razón Social</label>
+        <input type="text" id="razonSocial" name="razonSocial" required placeholder="Ej: Constructora Andina Sociedad Anónima" />
+    </div>
+    <div>
+        <label for="nit">NIT</label>
+        <input type="text" id="nit" name="nit" required placeholder="Ej: 900.123.456-1" pattern="^\d{3}\.\d{3}\.\d{3}-\d$" />
+    </div>
+    <div>
+        <label for="giro">Giro Comercial</label>
+        <input type="text" id="giro" name="giro" required placeholder="Ej: Construcción de edificios" />
+    </div>
+    <div>
+        <label for="añoFundacion">Año de Fundación</label>
+        <input type="number" id="añoFundacion" name="añoFundacion" min="1900" max="2025" placeholder="Ej: 2005" />
+    </div>
+    <div>
+        <label for="tamañoEmpresa">Tamaño de Empresa</label>
+        <select id="tamañoEmpresa" name="tamañoEmpresa">
+            <option value="">Seleccione</option>
+            <option value="micro">Microempresa</option>
+            <option value="pequeña">Pequeña</option>
+            <option value="mediana">Mediana</option>
+            <option value="grande">Grande</option>
+        </select>
+    </div>
+    <div>
+        <label for="registroMercantil">Registro Mercantil</label>
+        <input type="text" id="registroMercantil" name="registroMercantil" placeholder="Ej: 12345-67" />
+    </div>
+</div>
+
 
         <!-- Contacto -->
         <h2>Contacto</h2>
@@ -109,10 +129,6 @@
             <div>
                 <label for="direccion">Dirección Principal</label>
                 <input type="text" id="direccion" name="direccion" required placeholder="Ej: Av. Providencia 1234" />
-            </div>
-            <div>
-                <label for="comuna">Comuna</label>
-                <input type="text" id="comuna" name="comuna" required placeholder="Ej: Providencia" />
             </div>
             <div>
                 <label for="region">Región</label>
@@ -130,7 +146,6 @@
                 <label for="ciudad">Ciudad</label>
                 <select id="ciudad" name="ciudad" required>
                     <option value="">Seleccione una ciudad</option>
-                    <!-- Las ciudades se llenarán dinámicamente -->
                 </select>
             </div>
             <div>

@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="/static/css/menu-global.css" />
 </head>
 <body>
-  <label for="menu-toggle" class="boton-menu" style="background-color: #f2f2f3;">
+  <div id="cont_menu" for="menu-toggle" class="boton-menu" style="background-color: #f2f2f3;">
         <div id="casa">
             <img src="/static/Iconos/app.png" alt="CASA" class="casa">
             <br>
@@ -72,7 +72,7 @@
             <br>
             <div class="texto"><span><b>Informes</b></span></div>
         </div>
-  </label>
+      </div>
   <div class="navbar">
     <h2>Sistema de Gestión de Usuarios</h2>
   </div>
@@ -112,11 +112,8 @@
     </div>
   </div>
 
-<<<<<<< HEAD
 
-=======
   <!-- <script src="/static/js/personal.js"></script> -->
->>>>>>> origin/jesus
   <script src="{{ url_for('static', filename='js/personal.js') }}"></script>
   <script src="/static/js/home.js"></script>
 

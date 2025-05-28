@@ -354,7 +354,7 @@ async function actualizarDatosVentas() {
 function inicializarPestanaServicios() {
     const ctxServicios = document.getElementById('graficoServicios').getContext('2d');
     serviciosChart = new Chart(ctxServicios, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
             labels: [],
             datasets: [{
