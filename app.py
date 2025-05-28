@@ -224,11 +224,7 @@ def obtener_resumen_ventas():
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-<<<<<<< HEAD
             WHERE fecha = ?
-=======
-            WHERE v.estado = 1 AND DATE(fecha) = ?
->>>>>>> b2ea4f864798ec0363c6d6c6e09afc1d5f8cf486
             GROUP BY tp.nombre
         ''',((fecha_hoy),))
         print(desglose_pagos)
@@ -237,11 +233,7 @@ def obtener_resumen_ventas():
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
-<<<<<<< HEAD
             WHERE fecha = ?
-=======
-            WHERE v.estado = 1 AND DATE(fecha) = ?
->>>>>>> b2ea4f864798ec0363c6d6c6e09afc1d5f8cf486
         ''',((fecha_hoy),))
 
         resumen = [
