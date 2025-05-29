@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos_globales/al_min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos_globales/bustra_mind.css') }}">
     <link rel="stylesheet" href="/static/css/menu-global.css" />
-    
+
 </head>
 
 <body>
@@ -24,50 +24,50 @@
             <br>
             <div class="texto"><span><b>Monederos</b></span></div>
         </div>
-    
+
         <!-- Ventas -->
         <div id="ventas">
             <img src="/static/Iconos/ventas.png" alt="VENTAS">
             <br>
             <div class="texto"><span><b>Ventas</b></span></div>
         </div>
-    
+
         <!-- Inventario -->
         <div id="inventario">
             <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
             <br>
             <div class="texto"><span><b>Inventario</b></span></div>
         </div>
-    
+
         <!-- Cuentas por cobrar/pagar -->
         <div id="cuentas">
             <img src="/static/Iconos/cobro.png" alt="COBRO">
             <br>
             <div class="texto"><span><b>CXC/CXP</b></span></div>
-            
+
         </div>
-    
+
         <!-- Personal -->
         <div id="personal">
             <img src="/static/Iconos/personal.png" alt="PERSONAL">
             <br>
             <div class="texto"><span><b>Personal</b></span></div>
         </div>
-    
+
         <!-- Configuraciones -->
         <div id="configuraciones">
             <img src="/static/Iconos/configuracion.png" alt="CONFIG">
             <br>
             <div class="texto"><span><b>Ajustes</b></span></div>
         </div>
-    
+
         <!-- Empresa -->
         <div id="empresa">
             <img src="/static/Iconos/empresa.png" alt="EMPRESA">
             <br>
             <div class="texto"><span><b>Empresa</b></span></div>
         </div>
-    
+
         <!-- Informes -->
         <div id="informes">
             <img src="/static/Iconos/informes.png" alt="INFORMES">
@@ -77,18 +77,10 @@
     </label>
     <div class="container-fluid">
         <header class="row bg-primary text-white py-3">
-            <!-- Icono Home a la izquierda -->
-            <div class="col-2 d-flex align-items-center">
-                <a class="nav-link active" href="/home">
-                    <img src="{{ url_for('static', filename='svg/house.svg') }}" alt="" width="32">
-                </a>
-            </div>
             <!-- Título centrado -->
             <div class="col-8 d-flex align-items-center justify-content-center">
                 <h1 class="mb-0">Sistema de Gestión de Inventario</h1>
             </div>
-            <!-- Columna vacía para equilibrar -->
-            <div class="col-2"></div>
         </header>
 
 
@@ -97,22 +89,25 @@
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
                         <a class="nav-link active" href="#entrada-productos" data-bs-toggle="tab">
-                            <i class="fas"></i>  Entrada de Productos
+                            <i class="fas"></i> Entrada de Productos
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#proveedores" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/truck-fast.svg') }}" alt="" width="24"> Proveedores
+                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/truck-fast.svg') }}" alt=""
+                                width="24"> Proveedores
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#inventario" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/warehouse.svg') }}" alt="" width="24"> Inventario
+                        <a class="nav-link" href="#inventarios" data-bs-toggle="tab">
+                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/warehouse.svg') }}" alt=""
+                                width="24"> Inventario
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#reportes" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/chart-bar.svg') }}" alt="" width="24"> Reportes
+                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/chart-bar.svg') }}" alt=""
+                                width="24"> Reportes
                         </a>
                     </li>
                 </ul>
@@ -273,7 +268,8 @@
                                         <input type="email" class="form-control" id="email-proveedor" required>
                                     </div>
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas"></i><img src="{{ url_for('static', filename='svg/save.svg') }}" alt="" width="16"> Guardar Proveedor
+                                        <i class="fas"></i><img src="{{ url_for('static', filename='svg/save.svg') }}"
+                                            alt="" width="16"> Guardar Proveedor
                                     </button>
                                 </form>
                             </div>
@@ -306,7 +302,7 @@
             </div>
 
             <!-- Inventario -->
-            <div class="tab-pane fade" id="reportes">
+            <div class="tab-pane fade" id="inventarios">
                 <!-- Contenido de Inventario -->
                 <div class="card">
                     <div class="card-header bg-primary text-white">
@@ -333,8 +329,31 @@
                 </div>
             </div>
 
-            <!-- Reportes -->
-            
+            <div class="tab-pane fade" id="reportes">
+                <!-- Contenido de Reportes -->
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Reporte de Entradas</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-entradas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title">Reporte de Stock</h3>
+                            </div>
+                            <div class="card-body">
+                                <canvas id="grafico-stock"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -350,7 +369,6 @@
     <script src="{{ url_for('static', filename='js/inventario/gestor_inventario_1.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventario/gestos_inventarios_cargar_productos.js') }}"></script>
     <script src="{{ url_for('static', filename='js/inventario/guardar_proveedor.js') }}"></script>
-    
     <script src="{{ url_for('static', filename='js/inventario/gestor_entradas.js') }}"></script>
     <script src="{{ url_for('static', filename='js/swall.js') }}"></script>
     <script src="/static/js/home.js"></script>
