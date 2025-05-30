@@ -1020,9 +1020,17 @@ def insertar_tipo_pago():
         return jsonify({'ok': True, 'id': id_pagos}), 201
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
-
+@app.route('/api/turno/cerrar_dia', methods=['POST'])
+def cerrar_turno():
+    data = request.get_json()
+    print(data)
+    if not data:
+        return jsonify({'ok': False, 'error': 'Datos vacios'}), 400
+    try:
+        return jsonify({'ok': True, 'mensaje': "Regisstro exitoso"}), 201
+    except Exception as e:
+        return jsonify({'ok': False, 'error': str(e)}), 500
 if __name__ == '__main__':
-    
     host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
     print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
     app.run(debug=True, host=host_ip, port=5000)
