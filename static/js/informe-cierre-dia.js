@@ -77,9 +77,33 @@ function displayGeneralData() {
     document.getElementById('total-ingresos').textContent = formatCurrency(reporteData.total_ingresos);
     document.getElementById('total-egresos').textContent = formatCurrency(reporteData.total_egresos);
     document.getElementById('total-neto').textContent = formatCurrency(reporteData.total_neto);
-    document.getElementById('observaciones').textContent += reporteData.observaciones;
 }
-
+document.getElementById("observaciones").addEventListener("input", function(i){
+    reporteData.observaciones = i.target.value;
+})
+async function cerrarDiaTurno(datos) {
+    try {
+      const respuesta = await fetch('/api/turno/cerrar_dia', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+      });
+  
+      if (!respuesta.ok) {
+        throw new Error(`Error: ${respuesta.status}`);
+      }
+  
+      const resultado = await respuesta.json();
+      console.log('Respuesta del servidor:', resultado);
+      return resultado;
+    } catch (error) {
+      console.error('Hubo un problema al cerrar el día:', error);
+      return null;
+    }
+  } 
+  
 // Función para mostrar los tipos de pago
 function displayTiposPago() {
     const container = document.getElementById('tipos-pago-container');
