@@ -12,18 +12,12 @@ def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
 
         # 1. Desactivar validación de claves foráneas temporalmente
         cursor.execute("PRAGMA foreign_keys = OFF;")
-        # 6. Volver a activar claves foráneas
-        cursor.execute("PRAGMA foreign_keys = ON;")
-
-        # 7. Comprobar integridad referencial
-        cursor.execute("PRAGMA foreign_key_check;")
-        errores_fk = cursor.fetchall()
-        if True:
-            return
+        
         # 1.1. Borrar la tabla original
+        cursor.execute("DROP TABLE usuarios_old;")
 
         # 2. Renombrar la tabla original
-        cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+        # cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
         
 
         # 3. Crear nueva tabla sin CHECK en 'rol'
@@ -38,14 +32,14 @@ def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
             );
         ''')
 
-        # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
-        cursor.execute('''
-            INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
-            SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
-        ''')
+        # # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
+        # cursor.execute('''
+        #     INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+        #     SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+        # ''')
 
-        # 5. Borrar la tabla original
-        cursor.execute("DROP TABLE usuarios_old;")
+        # # 5. Borrar la tabla original
+        # cursor.execute("DROP TABLE usuarios_old;")
 
         # 6. Volver a activar claves foráneas
         cursor.execute("PRAGMA foreign_keys = ON;")
@@ -104,10 +98,10 @@ def crear_tablas(base):
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        usuario TEXT NOT NULL UNIQUE,  -- UNIQUE para evitar duplicados
+        nombre TEXT NOT NULL UNIQUE,  -- UNIQUE para evitar duplicados
         contrasena TEXT NOT NULL,
         email TEXT NOT NULL,
-        celular TEXT NO NULL,
+        telefono TEXT NO NULL,
         rol TEXT NOT NULL
     )
     ''')
@@ -398,7 +392,7 @@ def crear_tablas(base):
             total_neto REAL DEFAULT 0,
             observaciones TEXT,
             creado_por TEXT,
-            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
         );
     ''')

@@ -104,12 +104,6 @@
                                 width="24"> Inventario
                         </a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#reportes" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/chart-bar.svg') }}" alt=""
-                                width="24"> Reportes
-                        </a>
-                    </li>
                 </ul>
             </div>
         </nav>
@@ -325,32 +319,6 @@
                                 <!-- Productos del inventario se agregarán dinámicamente -->
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-
-            <div class="tab-pane fade" id="reportes">
-                <!-- Contenido de Reportes -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title">Reporte de Entradas</h3>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="grafico-entradas"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title">Reporte de Stock</h3>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="grafico-stock"></canvas>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>

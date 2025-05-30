@@ -7,7 +7,7 @@ def crear_usuarios_admin_y_ventas(nombre_bd="tienda_jfleong6_1.db"):
 
     try:
         # Hashear contraseñas
-        contrasena_admin = bcrypt.hashpw("Adm1n321".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+        contrasena_admin = bcrypt.hashpw("4dm1n321".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
         contrasena_ventas = bcrypt.hashpw("V3nt45321".encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         # Insertar usuarios si no existen
@@ -19,7 +19,7 @@ def crear_usuarios_admin_y_ventas(nombre_bd="tienda_jfleong6_1.db"):
         for usuario in usuarios:
             try:
                 cursor.execute('''
-                    INSERT INTO usuarios (usuario, contrasena, email, celular, rol)
+                    INSERT INTO usuarios (nombre, contrasena, email, telefono, rol)
                     VALUES (?, ?, ?, ?, ?)
                 ''', usuario)
             except sqlite3.IntegrityError:
