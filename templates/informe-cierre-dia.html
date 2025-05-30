@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cierre de día</title>
+    <link rel="stylesheet" href="/static/css/informe-cierre-dia.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CIERRE DE DIA</h1>
+            <div class="date-info">
+                <span id="fecha">Fecha: </span>
+            </div>
+        </header>
+
+        <section class="resumen">
+            <h2>Resumen General</h2>
+            <div class="resumen-grid">
+                <div class="card-ingresos">
+                    <h3>Ingresos</h3>
+                    <p id="total-ingresos">$0</p>
+                </div>
+                <div class="card-egresos">
+                    <h3>Egresos</h3>
+                    <p id="total-egresos">$0</p>
+                </div>
+                <div class="card-neto">
+                    <h3>Total Neto</h3>
+                    <p id="total-neto">$0</p>
+                </div>
+            </div>
+            <div class="observaciones">
+                <p id="observaciones">Observaciones: </p>
+            </div>
+        </section>
+
+        <section class="detalle">
+            <div class="ingresos-detalle">
+              <h2>Ingresos por Tipo de Pago</h2>
+              <div id="tipos-pago-container" class="detalle-container"></div>
+            </div>
+          
+            <div class="egresos-detalle">
+              <div class="gastos-detalle">
+                <h3>Gastos</h3>
+                <div id="gastos-container" class="detalle-container"></div>
+              </div>
+              <div class="facturas-detalle">
+                <h3>Facturas</h3>
+                <div id="facturas-container" class="detalle-container"></div>
+              </div>
+            </div>
+          </section>          
+    </div>
+
+    <script src="/static/js/informe-cierre-dia.js"></script>
+</body>
+</html>
