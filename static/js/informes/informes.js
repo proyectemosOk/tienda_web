@@ -6,7 +6,7 @@ async function obtenerDatosJSONVentas() {
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
-        
+
         const data = await response.json();
         console.log(data);
         return data;  // Usa objeto JS normal
@@ -118,31 +118,51 @@ function obtenerDetallesExtrasServicio(id) {
     };
 }
 
-function obtenerDatosEstadisticas(periodo) {
-    const datosPeriodos = {
-        semana: {
-            etiquetas: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
-            ventas: [200, 300, 250, 280, 300, 350, 400],
-            servicios: [50, 60, 70, 80, 90, 100, 110]
-        },
-        mes: {
-            etiquetas: Array.from({ length: 30 }, (_, i) => `Día ${i + 1}`),
-            ventas: Array.from({ length: 30 }, () => Math.floor(Math.random() * 400) + 100),
-            servicios: Array.from({ length: 30 }, () => Math.floor(Math.random() * 200) + 50)
-        },
-        trimestre: {
-            etiquetas: ['Ene', 'Feb', 'Mar'],
-            ventas: [5000, 5500, 6000],
-            servicios: [2600, 2700, 2900]
-        },
-        año: {
-            etiquetas: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
-            ventas: [16000, 16500, 17000, 18000, 17500, 18500, 19000, 20000, 21000, 21500, 22000, 23000],
-            servicios: [7200, 7300, 7500, 7800, 7700, 8000, 8100, 8300, 8500, 8700, 8900, 9100]
-        }
+function obtenerDatosSemana() {
+    return {
+        etiquetas: ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'],
+        ventas: [200, 300, 250, 280, 300, 350, 400],
+        servicios: [50, 60, 70, 80, 90, 100, 110]
     };
+}
 
-    return datosPeriodos[periodo] || datosPeriodos['año'];
+function obtenerDatosMes() {
+    return {
+        etiquetas: Array.from({ length: 30 }, (_, i) => `Día ${i + 1}`),
+        ventas: Array.from({ length: 30 }, () => Math.floor(Math.random() * 400) + 100),
+        servicios: Array.from({ length: 30 }, () => Math.floor(Math.random() * 200) + 50)
+    };
+}
+
+function obtenerDatosTrimestre() {
+    return {
+        etiquetas: ['Ene', 'Feb', 'Mar'],
+        ventas: [5000, 5500, 6000],
+        servicios: [2600, 2700, 2900]
+    };
+}
+
+function obtenerDatosAño() {
+    return {
+        etiquetas: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+        ventas: [16000, 16500, 17000, 18000, 17500, 18500, 19000, 20000, 21000, 21500, 22000, 23000],
+        servicios: [7200, 7300, 7500, 7800, 7700, 8000, 8100, 8300, 8500, 8700, 8900, 9100]
+    };
+}
+
+function obtenerDatosEstadisticas(periodo) {
+    switch (periodo) {
+        case 'semana':
+            return obtenerDatosSemana();
+        case 'mes':
+            return obtenerDatosMes();
+        case 'trimestre':
+            return obtenerDatosTrimestre();
+        case 'año':
+            return obtenerDatosAño();
+        default:
+            return obtenerDatosAño();
+    }
 }
 
 function verDetalleHistorial(id) {
@@ -210,7 +230,7 @@ function verDetalleHistorial(id) {
         <hr>
         ${detallesAdicionales}
     `;
-    
+
     mostrarModal('Detalle Ampliado del Registro Histórico', contenido);
 }
 
@@ -224,18 +244,48 @@ let serviciosPeriodoChart = null;
 let periodoActual = 'semana';
 
 // Colores para gráficos y estados
-const colores = [
-    'rgba(252, 211, 77, 0.7)',   // Pendiente - Amarillo (bg-warning)
-    'rgba(59, 130, 246, 0.7)',   // En Proceso - Azul (bg-info)
-    'rgba(34, 197, 94, 0.7)',    // Listo - Verde (bg-success)
-    'rgba(108, 117, 125, 0.7)'   // Entregado - Gris oscuro (bg-secondary)
-];
+function generarColores(cantidad) {
+    // Colores base predefinidos
+    const coloresBase = [
+        'rgba(252, 211, 77, 0.7)', 
+        'rgba(59, 130, 246, 0.7)', 
+        'rgba(34, 197, 94, 0.7)',  
+        'rgba(108, 117, 125, 0.7)',
+        'rgba(239, 68, 68, 0.7)',  
+        'rgba(168, 85, 247, 0.7)', 
+        'rgba(245, 158, 11, 0.7)', 
+        'rgba(20, 184, 166, 0.7)', 
+        'rgba(236, 72, 153, 0.7)', 
+        'rgba(99, 102, 241, 0.7)', 
+    ];
+
+    // Si necesitamos menos colores que los predefinidos, devolver solo los necesarios
+    if (cantidad <= coloresBase.length) {
+        return coloresBase.slice(0, cantidad);
+    }
+
+    // Si necesitamos más colores, generar adicionales
+    const colores = [...coloresBase];
+
+    // Generar colores adicionales usando HSL para mejor distribución
+    for (let i = coloresBase.length; i < cantidad; i++) {
+        const hue = (i * 137.508) % 360; // Usar proporción áurea para distribución uniforme
+        const saturation = 60 + (i % 3) * 15; // Variar saturación (60%, 75%, 90%)
+        const lightness = 45 + (i % 4) * 10;  // Variar luminosidad (45%, 55%, 65%, 75%)
+
+        colores.push(`hsla(${hue}, ${saturation}%, ${lightness}%, 0.7)`);
+    }
+
+    return colores;
+};
+
+const colores = generarColores();
 
 // Estado visual para servicios actualizado en memoria
 let serviciosEstadoMap = {};
 
 // Inicialización cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     inicializarEstadoServicios();
     inicializarPestanaVentas();
     inicializarPestanaServicios();
@@ -245,14 +295,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const tabElems = document.querySelectorAll('button[data-bs-toggle="tab"]');
     tabElems.forEach(tab => {
-        tab.addEventListener('shown.bs.tab', function(event) {
+        tab.addEventListener('shown.bs.tab', function (event) {
             const targetId = event.target.getAttribute('data-bs-target').substring(1);
             actualizarPestanaActiva(targetId);
         });
     });
 
     document.querySelectorAll('.periodo-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             document.querySelectorAll('.periodo-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             periodoActual = this.getAttribute('data-periodo');
@@ -271,7 +321,7 @@ function inicializarEstadoServicios() {
 
 // Función para actualizar la pestaña activa
 function actualizarPestanaActiva(pestanaId) {
-    switch(pestanaId) {
+    switch (pestanaId) {
         case 'ventas':
             actualizarDatosVentas();
             break;
@@ -330,8 +380,8 @@ async function actualizarDatosVentas() {
     const cuerpoTablaVentas = document.getElementById('cuerpoTablaVentas');
 
     cuerpoTablaVentas.innerHTML = data.ventas
-    .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))  // 🧠 Ordena por fecha descendente
-    .map(venta => `
+        .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))  // 🧠 Ordena por fecha descendente
+        .map(venta => `
         <tr>
             <td>${venta.id}</td>
             <td>${venta.fecha}</td>
@@ -403,7 +453,7 @@ function actualizarDatosServicios() {
     } else {
         document.getElementById('totalServiciosCard').style.display = 'none';
         document.getElementById('pendientesCard').style.display = 'none';
-                document.getElementById('enProcesoCard').style.display = 'none';
+        document.getElementById('enProcesoCard').style.display = 'none';
         document.getElementById('listosCard').style.display = 'none';
         document.getElementById('entregadosCard').style.display = 'none';
     }
@@ -530,7 +580,7 @@ function inicializarPestanaHistorial() {
     fechaInicioInput.valueAsDate = inicioMes;
     fechaFinInput.valueAsDate = hoy;
 
-    document.getElementById('filtroHistorialForm').addEventListener('submit', function(e) {
+    document.getElementById('filtroHistorialForm').addEventListener('submit', function (e) {
         e.preventDefault();
         buscarHistorial();
     });
@@ -671,10 +721,11 @@ function actualizarEstadisticas() {
     document.getElementById('tasaConversion').textContent = `${Math.round((promedio / 500) * 100)}%`;
 }
 
+
 // ==================== FUNCIONES AUXILIARES ====================
 
 function getEstadoClase(estado) {
-    switch(estado.toLowerCase()) {
+    switch (estado.toLowerCase()) {
         case 'pendiente': return 'bg-warning text-dark';
         case 'en proceso': return 'bg-info text-dark';
         case 'listo': return 'bg-success';
@@ -955,8 +1006,44 @@ async function imprimirTicket(id) {
     const totalFinal = totalVenta + impuestos - descuento;
 
     const ticket = `
-<pre style="font-family: monospace; font-size: 11px;">
-        *** TICKET DE VENTA ***
+<html>
+<head>
+  <title>Ticket ${venta.id}</title>
+  <style>
+    @media print {
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        font-family: monospace;
+        font-size: 11px;
+        white-space: pre;
+      }
+
+      pre {
+        margin: 0;
+        padding: 5px 10px;
+      }
+    }
+
+    body {
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre;
+    }
+
+    pre {
+      margin: 0;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+<pre>
+    *** TICKET DE VENTA ***
 -------------------------------
 Venta ID: ${venta.id}
 Fecha: ${fecha}
@@ -976,11 +1063,15 @@ Métodos de Pago:
 ${pagoTexto}
 -------------------------------
 Gracias por su compra
-</pre>`;
+</pre>
+</body>
+</html>
+`;
 
-    const ventana = window.open('', '', 'width=400,height=600');
-    ventana.document.write(`<html><head><title>Ticket ${venta.id}</title></head><body>${ticket}</body></html>`);
+    const ventana = window.open('', ''); // ancho aproximado de 80mm en píxeles
+    ventana.document.write(ticket);
     ventana.document.close();
+    ventana.focus();
     ventana.print();
     ventana.close();
 }
@@ -1013,7 +1104,7 @@ function imprimirHistorial(id) {
         </html>
     `;
 
-    const ventanaImpresion = window.open('', '', 'width=600,height=400');
+    const ventanaImpresion = window.open('', '');
     ventanaImpresion.document.write(contenido);
     ventanaImpresion.document.close();
     ventanaImpresion.print();

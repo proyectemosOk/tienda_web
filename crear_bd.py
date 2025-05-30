@@ -473,9 +473,28 @@ def crear_tablas(base):
         estado INTEGER,
         FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
         FOREIGN KEY (servicio) REFERENCES tipos_pago(nombre),
-        FOREIGN KEY (tipo) REFERENCES tipos(id)
+        FOREIGN KEY (tipo) REFERENCES tipos(id),
+        FOREIGN KEY (estado) REFERENCES estados_servicios(id)
 
     )""")
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS estados_servicios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        estado TEXT NOT NULL
+    )""")
+     # Servicios por defecto
+    estados = [
+        (1, "Pendiente"),
+        (2, "En Proceso"),
+        (3, "Listo"),
+        (4, "Entregado")
+    ]
+    # Insertar los servicios si no existen
+    cursor.executemany(
+        "INSERT OR IGNORE INTO estados_servicios (id, estado) VALUES (?, ?)",
+        estados
+    )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servicios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,

@@ -360,3 +360,35 @@ class ConexionBase:
 
         except Exception as e:
             return {"exito": False, "error": str(e)}
+
+    def obtener_resumen_ordenes(self):
+        """
+        Devuelve una lista de órdenes con ID, estado_entrada como Descripción,
+        fecha como Fecha Ingreso y el estado (nombre) proveniente de la tabla estados_servicios.
+        """
+        consulta = """
+            SELECT o.id, o.estado_entrada, o.fecha, e.estado
+            FROM ordenes o
+            LEFT JOIN estados_servicios e ON o.estado = e.id
+        """
+
+        try:
+            resultados = self.ejecutar_personalizado(consulta)
+            if not resultados:
+                return []
+
+            resumen = []
+            for fila in resultados:
+                id_orden, descripcion, fecha_ingreso, estado_str = fila
+                resumen.append({
+                    "ID": id_orden,
+                    "Descripción": descripcion,
+                    "Fecha Ingreso": fecha_ingreso,
+                    "Estado": estado_str or "Desconocido"
+                })
+            return resumen
+
+        except Exception as e:
+            print(f"❌ Error al obtener resumen de órdenes con JOIN: {e}")
+            return []
+
