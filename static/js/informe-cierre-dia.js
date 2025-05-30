@@ -148,15 +148,15 @@ function displayTiposPago() {
     // Totales
     html += `
         <tr class="total-row">
-            <td colspan="2">Total Efectivo</td>
+            <td colspan="2"><b>Total Efectivo</b></td>
             <td>${formatCurrency(reporteData.tipos_pago.Efectivo.monto)}</td>
         </tr>
         <tr class="total-row">
-            <td colspan="2">Total Tarjeta</td>
+            <td colspan="2"><b>Total Tarjeta</b></td>
             <td>${formatCurrency(reporteData.tipos_pago.Tarjeta.monto)}</td>
         </tr>
         <tr class="total-row">
-            <td colspan="2">Total Ingresos</td>
+            <td colspan="2"><b>Total Ingresos</b></td>
             <td>${formatCurrency(reporteData.total_ingresos)}</td>
         </tr>
     `;
@@ -204,7 +204,7 @@ function displayGastos() {
     // Total gastos
     html += `
         <tr class="total-row">
-            <td colspan="2">Total Gastos</td>
+            <td colspan="2"><b>Total Gastos</b></td>
             <td>${formatCurrency(reporteData.gastos.monto)}</td>
         </tr>
     `;
@@ -253,7 +253,7 @@ function displayFacturas() {
     // Total facturas
     html += `
         <tr class="total-row">
-            <td colspan="2">Total Facturas</td>
+            <td colspan="2"><b>Total Facturas</b></td>
             <td>${formatCurrency(reporteData.facturas.monto)}</td>
         </tr>
     `;
