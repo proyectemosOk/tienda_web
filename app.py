@@ -971,7 +971,7 @@ def crear_venta():
 @app.route("/api/cargar/usuarios", methods = ["GET"])
 def cargar_usuarios():
     usuarios = conn_db.seleccionar(tabla = "usuarios",
-                                   columnas= "id, usuario, rol")
+                                   columnas= "id, nombre, rol")
     if usuarios:        
         lista_usuarios = [{"id":id, "nombre":nombre, "rol":rol} for id, nombre, rol in usuarios]
         return jsonify(lista_usuarios), 200
@@ -985,17 +985,19 @@ def cargar_usuarios():
 @app.route("/api/new_usuario", methods = ["POST"])
 def new_usuario():
     datos = request.get_json()
+
     datos["contrasena"] = bcrypt.hashpw(datos["contrasena"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-    print(datos)
-    id_usuario = conn_db.insertar(tabla="usuarios", datos=datos)
-    print(id_usuario)
+    
+    id_usuario, error = conn_db.insertar(tabla="usuarios", datos=datos)
+    print(id_usuario, error)
     if id_usuario:        
-        usuario = [{"id":id_usuario, "usuario":datos["usuario"], "rol":datos["rol"]}]
+        usuario = {"id":id_usuario, "nombre":datos["nombre"], "rol":datos["rol"]}
         return jsonify(usuario), 200
     else:
         return jsonify({
             "valido": False,
-            "mensaje": "Usuario no registrado"
+            "mensaje": "Usuario no registrado",
+            "error": error
         }), 401      
 
 @app.route("/api/monedero_dia_actual", methods = ["GET"])

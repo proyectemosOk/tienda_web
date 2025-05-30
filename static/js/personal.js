@@ -18,7 +18,6 @@ async function insertarUserTabla() {
   const usuarios = await cargarDatosApi();
   usuarios.forEach(usuario => {
     agregarFila(usuario);
-    console.log(usuario)
   });
   
 }
@@ -98,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const usuario = {usuario:nombre,contrasena:pass, email:email, celular:telefono, rol:rol };
+    const usuario = {nombre:nombre,contrasena:pass, email:email, telefono:telefono, rol:rol };
     try {
             const respuesta = await fetch("/api/new_usuario", {
                 method: "POST",
@@ -124,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `,
                     icon: 'success'
                 });
-                
+
                 form.reset();
                 agregarFila(resultado);
             } else {
