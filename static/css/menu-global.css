@@ -57,12 +57,12 @@
 }
 
 
-label {
+#cont_menu {
     background-color: #f4f7fa;
     padding-left: 10px;
 }
 
-label:hover {
+#cont_menu:hover {
     padding-left: 15px;
     padding-top: 40px;
 }

@@ -460,7 +460,7 @@ def crear_tablas(base):
         nombre TEXT,
         telefono TEXT,
         correo TEXT,
-        tipo TEXT,
+        tipo INTEGER,
         marca TEXT,
         modelo TEXT,
         estado_entrada TEXT,
@@ -471,7 +471,8 @@ def crear_tablas(base):
         tipo_pago TEXT,
         pago REAL,
         estado INTEGER,
-        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre)
+        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
+        FOREIGN KEY (servicio) REFERENCES tipos_pago(nombre),
         FOREIGN KEY (tipo) REFERENCES tipos(id)
 
     )""")

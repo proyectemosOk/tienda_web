@@ -17,7 +17,10 @@ function obtenerDatosJSONEmpresa() {
         facebook: "https://www.facebook.com/andina",
         instagram: "https://www.instagram.com/andina",
         linkedin: "https://www.linkedin.com/company/andina",
-        twitter: "https://www.twitter.com/andina"
+        twitter: "https://www.twitter.com/andina",
+        nit: "900.123.456-1",
+        añoFundacion: "2005",
+        tamañoEmpresa: "mediana",
     };
 }
 
