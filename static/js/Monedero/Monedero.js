@@ -90,37 +90,6 @@ async function cargarTarjetas() {
       `<div class="error">Error de conexión: ${error.message}</div>`;
   }
 }
-// 2. Función para obtener datos filtrados desde JSON
-async function obtenerDatosFiltrados(filtros = {}) {
-  try {
-    // Simulamos retardo de red
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // En producción, aquí iría:
-    // const params = new URLSearchParams();
-    // if (filtros.tipo) params.append('tipo', filtros.tipo);
-    // if (filtros.metodo) params.append('metodo', filtros.metodo);
-    // if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-    // if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-    // const response = await fetch(`/api/registros?${params.toString()}`);
-    // return await response.json();
-
-    // Simulamos filtrado básico para el ejemplo
-    const registrosFiltrados = jsonFiltrado.registros.filter(registro => {
-      const cumpleTipo = !filtros.tipo || filtros.tipo === 'todos' || registro.tipo === filtros.tipo;
-      const cumpleMetodo = !filtros.metodo || filtros.metodo === 'todos' || registro.metodo === filtros.metodo;
-      const cumpleFechaInicio = !filtros.fechaInicio || registro.fecha >= filtros.fechaInicio;
-      const cumpleFechaFin = !filtros.fechaFin || registro.fecha <= filtros.fechaFin;
-
-      return cumpleTipo && cumpleMetodo && cumpleFechaInicio && cumpleFechaFin;
-    });
-
-    return registrosFiltrados;
-  } catch (error) {
-    console.error('Error al obtener datos filtrados:', error);
-    return [];
-  }
-}
 
 // Función para mostrar tarjetas resumen
 function mostrarTarjetas(data) {
@@ -389,9 +358,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   // const datosIniciales = await obtenerDatosDelDiaActual();
   // mostrarTarjetas(datosIniciales);
   // actualizarGrafica(datosIniciales);
-
-
-
-  // Configurar evento del botón filtrar
-  btnFiltrar.addEventListener('click', aplicarFiltros);
 });
