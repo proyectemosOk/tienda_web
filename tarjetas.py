@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request, render_template_string
-from flask_cors import CORS
+# from flask_cors import CORS
 from datetime import datetime, timedelta
 from conexion_base import ConexionBase
 import json

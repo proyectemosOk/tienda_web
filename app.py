@@ -59,7 +59,7 @@ def monedero():
 
 @app.route('/cierre_dia')
 def cierre_dia():
-    return render_template('cierre_dia.html')
+    return render_template('informe-cierre-dia.html')
 
 @app.route('/submit', methods=['POST'])
 def submit():

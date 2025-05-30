@@ -77,9 +77,46 @@ function displayGeneralData() {
     document.getElementById('total-ingresos').textContent = formatCurrency(reporteData.total_ingresos);
     document.getElementById('total-egresos').textContent = formatCurrency(reporteData.total_egresos);
     document.getElementById('total-neto').textContent = formatCurrency(reporteData.total_neto);
-    document.getElementById('observaciones').textContent += reporteData.observaciones;
 }
+document.addEventListener('DOMContentLoaded', () => {
+    // Actualiza en tiempo real la propiedad 'observaciones' del objeto reporteData
+    document.getElementById("observaciones").addEventListener("input", function(e) {
+      reporteData.observaciones = e.target.value;
+    });
+  
+    const btnCerrar = document.getElementById('cierre-dia-btn');
+  
+    btnCerrar.addEventListener('click', () => {
 
+      cerrarDiaTurno(reporteData);
+    });
+  });
+  async function cerrarDiaTurno(datos) {
+    try {
+      const respuesta = await fetch('/api/turno/cerrar_dia', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datos)
+      });
+  
+      const resultado = await respuesta.json();
+      console.log('Respuesta del servidor:', resultado);
+  
+      if (!respuesta.ok) {
+        // Aquí el código 201 no debe lanzar error
+        throw new Error(`Error: ${respuesta.status}`);
+      }
+  
+      return resultado;
+    } catch (error) {
+      console.error('Hubo un problema al cerrar el día:', error);
+      return null;
+    }
+  }
+  
+  
 // Función para mostrar los tipos de pago
 function displayTiposPago() {
     const container = document.getElementById('tipos-pago-container');

@@ -234,4 +234,125 @@
     padding: 20px;
     box-shadow: var(--shadow-sm);
   }
+  .observaciones {
+    position: relative;
+    margin: 50px auto;
+    color: white;
+    background-color: white;
+    border-radius: var(--border-radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 32px;
+    border-left: 4px solid var(--medium-gray);
+    font-style: italic;
+    color: var(--primary-light);
+  }
   
+  .observaciones input[type="text"] {
+    font-size: 14px;
+    width: 100%;
+    border: none;
+    border-bottom: 2px solid #ccc;
+    padding: 5px 0;
+    background-color: transparent;
+    outline: none;
+    color: black;
+  }
+  
+  .observaciones .label {
+    position: absolute;
+    top: 0;
+    left: 0;
+    color: black;
+    transition: all 0.3s ease;
+    pointer-events: none;
+  }
+  
+  .observaciones input[type="text"]:focus ~ .label,
+  .observaciones input[type="text"]:valid ~ .label {
+    top: -20px;
+    font-size: 16px;
+    color: black;
+  }
+  
+  .observaciones .underline {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 100%;
+    background-color: #333;
+    transform: scaleX(0);
+    transition: all 0.3s ease;
+  }
+  
+  .observaciones input[type="text"]:focus ~ .underline,
+  .observaciones input[type="text"]:valid ~ .underline {
+    transform: scaleX(1);
+  }
+.btn-cerrar{
+  display: flex;
+  flex-direction: row-reverse;
+}
+button {
+  position: relative;
+  padding: 10px 20px;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--accent);
+  font-size: 14px;
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 2px;
+  background-color: var(--primary-dark);
+  width: 100%;
+  color: var(--accent);
+  overflow: hidden;
+  box-shadow: 0 0 0 0 transparent;
+  transition: var(--transition);
+}
+
+button:hover {
+  background-color: var(--accent);
+  color: var(--light-text);
+  box-shadow: 0 0 25px 8px var(--accent);
+  transition: var(--transition);
+}
+
+button:hover::before {
+  animation: sh02 0.5s 0s linear;
+}
+
+button::before {
+  content: '';
+  display: block;
+  width: 0px;
+  height: 86%;
+  position: absolute;
+  top: 7%;
+  left: 0%;
+  opacity: 0;
+  background: white;
+  box-shadow: 0 0 60px 40px white;
+  transform: skewX(-20deg);
+}
+
+@keyframes sh02 {
+  from {
+    opacity: 0;
+    left: 0%;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+    left: 100%;
+  }
+}
+
+button:active {
+  box-shadow: 0 0 10px 4px var(--accent);
+  transition: box-shadow 0.2s ease-in;
+}
