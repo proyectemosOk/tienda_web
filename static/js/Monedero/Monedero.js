@@ -87,7 +87,7 @@ function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
                                 <i class="fas fa-trash"></i>
                             </button>
             </div>
-            
+
           </div>
           
                             
@@ -101,7 +101,7 @@ function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
         <div class="tarjeta-bolsillo tarjeta-resumen">
           <div class="encabezado">
             <i class="fas fa-chart-line"></i>
-            <span>Resumen Financiero</span>
+            <span>Resumen</span>
           </div>
           <div class="modulos">
             <div class="modulo">
