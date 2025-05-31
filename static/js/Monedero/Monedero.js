@@ -87,6 +87,7 @@ function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
                                 <i class="fas fa-trash"></i>
                             </button>
             </div>
+            
           </div>
           
                             
