@@ -1,361 +1,461 @@
-// 1. JSON para datos del día actual (simulando respuesta API)
-const jsonDiaActual = {
-  fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
-  registros: [
-    { id: 1, tipo: 'venta', valor: 350, metodo: 'efectivo', fecha: new Date().toISOString().split('T')[0], descripcion: 'Venta al contado' },
-    { id: 2, tipo: 'servicio', valor: 180, metodo: 'tarjeta', fecha: new Date().toISOString().split('T')[0], descripcion: 'Servicio premium' },
-    { id: 3, tipo: 'gasto', valor: 75, metodo: 'transferencia', fecha: new Date().toISOString().split('T')[0], descripcion: 'Compra de materiales' }
-  ]
-};
+ // Datos de ejemplo para los bolsillos
+        let datosBolsillos = [
+            {
+                id: 1,
+                bolsillo: "Caja Principal",
+                descripcion: "Bolsillo principal para operaciones diarias",
+                total: 1250000,
+                porcentaje: 15,
+                comportamiento: 1,
+                modulos: {
+                    ventas: { valor: 850000, porcentaje: 68, sub_comportamiento: 1 },
+                    servicios: { valor: 250000, porcentaje: 20, sub_comportamiento: 0 },
+                    gastos: { valor: 150000, porcentaje: 12, sub_comportamiento: 1 }
+                }
+            },
+            {
+                id: 2,
+                bolsillo: "Caja Secundaria",
+                descripcion: "Bolsillo para reservas y fondos especiales",
+                total: 850000,
+                porcentaje: 8,
+                comportamiento: 0,
+                modulos: {
+                    ventas: { valor: 500000, porcentaje: 59, sub_comportamiento: 0 },
+                    servicios: { valor: 200000, porcentaje: 23.5, sub_comportamiento: 1 },
+                    gastos: { valor: 150000, porcentaje: 17.5, sub_comportamiento: 1 }
+                }
+            }
+        ];
 
-// 2. JSON para datos filtrados (simulando respuesta API)
-const jsonFiltrado = {
-  parametros: {
-    tipo: 'venta',
-    metodo: 'efectivo',
-    fechaInicio: '2025-05-20',
-    fechaFin: '2025-05-22'
-  },
-  registros: [
-    { id: 1, tipo: 'venta', valor: 200, metodo: 'efectivo', fecha: '2025-05-20', descripcion: 'Venta producto A' },
-    { id: 4, tipo: 'venta', valor: 300, metodo: 'efectivo', fecha: '2025-05-21', descripcion: 'Venta producto B' },
-    { id: 7, tipo: 'venta', valor: 250, metodo: 'efectivo', fecha: '2025-05-22', descripcion: 'Venta producto C' }
-  ]
-};
+        // Datos de ejemplo para gastos
+        let gastosIniciales = [
+            { id: 1, descripcion: "Compra de materiales", monto: 75000, categoria: "operativos", fecha: "2023-06-01" },
+            { id: 2, descripcion: "Pago de servicios", monto: 120000, categoria: "operativos", fecha: "2023-06-05" },
+            { id: 3, descripcion: "Publicidad", monto: 50000, categoria: "comerciales", fecha: "2023-06-10" }
+        ];
 
-// 1.1. JSON para datos del día actual (simulando respuesta API)
-const data = [
-  {
-    bolsillo: "Bolsillo A",
-    total: 1000000,
-    porcentaje: 15,
-    comportamiento: 1,
-    modulos: {
-      ventas: { porcentaje: 10, sub_comportamiento: 1 },
-      servicios: { porcentaje: 5, sub_comportamiento: 0 }
-    }
-  },
-  {
-    bolsillo: "Bolsillo B",
-    total: 800000,
-    porcentaje: 8,
-    comportamiento: 0,
-    modulos: {
-      ventas: { porcentaje: 20, sub_comportamiento: 0 },
-      servicios: { porcentaje: 25, sub_comportamiento: 1 }
-    }
-  }
-];
+        // Datos de ejemplo para cuentas por cobrar
+        const cuentasPorCobrar = [
+            { id: 1, cliente: "Juan Pérez", monto: 100000, fecha: "2023-06-15", pagada: false },
+            { id: 2, cliente: "María López", monto: 200000, fecha: "2023-06-20", pagada: false },
+            { id: 3, cliente: "Empresa XYZ", monto: 350000, fecha: "2023-06-25", pagada: true }
+        ];
 
-// Variables globales
-const resumenTarjetas = document.getElementById('resumenTarjetas');
-const btnFiltrar = document.getElementById('btnFiltrar');
-const ctx = document.getElementById('graficaCaja').getContext('2d');
-let grafica;
-let datosAnteriores = {
-  ventas: 0,
-  servicios: 0,
-  gastos: 0,
-  total: 0
-};
+        // Variables globales
+        let gastoEditando = null;
+        let bolsilloEditando = null;
+        const modalEditarGasto = document.getElementById('modal-editar-gasto');
+        const modalEditarBolsillo = document.getElementById('modal-editar-bolsillo');
+        const btnCerrarModal = document.querySelectorAll('.cerrar-modal');
+        const btnGuardarEdicion = document.getElementById('btn-guardar-edicion');
+        const btnGuardarEdicionBolsillo = document.getElementById('btn-guardar-edicion-bolsillo');
 
-// 1. Función para obtener datos del día actual desde JSON
-async function obtenerDatosDelDiaActual() {
-  try {
-    // Simulamos retardo de red
-    // await new Promise(resolve => setTimeout(resolve, 500));
+        // Función para mostrar los bolsillos con tarjetas mejoradas
+        function mostrarBolsillos() {
+            const contenedor = document.getElementById('resumenTarjetas');
+            let html = '';
 
-    // En producción, aquí iría:
-    const response = await fetch('/api/tarjetas-resumen');
-    return await response.json();
-    // return data
-  } catch (error) {
-    console.error('Error al obtener datos del día:', error);
-    return [];
-  }
-}
-async function cargarTarjetas() {
-  try {
-    const response = await fetch('/api/tarjetas-resumen');
-    const result = await response.json();
-    console.log(result)
-    if (result.success) {
-      mostrarTarjetas_1(result.data);
-    } else {
-      document.getElementById('contenido').innerHTML =
-        `<div class="error">Error: ${result.error}</div>`;
-    }
-  } catch (error) {
-    document.getElementById('resumenTarjetas').innerHTML =
-      `<div class="error">Error de conexión: ${error.message}</div>`;
-  }
-}
+            let totalGeneral = 0;
+            let totalGastos = 0;
 
-// Función para mostrar tarjetas resumen
-function mostrarTarjetas(data) {
-  resumenTarjetas.innerHTML = '';
+            datosBolsillos.forEach(bolsillo => {
+                totalGeneral += bolsillo.total;
+                totalGastos += bolsillo.modulos.gastos.valor;
 
-  const totalVentas = data.filter(r => r.tipo === 'venta').reduce((acc, r) => acc + r.valor, 0);
-  const totalServicios = data.filter(r => r.tipo === 'servicio').reduce((acc, r) => acc + r.valor, 0);
-  const totalGastos = data.filter(r => r.tipo === 'gasto').reduce((acc, r) => acc + r.valor, 0);
-  const totalCaja = totalVentas + totalServicios - totalGastos;
+                const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+                const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
 
-  // Calcular variación
-  const variacionVentas = calcularVariacion(totalVentas, datosAnteriores.ventas);
-  const variacionServicios = calcularVariacion(totalServicios, datosAnteriores.servicios);
-  const variacionGastos = calcularVariacion(totalGastos, datosAnteriores.gastos);
-  const variacionTotal = calcularVariacion(totalCaja, datosAnteriores.total);
-
-  // Actualizar datos anteriores
-  datosAnteriores = {
-    ventas: totalVentas,
-    servicios: totalServicios,
-    gastos: totalGastos,
-    total: totalCaja
-  };
-
-  // Crear tarjetas
-  const tarjetas = [
-    { titulo: 'Ventas', valor: totalVentas, variacion: variacionVentas },
-    { titulo: 'Servicios', valor: totalServicios, variacion: variacionServicios },
-    { titulo: 'Gastos', valor: totalGastos, variacion: variacionGastos },
-    { titulo: 'Total en Caja', valor: totalCaja, variacion: variacionTotal }
-  ];
-
-  tarjetas.forEach(t => {
-    const div = document.createElement('div');
-    div.className = 'tarjeta';
-    div.innerHTML = `
-      <h3>${t.titulo}</h3>
-      <p class="valor">$${t.valor.toFixed(2)}</p>
-      <div class="variacion ${t.variacion.tipo}">
-        ${t.variacion.icono} ${t.variacion.valor}%
-      </div>
-    `;
-    resumenTarjetas.appendChild(div);
-  });
-}
-
-// Función para mostrar tarjetas resumen
-function mostrarTarjetas_1(datos) {
-  const contenedor = document.getElementById('resumenTarjetas');
-
-  if (datos.length === 0) {
-    contenedor.innerHTML = '<div class="error">No hay datos disponibles</div>';
-    return;
-  }
-
-  let html = '<div class="tarjetas-container">';
-
-  let gastos = 0;
-  let total = 0;
-  datos.forEach(bolsillo => {
-    total += (bolsillo.bolsillo !== "CXC") ? bolsillo.total : 0;
-    gastos += bolsillo.modulos.gastos.valor_hoy;
-
-    const iconoTotal = bolsillo.comportamiento === 1 ? '↗' : '↘';
-    const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    const iconoVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    const iconoServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    const iconoGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    html += `
-                        <div class="tarjeta-bolsillo">
-                            <div class="encabezado">${bolsillo.bolsillo}</div>
-                            <div class="total ${colorTotal}">
-                                <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
-                                <span>${iconoTotal}</span>
+                html += `
+                    <div class="tarjeta-bolsillo">
+                        <div class="encabezado">
+                            <i class="fas fa-wallet"></i>
+                            <span>${bolsillo.bolsillo}</span>
+                        </div>
+                        <div class="total ${colorTotal}">
+                            <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
+                            <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
+                        </div>
+                        <div class="modulos">
+                            <div class="modulo">
+                                <div class="etiqueta">
+                                    <i class="fas fa-shopping-cart"></i>
+                                    <span>Ventas</span>
+                                </div>
+                                <div class="valor">${bolsillo.modulos.ventas.porcentaje}% ($${bolsillo.modulos.ventas.valor.toLocaleString('es-ES')})</div>
                             </div>
-                            <div class="modulos">
-                                <div class="modulo">
-                                    <div><strong>Ventas</strong></div>
-                                    <div class="${colorVentas}">
-                                        ${bolsillo.modulos.ventas.porcentaje}% ${iconoVentas}
-                                    </div>
+                            <div class="modulo">
+                                <div class="etiqueta">
+                                    <i class="fas fa-tools"></i>
+                                    <span>Servicios</span>
                                 </div>
-                                <div class="modulo">
-                                    <div><strong>Servicios</strong></div>
-                                    <div class="${colorServicios}">
-                                        ${bolsillo.modulos.servicios.porcentaje}% ${iconoServicios}
-                                    </div>
+                                <div class="valor">${bolsillo.modulos.servicios.porcentaje}% ($${bolsillo.modulos.servicios.valor.toLocaleString('es-ES')})</div>
+                            </div>
+                            <div class="modulo">
+                                <div class="etiqueta">
+                                    <i class="fas fa-money-bill-wave"></i>
+                                    <span>Gastos</span>
                                 </div>
-                                <div class="modulo">
-                                    <div><strong>Gastos</strong></div>
-                                    <div class="${colorGastos}">
-                                        ${bolsillo.modulos.gastos.porcentaje}% ${iconoGastos}
-                                    </div>
-                                </div>
+                                <div class="valor">${bolsillo.modulos.gastos.porcentaje}% ($${bolsillo.modulos.gastos.valor.toLocaleString('es-ES')})</div>
                             </div>
                         </div>
-                    `;
-  });
-  html +=`
-                        <div class="tarjeta-bolsillo">
-                            <div class="encabezado">Total</div>
-                            <div class="total color-verde">
-                                <strong>$${total.toLocaleString('es-ES')}</strong>
-                            </div>
-                            <div class="modulos">
-                              <div class="modulo">
-                                  <div><strong>Gastos</strong></div>
-                                  <div class= color-rojo>
-                                      ${gastos}
-                                  </div>
-                              </div>
-                            </div>
+                        <div class="acciones-tarjeta">
+                            
+                            <button class="btn-icono btn-eliminar" onclick="eliminarBolsillo(${bolsillo.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
                         </div>
-                    `;
-  html += '</div>';
-  contenedor.innerHTML = html;
-}
+                    </div>
+                `;
+            });
 
-// Función para calcular variación porcentual
-function calcularVariacion(valorActual, valorAnterior) {
-  if (valorAnterior === 0) {
-    return {
-      valor: '100',
-      tipo: valorActual >= 0 ? 'incremento' : 'decremento',
-      icono: valorActual >= 0 ? '↑' : '↓'
-    };
-  }
+            // Tarjeta de total general
+            html += `
+                <div class="tarjeta-bolsillo">
+                    <div class="encabezado">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Resumen General</span>
+                    </div>
+                    <div class="total color-verde">
+                        <strong>$${totalGeneral.toLocaleString('es-ES')}</strong>
+                    </div>
+                    <div class="modulos">
+                        <div class="modulo">
+                            <div class="etiqueta">
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Gastos Totales</span>
+                            </div>
+                            <div class="valor color-rojo">$${totalGastos.toLocaleString('es-ES')}</div>
+                        </div>
+                        <div class="modulo">
+                            <div class="etiqueta">
+                                <i class="fas fa-coins"></i>
+                                <span>Utilidad Neta</span>
+                            </div>
+                            <div class="valor color-verde">$${(totalGeneral - totalGastos).toLocaleString('es-ES')}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
 
-  const variacion = ((valorActual - valorAnterior) / valorAnterior) * 100;
-
-  return {
-    valor: Math.abs(variacion).toFixed(2),
-    tipo: variacion >= 0 ? 'incremento' : 'decremento',
-    icono: variacion >= 0 ? '↑' : '↓'
-  };
-}
-
-// Función para actualizar gráfica
-function actualizarGrafica(data) {
-  const ingresos = data.filter(r => r.tipo === 'venta' || r.tipo === 'servicio');
-  const egresos = data.filter(r => r.tipo === 'gasto');
-
-  const labels = [...new Set(data.map(r => r.fecha))].sort();
-
-  // Datasets para ingresos por método de pago
-  const efectivoIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const transferenciaIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const tarjetaIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  // Datasets para egresos por método de pago
-  const efectivoEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const transferenciaEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const tarjetaEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  if (grafica) grafica.destroy();
-
-  grafica = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Ingresos en Efectivo',
-          data: efectivoIngresos,
-          borderColor: '#28a745',
-          backgroundColor: 'rgba(40, 167, 69, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Ingresos por Transferencia',
-          data: transferenciaIngresos,
-          borderColor: '#17a2b8',
-          backgroundColor: 'rgba(23, 162, 184, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Ingresos con Tarjeta',
-          data: tarjetaIngresos,
-          borderColor: '#6f42c1',
-          backgroundColor: 'rgba(111, 66, 193, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos en Efectivo',
-          data: efectivoEgresos,
-          borderColor: '#dc3545',
-          backgroundColor: 'rgba(220, 53, 69, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos por Transferencia',
-          data: transferenciaEgresos,
-          borderColor: '#fd7e14',
-          backgroundColor: 'rgba(253, 126, 20, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos con Tarjeta',
-          data: tarjetaEgresos,
-          borderColor: '#343a40',
-          backgroundColor: 'rgba(52, 58, 64, 0.1)',
-          fill: true,
-          tension: 0.4
+            contenedor.innerHTML = html;
         }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      },
-      interaction: {
-        mode: 'index',
-        intersect: false
-      }
-    }
-  });
-}
 
-// Función para aplicar filtros
-async function aplicarFiltros() {
-  const filtros = {
-    tipo: document.getElementById('tipoRegistro').value,
-    metodo: document.getElementById('metodoPago').value,
-    fechaInicio: document.getElementById('fechaInicio').value,
-    fechaFin: document.getElementById('fechaFin').value
-  };
+        // Función para mostrar los gastos
+        function mostrarGastos() {
+            const contenedor = document.getElementById('lista-gastos');
+            contenedor.innerHTML = '';
 
-  const datosFiltrados = await obtenerDatosFiltrados(filtros);
-  mostrarTarjetas(datosFiltrados);
-  actualizarGrafica(datosFiltrados);
-}
+            gastosIniciales.forEach(gasto => {
+                const div = document.createElement('div');
+                div.className = 'gasto-item';
+                div.innerHTML = `
+                    <div class="info">
+                        <p class="descripcion">${gasto.descripcion}</p>
+                        <div class="detalles">
+                            <span><i class="fas fa-money-bill"></i> $${gasto.monto.toLocaleString('es-ES')}</span>
+                            <span><i class="fas fa-tag"></i> ${obtenerNombreCategoria(gasto.categoria)}</span>
+                            <span><i class="fas fa-calendar"></i> ${gasto.fecha}</span>
+                        </div>
+                    </div>
+                    <div class="monto">$${gasto.monto.toLocaleString('es-ES')}</div>
+                    <div class="acciones">
+                        <button class="btn-icono btn-editar" onclick="editarGasto(${gasto.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn-icono btn-eliminar" onclick="eliminarGasto(${gasto.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                contenedor.appendChild(div);
+            });
+        }
 
-// Inicialización al cargar la página
-document.addEventListener('DOMContentLoaded', async () => {
-  // Cargar datos del día actual
-  cargarTarjetas();
-  // const datosIniciales = await obtenerDatosDelDiaActual();
-  // mostrarTarjetas(datosIniciales);
-  // actualizarGrafica(datosIniciales);
-});
+        // Función para obtener el nombre de la categoría
+        function obtenerNombreCategoria(codigo) {
+            const categorias = {
+                "operativos": "Gastos Operativos",
+                "administrativos": "Gastos Administrativos",
+                "comerciales": "Gastos Comerciales",
+                "otros": "Otros Gastos"
+            };
+            return categorias[codigo] || "Sin categoría";
+        }
+
+        // Función para mostrar las cuentas por cobrar
+        function mostrarCuentasPorCobrar() {
+            const contenedor = document.getElementById('lista-cuentas');
+            contenedor.innerHTML = '';
+
+            cuentasPorCobrar.forEach(cuenta => {
+                const div = document.createElement('div');
+                div.className = `cuenta-item ${cuenta.pagada ? 'pagada' : ''}`;
+                
+                if (cuenta.pagada) {
+                    div.innerHTML = `
+                        <div class="info">
+                            <p class="cliente">${cuenta.cliente} <span class="color-verde">(Pagada)</span></p>
+                            <div class="detalles">
+                                <span><i class="fas fa-money-bill"></i> $${cuenta.monto.toLocaleString('es-ES')}</span>
+                                <span><i class="fas fa-calendar"></i> Pagada: ${cuenta.fecha}</span>
+                            </div>
+                        </div>
+                        <div class="monto color-verde">$${cuenta.monto.toLocaleString('es-ES')}</div>
+                    `;
+                } else {
+                    div.innerHTML = `
+                        <div class="info">
+                            <p class="cliente">${cuenta.cliente} <span class="color-rojo">(Pendiente)</span></p>
+                            <div class="detalles">
+                                <span><i class="fas fa-money-bill"></i> $${cuenta.monto.toLocaleString('es-ES')}</span>
+                                <span><i class="fas fa-calendar"></i> Vence: ${cuenta.fecha}</span>
+                            </div>
+                        </div>
+                        <div class="monto">$${cuenta.monto.toLocaleString('es-ES')}</div>
+                        <div class="acciones">
+                            <button class="btn-pagar" onclick="pagarFactura(${cuenta.id})">
+                                <i class="fas fa-check"></i> Pagar Factura
+                            </button>
+                        </div>
+                    `;
+                }
+                
+                contenedor.appendChild(div);
+            });
+        }
+
+        // Función para guardar un nuevo bolsillo
+        function guardarBolsillo() {
+            const nombre = document.getElementById('nombre-bolsillo').value.trim();
+            const descripcion = document.getElementById('descripcion-bolsillo').value.trim();
+
+            if (!nombre) {
+                alert('El nombre del bolsillo es obligatorio');
+                return;
+            }
+
+            // Aquí iría la llamada a la API para guardar el bolsillo
+            const nuevoBolsillo = {
+                id: datosBolsillos.length > 0 ? Math.max(...datosBolsillos.map(b => b.id)) + 1 : 1,
+                bolsillo: nombre,
+                descripcion: descripcion,
+                total: 0,
+                porcentaje: 0,
+                comportamiento: 0,
+                modulos: {
+                    ventas: { valor: 0, porcentaje: 0, sub_comportamiento: 0 },
+                    servicios: { valor: 0, porcentaje: 0, sub_comportamiento: 0 },
+                    gastos: { valor: 0, porcentaje: 0, sub_comportamiento: 0 }
+                }
+            };
+            
+            datosBolsillos.push(nuevoBolsillo);
+            mostrarBolsillos();
+            
+            alert(`Bolsillo "${nombre}" creado correctamente.`);
+            document.getElementById('nombre-bolsillo').value = '';
+            document.getElementById('descripcion-bolsillo').value = '';
+        }
+
+        // Función para editar un bolsillo
+        function editarBolsillo(id) {
+            bolsilloEditando = datosBolsillos.find(b => b.id === id);
+            if (!bolsilloEditando) return;
+
+            // Llenar el modal con los datos del bolsillo
+            document.getElementById('editar-nombre-bolsillo').value = bolsilloEditando.bolsillo;
+            document.getElementById('editar-descripcion-bolsillo').value = bolsilloEditando.descripcion;
+
+            // Mostrar el modal
+            modalEditarBolsillo.style.display = 'block';
+        }
+
+        // Función para guardar los cambios del bolsillo
+        function guardarCambiosBolsillo() {
+            if (!bolsilloEditando) return;
+
+            const nombre = document.getElementById('editar-nombre-bolsillo').value.trim();
+            const descripcion = document.getElementById('editar-descripcion-bolsillo').value.trim();
+
+            if (!nombre) {
+                alert("El nombre es obligatorio");
+                return;
+            }
+
+            // Actualizar el bolsillo
+            bolsilloEditando.bolsillo = nombre;
+            bolsilloEditando.descripcion = descripcion;
+
+            // Actualizar la lista
+            mostrarBolsillos();
+            
+            // Cerrar modal
+            modalEditarBolsillo.style.display = 'none';
+            
+            alert("Bolsillo actualizado correctamente");
+        }
+
+        // Función para eliminar un bolsillo
+        function eliminarBolsillo(id) {
+            if (!confirm("¿Estás seguro de eliminar este bolsillo?")) return;
+            
+            datosBolsillos = datosBolsillos.filter(bolsillo => bolsillo.id !== id);
+            mostrarBolsillos();
+            alert("Bolsillo eliminado correctamente");
+        }
+
+        // Función para guardar un nuevo tipo de pago
+        async function guardarTipoPago() {
+            const nombre = document.getElementById('nombre').value.trim();
+            const descripcion = document.getElementById('descripcion').value.trim();
+
+            if (!nombre) {
+                alert("El nombre es obligatorio");
+                return;
+            }
+
+            try {
+                // Simulamos la llamada a la API
+                await new Promise(resolve => setTimeout(resolve, 800));
+                
+                const resultado = {
+                    ok: true,
+                    id: Math.floor(Math.random() * 100) + 1
+                };
+
+                if (resultado.ok) {
+                    alert("Tipo de pago guardado con éxito. ID: " + resultado.id);
+                    document.getElementById('nombre').value = '';
+                    document.getElementById('descripcion').value = '';
+                } else {
+                    alert("Error al guardar: " + resultado.error);
+                }
+            } catch (error) {
+                alert("Error de red o del servidor");
+                console.error(error);
+            }
+        }
+
+        // Función para agregar un gasto
+        function agregarGasto() {
+            const descripcion = document.getElementById('descripcion-gasto').value.trim();
+            const monto = parseFloat(document.getElementById('monto-gasto').value);
+            const categoria = document.getElementById('categoria-gasto').value;
+
+            if (!descripcion || isNaN(monto) || monto <= 0) {
+                alert("Descripción y monto válido son obligatorios");
+                return;
+            }
+
+            // Aquí iría la llamada a la API para guardar el gasto
+            const nuevoGasto = {
+                id: gastosIniciales.length + 1,
+                descripcion,
+                monto,
+                categoria,
+                fecha: new Date().toISOString().split('T')[0]
+            };
+            
+            gastosIniciales.push(nuevoGasto);
+            mostrarGastos();
+            
+            alert(`Gasto agregado: ${descripcion} - $${monto.toLocaleString('es-ES')}`);
+            document.getElementById('descripcion-gasto').value = '';
+            document.getElementById('monto-gasto').value = '';
+        }
+
+        // Función para editar un gasto
+        function editarGasto(id) {
+            gastoEditando = gastosIniciales.find(g => g.id === id);
+            if (!gastoEditando) return;
+
+            // Llenar el modal con los datos del gasto
+            document.getElementById('editar-descripcion').value = gastoEditando.descripcion;
+            document.getElementById('editar-monto').value = gastoEditando.monto;
+            document.getElementById('editar-categoria').value = gastoEditando.categoria;
+
+            // Mostrar el modal
+            modalEditarGasto.style.display = 'block';
+        }
+
+        // Función para guardar los cambios de edición
+        function guardarCambiosGasto() {
+            if (!gastoEditando) return;
+
+            const descripcion = document.getElementById('editar-descripcion').value.trim();
+            const monto = parseFloat(document.getElementById('editar-monto').value);
+            const categoria = document.getElementById('editar-categoria').value;
+
+            if (!descripcion || isNaN(monto)) {
+                alert("Descripción y monto son obligatorios");
+                return;
+            }
+
+            // Actualizar el gasto
+            gastoEditando.descripcion = descripcion;
+            gastoEditando.monto = monto;
+            gastoEditando.categoria = categoria;
+
+            // Actualizar la lista
+            mostrarGastos();
+            
+            // Cerrar modal
+            modalEditarGasto.style.display = 'none';
+            
+            alert("Gasto actualizado correctamente");
+        }
+
+        // Función para eliminar un gasto
+        function eliminarGasto(id) {
+            if (!confirm("¿Estás seguro de eliminar este gasto?")) return;
+            
+            gastosIniciales = gastosIniciales.filter(gasto => gasto.id !== id);
+            mostrarGastos();
+            alert("Gasto eliminado correctamente");
+        }
+
+        // Función para pagar una factura
+        function pagarFactura(id) {
+            const cuenta = cuentasPorCobrar.find(c => c.id === id);
+            if (!cuenta) return;
+            
+            // Aquí iría la llamada a la API para registrar el pago
+            cuenta.pagada = true;
+            cuenta.fecha = new Date().toISOString().split('T')[0];
+            
+            mostrarCuentasPorCobrar();
+            alert(`Factura de ${cuenta.cliente} pagada correctamente.`);
+        }
+
+        // Inicialización al cargar la página
+        document.addEventListener('DOMContentLoaded', () => {
+            mostrarBolsillos();
+            mostrarGastos();
+            mostrarCuentasPorCobrar();
+            
+            // Configurar eventos para el menú
+            const opcionesMenu = document.querySelectorAll('.opcion-menu');
+            opcionesMenu.forEach(opcion => {
+                opcion.addEventListener('click', function() {
+                    opcionesMenu.forEach(o => o.classList.remove('activo'));
+                    this.classList.add('activo');
+                });
+            });
+            
+            // Configurar eventos del modal de gastos
+            btnCerrarModal.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    this.closest('.modal').style.display = 'none';
+                });
+            });
+            
+            btnGuardarEdicion.addEventListener('click', guardarCambiosGasto);
+            btnGuardarEdicionBolsillo.addEventListener('click', guardarCambiosBolsillo);
+            
+            window.addEventListener('click', (event) => {
+                if (event.target.classList.contains('modal')) {
+                    event.target.style.display = 'none';
+                }
+            });
+        });

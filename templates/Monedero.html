@@ -1,98 +1,193 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cierre de Caja</title>
+  <link rel="stylesheet" href="/static/css/monederos/Monedero.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/menu-global.css" />
-  <link rel="stylesheet" href="/static/css/monederos/Monedero.css" />
-  <link rel="stylesheet" href="/static/css/monederos/tarjetas.css" />
-
-
 </head>
-
 <body>
-  <div id="cont_menu" for="menu-toggle" class="boton-menu">
-    <div id="casa">
-      <img src="/static/Iconos/app.png" alt="CASA" class="casa">
-      <br>
-      <div class="texto"><span><b>Menu</b></span></div>
+  
+<div id="cont_menu" for="menu-toggle" class="boton-menu">
+        <div id="casa">
+            <img src="/static/Iconos/app.png" alt="CASA" class="casa">
+            <br>
+            <div class="texto"><span><b>Menu</b></span></div>
+        </div>
+        <!-- Monederos -->
+        <div id="monederos">
+            <img src="/static/Iconos/monedero.png" alt="MONEDERO">
+            <br>
+            <div class="texto"><span><b>Monederos</b></span></div>
+        </div>
+    
+        <!-- Ventas -->
+        <div id="ventas">
+            <img src="/static/Iconos/ventas.png" alt="VENTAS">
+            <br>
+            <div class="texto"><span><b>Ventas</b></span></div>
+        </div>
+    
+        <!-- Inventario -->
+        <div id="inventario">
+            <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
+            <br>
+            <div class="texto"><span><b>Inventario</b></span></div>
+        </div>
+    
+        <!-- Cuentas por cobrar/pagar -->
+        <div id="cuentas">
+            <img src="/static/Iconos/cobro.png" alt="COBRO">
+            <br>
+            <div class="texto"><span><b>CXC/CXP</b></span></div>
+            
+        </div>
+    
+        <!-- Personal -->
+        <div id="personal">
+            <img src="/static/Iconos/personal.png" alt="PERSONAL">
+            <br>
+            <div class="texto"><span><b>Personal</b></span></div>
+        </div>
+    
+        <!-- Configuraciones -->
+        <div id="configuraciones">
+            <img src="/static/Iconos/configuracion.png" alt="CONFIG">
+            <br>
+            <div class="texto"><span><b>Ajustes</b></span></div>
+        </div>
+    
+        <!-- Empresa -->
+        <div id="empresa">
+            <img src="/static/Iconos/empresa.png" alt="EMPRESA">
+            <br>
+            <div class="texto"><span><b>Empresa</b></span></div>
+        </div>
+    
+        <!-- Informes -->
+        <div id="informes">
+            <img src="/static/Iconos/informes.png" alt="INFORMES">
+            <br>
+            <div class="texto"><span><b>Informes</b></span></div>
+        </div>
     </div>
-    <!-- Monederos -->
-    <div id="monederos">
-      <img src="/static/Iconos/monedero.png" alt="MONEDERO">
-      <br>
-      <div class="texto"><span><b>Monederos</b></span></div>
+     <!-- Contenido principal -->
+        <main class="contenido">
+            <h1 class="titulo-principal"><i class="fas fa-cash-register"></i> Cierre de Caja</h1>
+
+          
+            <!-- Acciones rápidas -->
+            <div class="acciones-rapidas">
+                <div class="accion-rapida" onclick="document.getElementById('nuevo-bolsillo').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-plus-circle"></i>
+                    <h3>Nuevo Bolsillo</h3>
+                    <p>Crear un nuevo espacio para fondos</p>
+                </div>
+                <div class="accion-rapida" onclick="document.getElementById('nuevo-tipo-pago').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-credit-card"></i>
+                    <h3>Agregar Pago</h3>
+                    <p>Nuevo método de pago</p>
+                </div>
+                <div class="accion-rapida" onclick="document.getElementById('gastos').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-money-bill-wave"></i>
+                    <h3>Registrar Gasto</h3>
+                    <p>Agregar nuevo gasto</p>
+                </div>
+                <div class="accion-rapida" onclick="document.getElementById('cuentas-por-cobrar').scrollIntoView({behavior: 'smooth'})">
+                    <i class="fas fa-file-invoice"></i>
+                    <h3>Cuentas por Cobrar</h3>
+                    <p>Administrar facturas pendientes</p>
+                </div>
+            </div>
+
+            <!-- Resumen de tarjetas (bolsillos)  -->
+            <section class="seccion">
+                <h2><i class="fas fa-chart-pie"></i> Resumen Financiero</h2>
+                <div id="resumenTarjetas" class="resumen-tarjetas">
+                    <!-- Las tarjetas de bolsillos se cargarán dinámicamente con JavaScript -->
+                </div>
+            </section>
+
+            <!-- Formulario para nuevo cierre de caja (bolsillo) -->
+            <section class="seccion" id="nuevo-bolsillo">
+                <h2><i class="fas fa-plus-circle"></i> Nuevo Bolsillo</h2>
+                <div class="formulario">
+                    <div class="grupo-form">
+                        <label for="nombre-bolsillo">Nombre del bolsillo</label>
+                        <input type="text" id="nombre-bolsillo" placeholder="Ej: Caja principal">
+                    </div>
+                    <div class="grupo-form">
+                        <label for="descripcion-bolsillo">Descripción</label>
+                        <textarea id="descripcion-bolsillo" placeholder="Detalles del bolsillo"></textarea>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button onclick="guardarBolsillo()" class="btn btn-verde"><i class="fas fa-save"></i> Guardar Bolsillo</button>
+                </div>
+            </section>
+
+            <!-- Formulario para nuevo tipo de pago -->
+            <section class="seccion" id="nuevo-tipo-pago">
+                <h2><i class="fas fa-plus-circle"></i> Agregar Tipo de Pago</h2>
+                <div class="formulario">
+                    <div class="grupo-form">
+                        <label for="nombre">Nombre del tipo de pago</label>
+                        <input type="text" id="nombre" placeholder="Ej: Transferencia Bancaria">
+                    </div>
+                    <div class="grupo-form">
+                        <label for="descripcion">Descripción</label>
+                        <textarea id="descripcion" placeholder="Detalles del método de pago"></textarea>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button onclick="guardarTipoPago()" class="btn btn-verde"><i class="fas fa-save"></i> Guardar</button>
+                </div>
+            </section>
+
+            <!-- Sección de gastos -->
+            <section class="seccion" id="gastos">
+                <h2><i class="fas fa-money-bill-wave"></i> Gastos</h2>
+                <div id="lista-gastos">
+                    <!-- Los gastos se cargarán dinámicamente con JavaScript -->
+                </div>
+                <div class="formulario">
+                    <div class="grupo-form">
+                        <label for="descripcion-gasto">Descripción</label>
+                        <input type="text" id="descripcion-gasto" placeholder="Ej: Compra de materiales">
+                    </div>
+                    <div class="grupo-form">
+                        <label for="monto-gasto">Monto</label>
+                        <input type="number" id="monto-gasto" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="grupo-form">
+                        <label for="categoria-gasto">Categoría</label>
+                        <select id="categoria-gasto">
+                            <option value="operativos">Gastos Operativos</option>
+                            <option value="administrativos">Gastos Administrativos</option>
+                            <option value="comerciales">Gastos Comerciales</option>
+                            <option value="otros">Otros Gastos</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="acciones-form">
+                    <button onclick="agregarGasto()" class="btn btn-rojo"><i class="fas fa-plus"></i> Agregar Gasto</button>
+                </div>
+            </section>
+
+            <!-- Sección de cuentas por cobrar -->
+            <section class="seccion" id="cuentas-por-cobrar">
+                <h2><i class="fas fa-file-invoice-dollar"></i> Cuentas por Cobrar</h2>
+                <div id="lista-cuentas">
+                    <!-- Las cuentas se cargarán dinámicamente con JavaScript -->
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Ventas -->
-    <div id="ventas">
-      <img src="/static/Iconos/ventas.png" alt="VENTAS">
-      <br>
-      <div class="texto"><span><b>Ventas</b></span></div>
-    </div>
-
-    <!-- Inventario -->
-    <div id="inventario">
-      <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
-      <br>
-      <div class="texto"><span><b>Inventario</b></span></div>
-    </div>
-
-    <!-- Cuentas por cobrar/pagar -->
-    <div id="cuentas">
-      <img src="/static/Iconos/cobro.png" alt="COBRO">
-      <br>
-      <div class="texto"><span><b>CXC/CXP</b></span></div>
-
-    </div>
-
-    <!-- Personal -->
-    <div id="personal">
-      <img src="/static/Iconos/personal.png" alt="PERSONAL">
-      <br>
-      <div class="texto"><span><b>Personal</b></span></div>
-    </div>
-
-    <!-- Configuraciones -->
-    <div id="configuraciones">
-      <img src="/static/Iconos/configuracion.png" alt="CONFIG">
-      <br>
-      <div class="texto"><span><b>Ajustes</b></span></div>
-    </div>
-
-    <!-- Empresa -->
-    <div id="empresa">
-      <img src="/static/Iconos/empresa.png" alt="EMPRESA">
-      <br>
-      <div class="texto"><span><b>Empresa</b></span></div>
-    </div>
-
-    <!-- Informes -->
-    <div id="informes">
-      <img src="/static/Iconos/informes.png" alt="INFORMES">
-      <br>
-      <div class="texto"><span><b>Informes</b></span></div>
-    </div>
-  </div>
-
-
+    
  
-      <section class="container" id="resumenTarjetas">
-      </section>
-
-      <section class="grafica">
-        <h2>Comportamiento de la Caja</h2>
-        <canvas id="graficaCaja"></canvas>
-      </section>
-    </section>
-  </div>
-
-
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="/static/js/Monedero/Monedero.js"></script>
-  <script src="/static/js/home.js"></script>
 </body>
-
+<script src="/static/js/Monedero/Monedero.js"></script>
 </html>
