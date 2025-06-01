@@ -1,32 +1,7 @@
-// 1. JSON para datos del día actual (simulando respuesta API)
-const jsonDiaActual = {
-  fecha: new Date().toISOString().split('T')[0], // Fecha actual en formato YYYY-MM-DD
-  registros: [
-    { id: 1, tipo: 'venta', valor: 350, metodo: 'efectivo', fecha: new Date().toISOString().split('T')[0], descripcion: 'Venta al contado' },
-    { id: 2, tipo: 'servicio', valor: 180, metodo: 'tarjeta', fecha: new Date().toISOString().split('T')[0], descripcion: 'Servicio premium' },
-    { id: 3, tipo: 'gasto', valor: 75, metodo: 'transferencia', fecha: new Date().toISOString().split('T')[0], descripcion: 'Compra de materiales' }
-  ]
-};
-
-// 2. JSON para datos filtrados (simulando respuesta API)
-const jsonFiltrado = {
-  parametros: {
-    tipo: 'venta',
-    metodo: 'efectivo',
-    fechaInicio: '2025-05-20',
-    fechaFin: '2025-05-22'
-  },
-  registros: [
-    { id: 1, tipo: 'venta', valor: 200, metodo: 'efectivo', fecha: '2025-05-20', descripcion: 'Venta producto A' },
-    { id: 4, tipo: 'venta', valor: 300, metodo: 'efectivo', fecha: '2025-05-21', descripcion: 'Venta producto B' },
-    { id: 7, tipo: 'venta', valor: 250, metodo: 'efectivo', fecha: '2025-05-22', descripcion: 'Venta producto C' }
-  ]
-};
-
-// 1.1. JSON para datos del día actual (simulando respuesta API)
-const data = [
+// Datos de ejemplo para los bolsillos en el formato especificado
+const datosBolsillos = [
   {
-    bolsillo: "Bolsillo A",
+    bolsillo: "Caja",
     total: 1000000,
     porcentaje: 15,
     comportamiento: 1,
@@ -35,363 +10,423 @@ const data = [
       servicios: { porcentaje: 5, sub_comportamiento: 0 }
     }
   },
-  {
-    bolsillo: "Bolsillo B",
-    total: 800000,
-    porcentaje: 8,
-    comportamiento: 0,
-    modulos: {
-      ventas: { porcentaje: 20, sub_comportamiento: 0 },
-      servicios: { porcentaje: 25, sub_comportamiento: 1 }
-    }
-  }
+
+];
+
+// Datos de ejemplo para gastos
+let gastosIniciales = [
+  { id: 1, descripcion: "Compra de materiales", monto: 75000, categoria: "operativos", fecha: "2023-06-01" },
+  { id: 2, descripcion: "Pago de servicios", monto: 120000, categoria: "operativos", fecha: "2023-06-05" },
+  { id: 3, descripcion: "Publicidad", monto: 50000, categoria: "comerciales", fecha: "2023-06-10" },
+  { id: 4, descripcion: "Material de oficina", monto: 45000, categoria: "administrativos", fecha: "2023-06-15" },
+  { id: 5, descripcion: "Viáticos", monto: 180000, categoria: "operativos", fecha: "2023-06-20" }
+];
+
+// Datos de ejemplo para cuentas por cobrar
+const cuentasPorCobrar = [
+  { id: 1, cliente: "Juan Pérez", monto: 100000, fecha: "2023-06-15", pagada: false },
+  { id: 2, cliente: "María López", monto: 200000, fecha: "2023-06-20", pagada: false },
+  { id: 3, cliente: "Empresa XYZ", monto: 350000, fecha: "2023-06-25", pagada: true },
+  { id: 4, cliente: "Carlos Rodríguez", monto: 150000, fecha: "2023-06-18", pagada: false },
+  { id: 5, cliente: "Tienda ABC", monto: 275000, fecha: "2023-06-22", pagada: true }
 ];
 
 // Variables globales
-const resumenTarjetas = document.getElementById('resumenTarjetas');
-const btnFiltrar = document.getElementById('btnFiltrar');
-const ctx = document.getElementById('graficaCaja').getContext('2d');
-let grafica;
-let datosAnteriores = {
-  ventas: 0,
-  servicios: 0,
-  gastos: 0,
-  total: 0
-};
+let gastoEditando = null;
+const modalEditarGasto = document.getElementById('modal-editar-gasto');
+const btnCerrarModal = document.querySelectorAll('.cerrar-modal');
+const btnGuardarEdicion = document.getElementById('btn-guardar-edicion');
 
-// 1. Función para obtener datos del día actual desde JSON
-async function obtenerDatosDelDiaActual() {
-  try {
-    // Simulamos retardo de red
-    // await new Promise(resolve => setTimeout(resolve, 500));
-
-    // En producción, aquí iría:
-    const response = await fetch('/api/tarjetas-resumen');
-    return await response.json();
-    // return data
-  } catch (error) {
-    console.error('Error al obtener datos del día:', error);
-    return [];
-  }
-}
-async function cargarTarjetas() {
-  try {
-    const response = await fetch('/api/tarjetas-resumen');
-    const result = await response.json();
-    console.log(result)
-    if (result.success) {
-      mostrarTarjetas_1(result.data);
-    } else {
-      document.getElementById('contenido').innerHTML =
-        `<div class="error">Error: ${result.error}</div>`;
-    }
-  } catch (error) {
-    document.getElementById('resumenTarjetas').innerHTML =
-      `<div class="error">Error de conexión: ${error.message}</div>`;
-  }
-}
-// 2. Función para obtener datos filtrados desde JSON
-async function obtenerDatosFiltrados(filtros = {}) {
-  try {
-    // Simulamos retardo de red
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // En producción, aquí iría:
-    // const params = new URLSearchParams();
-    // if (filtros.tipo) params.append('tipo', filtros.tipo);
-    // if (filtros.metodo) params.append('metodo', filtros.metodo);
-    // if (filtros.fechaInicio) params.append('fechaInicio', filtros.fechaInicio);
-    // if (filtros.fechaFin) params.append('fechaFin', filtros.fechaFin);
-    // const response = await fetch(`/api/registros?${params.toString()}`);
-    // return await response.json();
-
-    // Simulamos filtrado básico para el ejemplo
-    const registrosFiltrados = jsonFiltrado.registros.filter(registro => {
-      const cumpleTipo = !filtros.tipo || filtros.tipo === 'todos' || registro.tipo === filtros.tipo;
-      const cumpleMetodo = !filtros.metodo || filtros.metodo === 'todos' || registro.metodo === filtros.metodo;
-      const cumpleFechaInicio = !filtros.fechaInicio || registro.fecha >= filtros.fechaInicio;
-      const cumpleFechaFin = !filtros.fechaFin || registro.fecha <= filtros.fechaFin;
-
-      return cumpleTipo && cumpleMetodo && cumpleFechaInicio && cumpleFechaFin;
-    });
-
-    return registrosFiltrados;
-  } catch (error) {
-    console.error('Error al obtener datos filtrados:', error);
-    return [];
-  }
-}
-
-// Función para mostrar tarjetas resumen
-function mostrarTarjetas(data) {
-  resumenTarjetas.innerHTML = '';
-
-  const totalVentas = data.filter(r => r.tipo === 'venta').reduce((acc, r) => acc + r.valor, 0);
-  const totalServicios = data.filter(r => r.tipo === 'servicio').reduce((acc, r) => acc + r.valor, 0);
-  const totalGastos = data.filter(r => r.tipo === 'gasto').reduce((acc, r) => acc + r.valor, 0);
-  const totalCaja = totalVentas + totalServicios - totalGastos;
-
-  // Calcular variación
-  const variacionVentas = calcularVariacion(totalVentas, datosAnteriores.ventas);
-  const variacionServicios = calcularVariacion(totalServicios, datosAnteriores.servicios);
-  const variacionGastos = calcularVariacion(totalGastos, datosAnteriores.gastos);
-  const variacionTotal = calcularVariacion(totalCaja, datosAnteriores.total);
-
-  // Actualizar datos anteriores
-  datosAnteriores = {
-    ventas: totalVentas,
-    servicios: totalServicios,
-    gastos: totalGastos,
-    total: totalCaja
-  };
-
-  // Crear tarjetas
-  const tarjetas = [
-    { titulo: 'Ventas', valor: totalVentas, variacion: variacionVentas },
-    { titulo: 'Servicios', valor: totalServicios, variacion: variacionServicios },
-    { titulo: 'Gastos', valor: totalGastos, variacion: variacionGastos },
-    { titulo: 'Total en Caja', valor: totalCaja, variacion: variacionTotal }
-  ];
-
-  tarjetas.forEach(t => {
-    const div = document.createElement('div');
-    div.className = 'tarjeta';
-    div.innerHTML = `
-      <h3>${t.titulo}</h3>
-      <p class="valor">$${t.valor.toFixed(2)}</p>
-      <div class="variacion ${t.variacion.tipo}">
-        ${t.variacion.icono} ${t.variacion.valor}%
-      </div>
-    `;
-    resumenTarjetas.appendChild(div);
-  });
-}
-
-// Función para mostrar tarjetas resumen
-function mostrarTarjetas_1(datos) {
+// Función para mostrar los bolsillos con filtros
+function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
   const contenedor = document.getElementById('resumenTarjetas');
+  let html = '';
 
-  if (datos.length === 0) {
-    contenedor.innerHTML = '<div class="error">No hay datos disponibles</div>';
-    return;
-  }
+  // Calcular totales generales
+  const totalGeneral = datosBolsillos.reduce((total, bolsillo) => total + bolsillo.total, 0);
+  const totalGastos = gastosIniciales.reduce((total, gasto) => total + gasto.monto, 0);
+  const utilidadNeta = totalGeneral - totalGastos;
 
-  let html = '<div class="tarjetas-container">';
+  // Filtrar bolsillos
+  const bolsillosFiltrados = datosBolsillos.filter(bolsillo => {
+    if (filtroBolsillo === "todos") return true;
+    return bolsillo.bolsillo.includes(filtroBolsillo);
+  });
 
-  let gastos = 0;
-  let total = 0;
-  datos.forEach(bolsillo => {
-    total += (bolsillo.bolsillo !== "CXC") ? bolsillo.total : 0;
-    gastos += bolsillo.modulos.gastos.valor_hoy;
-
-    const iconoTotal = bolsillo.comportamiento === 1 ? '↗' : '↘';
+  // Mostrar cada bolsillo filtrado
+  bolsillosFiltrados.forEach(bolsillo => {
+    const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
     const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
 
-    const iconoVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    const iconoServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
-    const iconoGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? '↗' : '↘';
-    const colorGastos = bolsillo.modulos.gastos.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-
     html += `
-                        <div class="tarjeta-bolsillo">
-                            <div class="encabezado">${bolsillo.bolsillo}</div>
-                            <div class="total ${colorTotal}">
-                                <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
-                                <span>${iconoTotal}</span>
-                            </div>
-                            <div class="modulos">
-                                <div class="modulo">
-                                    <div><strong>Ventas</strong></div>
-                                    <div class="${colorVentas}">
-                                        ${bolsillo.modulos.ventas.porcentaje}% ${iconoVentas}
-                                    </div>
-                                </div>
-                                <div class="modulo">
-                                    <div><strong>Servicios</strong></div>
-                                    <div class="${colorServicios}">
-                                        ${bolsillo.modulos.servicios.porcentaje}% ${iconoServicios}
-                                    </div>
-                                </div>
-                                <div class="modulo">
-                                    <div><strong>Gastos</strong></div>
-                                    <div class="${colorGastos}">
-                                        ${bolsillo.modulos.gastos.porcentaje}% ${iconoGastos}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
+          <div class="tarjeta-bolsillo">
+            <div class="encabezado">
+              <i class="fas fa-wallet"></i>
+              <span>${bolsillo.bolsillo}</span>
+            </div>
+            <div class="total ${colorTotal}">
+              <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
+              <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
+            </div>
+            <div class="modulos">
+              <div class="modulo">
+                <div class="etiqueta">
+                  <i class="fas fa-shopping-cart"></i>
+                  <span>Ventas</span>
+                </div>
+                <div class="valor">${bolsillo.modulos.ventas.porcentaje}%</div>
+              </div>
+              <div class="modulo">
+                <div class="etiqueta">
+                  <i class="fas fa-tools"></i>
+                  <span>Servicios</span>
+                </div>
+                <div class="valor">${bolsillo.modulos.servicios.porcentaje}%</div>
+              </div>
+               <button class="btn-icono btn-eliminar" onclick="eliminarBolsillo(${bolsillo.id})">
+                                <i class="fas fa-trash"></i>
+                            </button>
+            </div>
+
+          </div>
+          
+                            
+  
+                        
+        `;
   });
-  html +=`
-                        <div class="tarjeta-bolsillo">
-                            <div class="encabezado">Total</div>
-                            <div class="total color-verde">
-                                <strong>$${total.toLocaleString('es-ES')}</strong>
-                            </div>
-                            <div class="modulos">
-                              <div class="modulo">
-                                  <div><strong>Gastos</strong></div>
-                                  <div class= color-rojo>
-                                      ${gastos}
-                                  </div>
-                              </div>
-                            </div>
-                        </div>
-                    `;
-  html += '</div>';
+
+  // Tarjeta de Resumen Financiero
+  html += `
+        <div class="tarjeta-bolsillo tarjeta-resumen">
+          <div class="encabezado">
+            <i class="fas fa-chart-line"></i>
+            <span>Resumen</span>
+          </div>
+          <div class="modulos">
+            <div class="modulo">
+              <div class="etiqueta">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Total General</span>
+              </div>
+              <div class="valor">$${totalGeneral.toLocaleString('es-ES')}</div>
+            </div>
+            <div class="modulo">
+              <div class="etiqueta">
+                <i class="fas fa-money-bill-wave"></i>
+                <span>Gastos Totales</span>
+              </div>
+              <div class="valor color-rojo">$${totalGastos.toLocaleString('es-ES')}</div>
+            </div>
+            <div class="modulo">
+              <div class="etiqueta">
+                <i class="fas fa-coins"></i>
+                <span>Utilidad Neta</span>
+              </div>
+              <div class="valor color-verde">$${utilidadNeta.toLocaleString('es-ES')}</div>
+            </div>
+            
+      `;
+
   contenedor.innerHTML = html;
 }
 
-// Función para calcular variación porcentual
-function calcularVariacion(valorActual, valorAnterior) {
-  if (valorAnterior === 0) {
-    return {
-      valor: '100',
-      tipo: valorActual >= 0 ? 'incremento' : 'decremento',
-      icono: valorActual >= 0 ? '↑' : '↓'
-    };
+// Función para mostrar los gastos con filtros
+function mostrarGastos(filtroCategoria = "todas", filtroFecha = "", filtroMonto = 0) {
+  const contenedor = document.getElementById('lista-gastos');
+  contenedor.innerHTML = '';
+
+  // Filtrar gastos
+  const gastosFiltrados = gastosIniciales.filter(gasto => {
+    // Filtrar por categoría
+    if (filtroCategoria !== "todas" && gasto.categoria !== filtroCategoria) {
+      return false;
+    }
+
+    // Filtrar por fecha
+    if (filtroFecha && gasto.fecha !== filtroFecha) {
+      return false;
+    }
+
+    // Filtrar por monto mínimo
+    if (filtroMonto > 0 && gasto.monto < filtroMonto) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Mostrar gastos filtrados
+  if (gastosFiltrados.length === 0) {
+    contenedor.innerHTML = '<div class="no-resultados">No se encontraron gastos con los filtros seleccionados</div>';
+    return;
   }
 
-  const variacion = ((valorActual - valorAnterior) / valorAnterior) * 100;
-
-  return {
-    valor: Math.abs(variacion).toFixed(2),
-    tipo: variacion >= 0 ? 'incremento' : 'decremento',
-    icono: variacion >= 0 ? '↑' : '↓'
-  };
-}
-
-// Función para actualizar gráfica
-function actualizarGrafica(data) {
-  const ingresos = data.filter(r => r.tipo === 'venta' || r.tipo === 'servicio');
-  const egresos = data.filter(r => r.tipo === 'gasto');
-
-  const labels = [...new Set(data.map(r => r.fecha))].sort();
-
-  // Datasets para ingresos por método de pago
-  const efectivoIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const transferenciaIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const tarjetaIngresos = labels.map(fecha =>
-    ingresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  // Datasets para egresos por método de pago
-  const efectivoEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'efectivo').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const transferenciaEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'transferencia').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  const tarjetaEgresos = labels.map(fecha =>
-    egresos.filter(r => r.fecha === fecha && r.metodo === 'tarjeta').reduce((sum, r) => sum + r.valor, 0)
-  );
-
-  if (grafica) grafica.destroy();
-
-  grafica = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: [
-        {
-          label: 'Ingresos en Efectivo',
-          data: efectivoIngresos,
-          borderColor: '#28a745',
-          backgroundColor: 'rgba(40, 167, 69, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Ingresos por Transferencia',
-          data: transferenciaIngresos,
-          borderColor: '#17a2b8',
-          backgroundColor: 'rgba(23, 162, 184, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Ingresos con Tarjeta',
-          data: tarjetaIngresos,
-          borderColor: '#6f42c1',
-          backgroundColor: 'rgba(111, 66, 193, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos en Efectivo',
-          data: efectivoEgresos,
-          borderColor: '#dc3545',
-          backgroundColor: 'rgba(220, 53, 69, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos por Transferencia',
-          data: transferenciaEgresos,
-          borderColor: '#fd7e14',
-          backgroundColor: 'rgba(253, 126, 20, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'Egresos con Tarjeta',
-          data: tarjetaEgresos,
-          borderColor: '#343a40',
-          backgroundColor: 'rgba(52, 58, 64, 0.1)',
-          fill: true,
-          tension: 0.4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      scales: {
-        y: { beginAtZero: true }
-      },
-      interaction: {
-        mode: 'index',
-        intersect: false
-      }
-    }
+  gastosFiltrados.forEach(gasto => {
+    const div = document.createElement('div');
+    div.className = 'gasto-item';
+    div.innerHTML = `
+          <div class="info">
+            <p class="descripcion">${gasto.descripcion}</p>
+            <div class="detalles">
+              <span><i class="fas fa-money-bill"></i> $${gasto.monto.toLocaleString('es-ES')}</span>
+              <span><i class="fas fa-tag"></i> ${obtenerNombreCategoria(gasto.categoria)}</span>
+              <span><i class="fas fa-calendar"></i> ${gasto.fecha}</span>
+            </div>
+          </div>
+          <div class="monto">$${gasto.monto.toLocaleString('es-ES')}</div>
+          <div class="acciones">
+            <button class="btn-icono btn-editar" onclick="editarGasto(${gasto.id})">
+              <i class="fas fa-edit"></i>
+            </button>
+            <button class="btn-icono btn-eliminar" onclick="eliminarGasto(${gasto.id})">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        `;
+    contenedor.appendChild(div);
   });
 }
 
-// Función para aplicar filtros
-async function aplicarFiltros() {
-  const filtros = {
-    tipo: document.getElementById('tipoRegistro').value,
-    metodo: document.getElementById('metodoPago').value,
-    fechaInicio: document.getElementById('fechaInicio').value,
-    fechaFin: document.getElementById('fechaFin').value
+// Función para obtener el nombre de la categoría
+function obtenerNombreCategoria(codigo) {
+  const categorias = {
+    "operativos": "Gastos Operativos",
+    "administrativos": "Gastos Administrativos",
+    "comerciales": "Gastos Comerciales",
+    "otros": "Otros Gastos"
+  };
+  return categorias[codigo] || "Sin categoría";
+}
+
+// Función para mostrar las cuentas por cobrar con filtros
+function mostrarCuentasPorCobrar(filtroEstado = "todos", filtroCliente = "", filtroFecha = "") {
+  const contenedor = document.getElementById('lista-cuentas');
+  contenedor.innerHTML = '';
+
+  // Filtrar cuentas
+  const cuentasFiltradas = cuentasPorCobrar.filter(cuenta => {
+    // Filtrar por estado
+    if (filtroEstado !== "todos") {
+      if (filtroEstado === "pendiente" && cuenta.pagada) return false;
+      if (filtroEstado === "pagada" && !cuenta.pagada) return false;
+    }
+
+    // Filtrar por cliente
+    if (filtroCliente && !cuenta.cliente.toLowerCase().includes(filtroCliente.toLowerCase())) {
+      return false;
+    }
+
+    // Filtrar por fecha
+    if (filtroFecha && cuenta.fecha !== filtroFecha) {
+      return false;
+    }
+
+    return true;
+  });
+
+  // Mostrar cuentas filtradas
+  if (cuentasFiltradas.length === 0) {
+    contenedor.innerHTML = '<div class="no-resultados">No se encontraron cuentas con los filtros seleccionados</div>';
+    return;
+  }
+
+  cuentasFiltradas.forEach(cuenta => {
+    const div = document.createElement('div');
+    div.className = `cuenta-item ${cuenta.pagada ? 'pagada' : ''}`;
+
+    if (cuenta.pagada) {
+      div.innerHTML = `
+            <div class="info">
+              <p class="cliente">${cuenta.cliente} <span class="color-verde">(Pagada)</span></p>
+              <div class="detalles">
+                <span><i class="fas fa-money-bill"></i> $${cuenta.monto.toLocaleString('es-ES')}</span>
+                <span><i class="fas fa-calendar"></i> Pagada: ${cuenta.fecha}</span>
+              </div>
+            </div>
+            <div class="monto color-verde">$${cuenta.monto.toLocaleString('es-ES')}</div>
+          `;
+    } else {
+      div.innerHTML = `
+            <div class="info">
+              <p class="cliente">${cuenta.cliente} <span class="color-rojo">(Pendiente)</span></p>
+              <div class="detalles">
+                <span><i class="fas fa-money-bill"></i> $${cuenta.monto.toLocaleString('es-ES')}</span>
+                <span><i class="fas fa-calendar"></i> Vence: ${cuenta.fecha}</span>
+              </div>
+            </div>
+            <div class="monto">$${cuenta.monto.toLocaleString('es-ES')}</div>
+            <div class="acciones">
+              <button class="btn-pagar" onclick="pagarFactura(${cuenta.id})">
+                <i class="fas fa-check"></i> Pagar Factura
+              </button>
+            </div>
+          `;
+    }
+
+    contenedor.appendChild(div);
+  });
+}
+
+// Funciones para aplicar filtros
+function filtrarBolsillos() {
+  const filtroBolsillo = document.getElementById('filtro-bolsillo').value;
+  const filtroFecha = document.getElementById('filtro-fecha').value;
+  mostrarBolsillos(filtroBolsillo, filtroFecha);
+}
+
+function filtrarGastos() {
+  const filtroCategoria = document.getElementById('filtro-categoria').value;
+  const filtroFecha = document.getElementById('filtro-fecha-gasto').value;
+  const filtroMonto = parseFloat(document.getElementById('filtro-monto').value) || 0;
+  mostrarGastos(filtroCategoria, filtroFecha, filtroMonto);
+}
+
+function filtrarCuentas() {
+  const filtroEstado = document.getElementById('filtro-estado').value;
+  const filtroCliente = document.getElementById('filtro-cliente').value;
+  const filtroFecha = document.getElementById('filtro-fecha-cxc').value;
+  mostrarCuentasPorCobrar(filtroEstado, filtroCliente, filtroFecha);
+}
+
+// Función para guardar un nuevo tipo de pago (con llamada a API simulada)
+async function guardarTipoPago() {
+  const nombre = document.getElementById('nombre').value.trim();
+  const descripcion = document.getElementById('descripcion').value.trim();
+
+  if (!nombre) {
+    alert("El nombre es obligatorio");
+    return;
+  }
+
+  try {
+    // Simulación de llamada a API
+    console.log("Enviando datos a la API:", { nombre, descripcion });
+
+    // Simulamos un retraso de red
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Simulamos una respuesta exitosa de la API
+    const resultado = { ok: true, id: Math.floor(Math.random() * 100) + 1 };
+
+    if (resultado.ok) {
+      alert("Tipo de pago guardado con éxito. ID: " + resultado.id);
+      document.getElementById('nombre').value = '';
+      document.getElementById('descripcion').value = '';
+
+      // Aquí podrías actualizar la UI con el nuevo tipo de pago
+    } else {
+      alert("Error al guardar: " + resultado.error);
+    }
+  } catch (error) {
+    alert("Error de red o del servidor");
+    console.error(error);
+  }
+}
+
+// Función para agregar un gasto
+function agregarGasto() {
+  const descripcion = document.getElementById('descripcion-gasto').value.trim();
+  const monto = parseFloat(document.getElementById('monto-gasto').value);
+  const categoria = document.getElementById('categoria-gasto').value;
+
+  if (!descripcion || isNaN(monto) || monto <= 0) {
+    alert("Descripción y monto válido son obligatorios");
+    return;
+  }
+
+  const nuevoGasto = {
+    id: gastosIniciales.length + 1,
+    descripcion,
+    monto,
+    categoria,
+    fecha: new Date().toISOString().split('T')[0]
   };
 
-  const datosFiltrados = await obtenerDatosFiltrados(filtros);
-  mostrarTarjetas(datosFiltrados);
-  actualizarGrafica(datosFiltrados);
+  gastosIniciales.push(nuevoGasto);
+  mostrarGastos();
+  mostrarBolsillos(); // Actualizar el resumen financiero
+
+  alert(`Gasto agregado: ${descripcion} - $${monto.toLocaleString('es-ES')}`);
+  document.getElementById('descripcion-gasto').value = '';
+  document.getElementById('monto-gasto').value = '';
+}
+
+// Función para editar un gasto
+function editarGasto(id) {
+  gastoEditando = gastosIniciales.find(g => g.id === id);
+  if (!gastoEditando) return;
+
+  document.getElementById('editar-descripcion').value = gastoEditando.descripcion;
+  document.getElementById('editar-monto').value = gastoEditando.monto;
+  document.getElementById('editar-categoria').value = gastoEditando.categoria;
+
+  modalEditarGasto.style.display = 'block';
+}
+
+// Función para guardar los cambios de edición
+function guardarCambiosGasto() {
+  if (!gastoEditando) return;
+
+  const descripcion = document.getElementById('editar-descripcion').value.trim();
+  const monto = parseFloat(document.getElementById('editar-monto').value);
+  const categoria = document.getElementById('editar-categoria').value;
+
+  if (!descripcion || isNaN(monto)) {
+    alert("Descripción y monto son obligatorios");
+    return;
+  }
+
+  gastoEditando.descripcion = descripcion;
+  gastoEditando.monto = monto;
+  gastoEditando.categoria = categoria;
+
+  mostrarGastos();
+  mostrarBolsillos(); // Actualizar el resumen financiero
+  modalEditarGasto.style.display = 'none';
+  alert("Gasto actualizado correctamente");
+}
+
+// Función para eliminar un gasto
+function eliminarGasto(id) {
+  if (!confirm("¿Estás seguro de eliminar este gasto?")) return;
+
+  gastosIniciales = gastosIniciales.filter(gasto => gasto.id !== id);
+  mostrarGastos();
+  mostrarBolsillos(); // Actualizar el resumen financiero
+  alert("Gasto eliminado correctamente");
+}
+
+// Función para pagar una factura
+function pagarFactura(id) {
+  const cuenta = cuentasPorCobrar.find(c => c.id === id);
+  if (!cuenta) return;
+
+  cuenta.pagada = true;
+  cuenta.fecha = new Date().toISOString().split('T')[0];
+
+  mostrarCuentasPorCobrar();
+  mostrarBolsillos(); // Actualizar el resumen financiero
+  alert(`Factura de ${cuenta.cliente} pagada correctamente.`);
 }
 
 // Inicialización al cargar la página
-document.addEventListener('DOMContentLoaded', async () => {
-  // Cargar datos del día actual
-  cargarTarjetas();
-  // const datosIniciales = await obtenerDatosDelDiaActual();
-  // mostrarTarjetas(datosIniciales);
-  // actualizarGrafica(datosIniciales);
+document.addEventListener('DOMContentLoaded', () => {
+  mostrarBolsillos();
+  mostrarGastos();
+  mostrarCuentasPorCobrar();
 
+  btnCerrarModal.forEach(btn => {
+    btn.addEventListener('click', function () {
+      this.closest('.modal').style.display = 'none';
+    });
+  });
 
+  btnGuardarEdicion.addEventListener('click', guardarCambiosGasto);
 
-  // Configurar evento del botón filtrar
-  btnFiltrar.addEventListener('click', aplicarFiltros);
+  window.addEventListener('click', (event) => {
+    if (event.target.classList.contains('modal')) {
+      event.target.style.display = 'none';
+    }
+  });
 });
