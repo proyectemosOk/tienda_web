@@ -378,9 +378,26 @@ def crear_tablas(base):
             fecha_entrada DATE DEFAULT CURRENT_DATE,
             monto REAL NOT NULL,
             descripcion TEXT NOT NULL,
-            metodo_pago TEXT NOT NULL
+            categoria INTEGER NOT NULL,
+            metodo_pago INTEGER NOT NULL,
+            FOREIGN KEY (categoria) REFERENCES categoria_gastos(id),
+            FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id)
         )
     ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS categoria_gastos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                descripcion TEXT NOT NULL UNIQUE
+                )
+    ''')
+    cursor.executemany("INSERT OR IGNORE INTO categoria_gastos (id, descripcion) VALUES (?, ?)",
+                   ((0, "Otros"),
+                    (1,	"Operativos"),
+                    (2,	"Compras e insumos"),
+                    (3,	"Administrativos"),
+                    (4,	"Impuestos")
+                    ))
+
     # Confirmar los cambios y cerrar la conexión
     # Crear tabla si no existe    
     cursor.execute('''
@@ -582,7 +599,7 @@ def crear_tablas(base):
 
 if __name__ == "__main__":
     crear_tablas("tienda_jfleong6_1.db")
-    modificar_tabla_usuarios_sin_check()
+    # modificar_tabla_usuarios_sin_check()
     
     
     # Conexión a la base de datos (cambia el nombre si es diferente)

@@ -7,7 +7,7 @@ class Item {
     this.cantidad = 1;
     this.actualizarTotalCallback = actualizarTotalCallback;
     this.eliminarItemCallback = eliminarItemCallback;
-    
+
     // Crear elemento HTML
     this.element = document.createElement('div');
     this.element.className = 'item-card';
@@ -25,7 +25,7 @@ class Item {
     `;
     console.log("parentElement:", parentElement);
     parentElement.appendChild(this.element);
-    
+
     // Event listeners
     this.element.querySelector('.btn-quantity-minus').addEventListener('click', () => this.restar());
     this.element.querySelector('.btn-quantity-plus').addEventListener('click', () => this.sumar());
@@ -33,23 +33,23 @@ class Item {
     this.element.querySelector('.item-price-input').addEventListener('change', (e) => this.actualizarPrecio(e.target.value));
     this.element.querySelector('.item-quantity-input').addEventListener('change', (e) => this.actualizarCantidad(e.target.value));
   }
-  
+
   actualizarPrecio(nuevoPrecio) {
     this.precio = parseFloat(nuevoPrecio) || this.precio;
     this.actualizarTotal();
   }
-  
+
   actualizarCantidad(nuevaCantidad) {
     this.cantidad = parseInt(nuevaCantidad) || 1;
     this.actualizarTotal();
   }
-  
+
   sumar() {
     this.cantidad++;
     this.element.querySelector('.item-quantity-input').value = this.cantidad;
     this.actualizarTotal();
   }
-  
+
   restar() {
     if (this.cantidad > 1) {
       this.cantidad--;
@@ -59,13 +59,13 @@ class Item {
       this.eliminar();
     }
   }
-  
+
   actualizarTotal() {
     const total = this.precio * this.cantidad;
     this.element.querySelector('.item-total').textContent = `$${total.toFixed(2)}`;
     this.actualizarTotalCallback();
   }
-  
+
   eliminar() {
     this.element.remove();
     this.eliminarItemCallback(this.id);
@@ -76,94 +76,94 @@ class TicketDeVenta {
   constructor() {
     this.items = {};
     this.total = 0;
-    
+
     // Elementos del DOM
     this.itemsContainer = document.getElementById('itemsContainer');
     this.totalLabel = document.getElementById('totalLabel');
     this.venderBtn = document.getElementById('venderBtn');
     this.clienteCombo = document.getElementById('clienteCombo');
     this.nuevoClienteBtn = document.getElementById('nuevoClienteBtn');
-    
+
     // Métodos de pago
     this.paymentInputs = {
       efectivo: document.getElementById('efectivoInput'),
       transferencia: document.getElementById('transferenciaInput'),
       cxc: document.getElementById('cxcInput')
     };
-    
+
     // Event listeners
     document.querySelectorAll('.btn-payment').forEach(btn => {
       btn.addEventListener('click', (e) => this.seleccionarMetodoPago(e.target.dataset.method));
     });
-    
+
     this.venderBtn.addEventListener('click', () => this.vender());
     this.clienteCombo.addEventListener('keyup', () => this.filtrarClientes());
   }
-  
+
   agregarItem(id, nombre, precio, stock) {
     if (id in this.items) {
       this.items[id].sumar();
     } else {
       this.items[id] = new Item(
-        this.itemsContainer, 
-        id, 
-        nombre, 
-        precio, 
-        stock, 
+        this.itemsContainer,
+        id,
+        nombre,
+        precio,
+        stock,
         () => this.actualizarTotal(),
         (id) => this.eliminarItem(id)
       );
       this.actualizarTotal();
     }
   }
-  
+
   eliminarItem(id) {
     delete this.items[id];
     this.actualizarTotal();
   }
-  
+
   actualizarTotal() {
     this.total = Object.values(this.items).reduce((sum, item) => {
       return sum + (item.precio * item.cantidad);
     }, 0);
-    
+
     this.totalLabel.textContent = `$${this.total.toFixed(2)}`;
   }
-  
+
   seleccionarMetodoPago(metodo) {
     // Oculta todos los inputs primero
     Object.values(this.paymentInputs).forEach(input => {
       input.style.display = 'none';
     });
-    
+
     // Muestra el input correspondiente
     if (this.paymentInputs[metodo]) {
       this.paymentInputs[metodo].style.display = 'block';
       this.paymentInputs[metodo].placeholder = `$${this.total.toFixed(2)}`;
     }
   }
-  
+
   filtrarClientes() {
     // Implementar lógica de filtrado similar a Python
     console.log('Filtrando clientes...');
   }
-  
+
   vender() {
     const clienteId = this.clienteCombo.value;
     const vendedorId = "1";
-  
+
     if (!clienteId) {
       alert('Selecciona un cliente');
       return;
     }
-  
+
     // Construir productos
     const productos = Object.values(this.items).map(item => ({
-      codigo: item.id, 
+      codigo: item.id,
       cantidad: item.cantidad,
       precio_unitario: item.precio
     }));
-  
+
     // Obtener métodos de pago visibles con valor
     let metodosPago = Array.from(document.querySelectorAll('.payment-input'))
       .filter(input => input.value.trim() !== '')
@@ -171,8 +171,8 @@ class TicketDeVenta {
         metodo: input.dataset.method,
         valor: parseFloat(input.value)
       }));
-    let items =  Array.from(document.querySelectorAll('.payment-input'))
-    for (let i =0; i< items.length;i++){
+    let items = Array.from(document.querySelectorAll('.payment-input'))
+    for (let i = 0; i < items.length; i++) {
       console.log(items[i].value);
     }
     // Si no hay ningún método de pago, usar efectivo por defecto con el total
@@ -183,10 +183,10 @@ class TicketDeVenta {
       }];
     }
 
-  
+
     // Total
     const totalVenta = this.total;
-  
+
     const jsonVenta = {
       vendedor_id: vendedorId,
       cliente_id: clienteId,
@@ -194,9 +194,9 @@ class TicketDeVenta {
       metodos_pago: metodosPago,
       productos: productos
     };
-  
+
     console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
-  
+
     fetch('api/crear_venta', {
       method: 'POST',
       headers: {
@@ -204,55 +204,55 @@ class TicketDeVenta {
       },
       body: JSON.stringify(jsonVenta)
     })
-    .then(async res => {
-      const responseText = await res.text();
-  
-      if (!res.ok) {
-        console.error("❌ ERROR:", responseText);
-        throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
-      }
-  
-      const data = JSON.parse(responseText);
-      alert('✅ Venta registrada correctamente');
-      this.items = {};
-      this.total = 0;
-      this.totalLabel.textContent = '$0.00';
-      this.itemsContainer.innerHTML = '';
+      .then(async res => {
+        const responseText = await res.text();
 
-      
-      // Limpiar inputs de métodos de pago
-document.querySelectorAll('.payment-input').forEach(input => {
-  input.value = '';
-})
-// Actualizar visual del total (ajusta según cómo lo estés mostrando)
-      console.log(data);
-    })
-    .catch(err => {
-      console.error("❌ Fallo al registrar venta:", err.message);
-      alert(`Error al registrar venta:\n${err.message}`);
-    });
+        if (!res.ok) {
+          console.error("❌ ERROR:", responseText);
+          throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
+        }
+
+        const data = JSON.parse(responseText);
+        alert('✅ Venta registrada correctamente');
+        this.items = {};
+        this.total = 0;
+        this.totalLabel.textContent = '$0.00';
+        this.itemsContainer.innerHTML = '';
+
+
+        // Limpiar inputs de métodos de pago
+        document.querySelectorAll('.payment-input').forEach(input => {
+          input.value = '';
+        })
+        // Actualizar visual del total (ajusta según cómo lo estés mostrando)
+        console.log(data);
+      })
+      .catch(err => {
+        console.error("❌ Fallo al registrar venta:", err.message);
+        alert(`Error al registrar venta:\n${err.message}`);
+      });
   }
-  
+
 }
 async function cargarMetodosPago() {
   try {
-      const response = await fetch('/api/metodos_pago');
-      const data = await response.json();
-      
-      if (!response.ok) {
-          console.error('Error:', data.mensaje);
-          return;
-      }
-      
-      const paymentMethodsContainer = document.querySelector('.payment-methods');
-      paymentMethodsContainer.innerHTML = ''; // Limpiar contenedor
-       // Mostrar todos como botones
-        data.metodos.forEach(metodo => {
-            const metodoElement = crearElementoMetodoPago(metodo);
-            paymentMethodsContainer.appendChild(metodoElement);
-        });
+    const response = await fetch('/api/metodos_pago');
+    const data = await response.json();
+
+    if (!response.ok) {
+      console.error('Error:', data.mensaje);
+      return;
+    }
+
+    const paymentMethodsContainer = document.querySelector('.payment-methods');
+    paymentMethodsContainer.innerHTML = ''; // Limpiar contenedor
+    // Mostrar todos como botones
+    data.metodos.forEach(metodo => {
+      const metodoElement = crearElementoMetodoPago(metodo);
+      paymentMethodsContainer.appendChild(metodoElement);
+    });
   } catch (error) {
-      console.error('Error al cargar métodos de pago:', error);
+    console.error('Error al cargar métodos de pago:', error);
   }
 }
 
@@ -279,8 +279,8 @@ function crearElementoMetodoPago(metodo) {
 
 
 function mostrarInputPago(metodo) {
-const inputId = `input-${metodo.id}`;
-let input = document.getElementById(inputId);
+  const inputId = `input-${metodo.id}`;
+  let input = document.getElementById(inputId);
 
   // Si no existe el input, lo creamos
   if (!input) {
@@ -291,23 +291,23 @@ let input = document.getElementById(inputId);
     input.placeholder = '$0';
     input.dataset.method = metodo.nombre;
 
-  // Insertar después del botón
-  let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
-  parentElement.appendChild(input);
-}
+    // Insertar después del botón
+    let parentElement = document.querySelector(`[data-id="${metodo.id}"]`).parentNode;
+    parentElement.appendChild(input);
+  }
 
-// Alternar visibilidad solo de este input
-const visible = input.style.display === 'block';
+  // Alternar visibilidad solo de este input
+  const visible = input.style.display === 'block';
 
-// Ocultar todos los inputs primero
-document.querySelectorAll('.payment-input').forEach(el => el.style.display = 'none');
+  // Ocultar todos los inputs primero
+  document.querySelectorAll('.payment-input').forEach(el => el.style.display = 'none');
 
-// Si ya estaba visible, lo ocultamos. Si no, lo mostramos.
-input.style.display = visible ? 'none' : 'block';
+  // Si ya estaba visible, lo ocultamos. Si no, lo mostramos.
+  input.style.display = visible ? 'none' : 'block';
 
-if (!visible) {
-  input.focus();
-}
+  if (!visible) {
+    input.focus();
+  }
 }
 
 
@@ -326,10 +326,10 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 //         document.querySelectorAll('.otros-metodos option').forEach(opt => {
 //             opt.style.fontWeight = 'normal';
 //         });
-        
+
 //         // Resaltar opción seleccionada
 //         this.querySelector(`option[value="${metodoSeleccionado}"]`).style.fontWeight = 'bold';
-        
+
 //         // Mostrar input para este método
 //         mostrarInputPago({ 
 //             id: metodoSeleccionado, 
@@ -339,35 +339,35 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 // });
 
 document.addEventListener('DOMContentLoaded', () => {
-    const clienteCombo = document.getElementById('clientes');
+  const clienteCombo = document.getElementById('clientes');
 
-    // Función para cargar los clientes desde la API
-    const cargarClientes = async () => {
-      
-        try {
-            const response = await fetch('/api/clientes');
-            if (!response.ok) {
-                throw new Error('Error al cargar los clientes');
-            }
-            const clientes = await response.json();
+  // Función para cargar los clientes desde la API
+  const cargarClientes = async () => {
 
-            // Limpiar el combo antes de llenarlo
-            clienteCombo.innerHTML = '<option value="">Seleccionar cliente</option>';
+    try {
+      const response = await fetch('/api/clientes');
+      if (!response.ok) {
+        throw new Error('Error al cargar los clientes');
+      }
+      const clientes = await response.json();
 
-            // Llenar el combo con los clientes
-            clientes.forEach(cliente => {
-                const option = document.createElement('option');
-                option.value = cliente.nombre;
-                option.textContent = cliente.documento;
-                clienteCombo.appendChild(option);
-            });
-        } catch (error) {
-            console.error(error);
-        }
-    };
+      // Limpiar el combo antes de llenarlo
+      clienteCombo.innerHTML = '<option value="">Seleccionar cliente</option>';
 
-    // Llamar a la función para cargar los clientes al cargar la página
-    cargarClientes();
+      // Llenar el combo con los clientes
+      clientes.forEach(cliente => {
+        const option = document.createElement('option');
+        option.value = cliente.nombre;
+        option.textContent = cliente.documento;
+        clienteCombo.appendChild(option);
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  // Llamar a la función para cargar los clientes al cargar la página
+  cargarClientes();
 });
 
 

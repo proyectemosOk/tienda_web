@@ -31,7 +31,7 @@ class TarjetasEmpresariales:
             """
             
             resultado = self.conn.ejecutar_personalizado(consulta)
-            
+
             bolsillos = []
             for row in resultado:
                 bolsillos.append({
@@ -70,7 +70,6 @@ class TarjetasEmpresariales:
                 parametros = (fecha,)
             
             resultado = self.conn.ejecutar_personalizado(consulta, parametros)
-            
             return resultado[0][0] if resultado else 0
         except Exception as e:
             print(f"Error obteniendo ventas por tipo de pago: {e}")
@@ -90,17 +89,37 @@ class TarjetasEmpresariales:
         except Exception as e:
             print(f"Error obteniendo servicios: {e}")
             return 0
-    def obtener_gastos_por_fecha(self, fecha, nombre):
+    
+    def obtener_gastos_por_fecha(self, fecha):
         """Obtiene el total de servicios en una fecha específica"""
         try:
             consulta = """
-                SELECT COALESCE(SUM(monto), 0) as total
-                FROM gastos 
-                WHERE DATE(fecha_entrada) = ? AND metodo_pago = ?
+                SELECT 
+                g.id,
+                g.fecha_entrada,
+                g.monto,
+                g.descripcion,
+                c.descripcion AS categoria,
+                tp.nombre AS metodo_pago
+                FROM gastos g
+                JOIN categoria_gastos c ON g.categoria = c.id
+                JOIN tipos_pago tp ON g.metodo_pago = tp.id
+                WHERE DATE(g.fecha_entrada) >= ?
+                ORDER BY g.fecha_entrada ASC;
             """
-            
-            resultado = self.conn.ejecutar_personalizado(consulta, (fecha,nombre))
-            return resultado[0][0] if resultado else 0
+            resultado = self.conn.ejecutar_personalizado(consulta, (fecha,))
+            gastos = [
+                {
+                    "id": fila[0],
+                    "descripcion": fila[1],
+                    "monto": fila[2],
+                    "categoria": fila[3],
+                    "fecha": fila[4]
+                }
+                for fila in resultado
+]
+
+            return gastos if gastos else 0
         except Exception as e:
             print(f"Error obteniendo servicios: {e}")
             return 0
@@ -127,12 +146,8 @@ class TarjetasEmpresariales:
                 # Valores para el bolsillo actual
                 ventas_hoy = self.obtener_ventas_por_tipo_pago_fecha(fecha_hoy, bolsillo['id'])
                 ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'])
-                
                 servicios_hoy = self.obtener_servicios_por_fecha(fecha_hoy, bolsillo['nombre'])
                 servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['nombre'])
-                
-                gastos_hoy = self.obtener_gastos_por_fecha(fecha_hoy, bolsillo['nombre'])
-                gastos_ayer = self.obtener_gastos_por_fecha(fecha_ayer, bolsillo['nombre'])
                 
                 # Calcular total del bolsillo (valor actual configurado)
                 total_bolsillo = bolsillo['valor_actual']
@@ -140,14 +155,12 @@ class TarjetasEmpresariales:
                 # Calcular porcentajes de cambio
                 porcentaje_ventas = self.calcular_porcentaje_cambio(ventas_hoy, ventas_ayer)
                 porcentaje_servicios = self.calcular_porcentaje_cambio(servicios_hoy, servicios_ayer)
-                porcentaje_gastos = self.calcular_porcentaje_cambio(gastos_hoy, gastos_ayer)
-                
+
                 # Determinar comportamiento (1 = subida, 0 = bajada)
                 comportamiento_ventas = 1 if porcentaje_ventas >= 0 else 0
                 comportamiento_servicios = 1 if porcentaje_servicios >= 0 else 0
-                comportamiento_gastos = 1 if porcentaje_gastos >= 0 else 0
                 
-                comportamiento_general = 1 if (ventas_hoy + servicios_hoy + gastos_hoy) >= (ventas_ayer + servicios_ayer + gastos_ayer) else 0
+                comportamiento_general = 1 if (ventas_hoy + servicios_hoy) >= (ventas_ayer + servicios_ayer) else 0
                 
                 
                 # Construir objeto de tarjeta
@@ -155,28 +168,18 @@ class TarjetasEmpresariales:
                     "bolsillo": bolsillo['nombre'],
                     "total": total_bolsillo,
                     "porcentaje": self.calcular_porcentaje_cambio(
-                        ventas_hoy + servicios_hoy - gastos_hoy, 
-                        ventas_ayer + servicios_ayer - gastos_ayer
+                        ventas_hoy + servicios_hoy, 
+                        ventas_ayer + servicios_ayer
                     ),
                     "comportamiento": comportamiento_general,
                     "modulos": {
                         "ventas": {
                             "porcentaje": abs(porcentaje_ventas),
-                            "sub_comportamiento": comportamiento_ventas,
-                            "valor_hoy": ventas_hoy,
-                            "valor_ayer": ventas_ayer
+                            "sub_comportamiento": comportamiento_ventas
                         },
                         "servicios": {
                             "porcentaje": abs(porcentaje_servicios),
-                            "sub_comportamiento": comportamiento_servicios,
-                            "valor_hoy": servicios_hoy,
-                            "valor_ayer": servicios_ayer
-                        },
-                        "gastos": {
-                            "porcentaje": abs(porcentaje_gastos),
-                            "sub_comportamiento": comportamiento_gastos,
-                            "valor_hoy": gastos_hoy,
-                            "valor_ayer": gastos_ayer
+                            "sub_comportamiento": comportamiento_servicios
                         }
                     }
                 }
@@ -188,6 +191,25 @@ class TarjetasEmpresariales:
         except Exception as e:
             print(f"Error generando datos de tarjetas: {e}")
             return []
+
+    def cargar_tipos_pagos_tipos_gastos(self):
+        tipos_pago = self.conn.seleccionar("tipos_pago", "id, nombre")
+        tipos_gatos = self.conn.seleccionar("categoria_gastos", "id, descripcion")
+        datos ={
+            "tipos_pagos":{t[0]:t[1] for t in tipos_pago},
+            "tipos_gastos":{j[0]:j[1] for j in tipos_gatos},
+        }
+        return datos
+    
+    def generar_datos_gastos(self):
+        try:
+            fecha_hoy = self.obtener_fecha_hoy()
+            
+            return self.obtener_gastos_por_fecha(fecha=fecha_hoy )
+            
+        except:
+            pass
+
 
 # Instancia del generador de tarjetas
 generador_tarjetas = TarjetasEmpresariales(conn_db)
@@ -211,6 +233,196 @@ def obtener_tarjetas_resumen():
             "success": False,
             "error": str(e),
             "data": []
+        }), 500
+
+@extras.route('/api/gastos', methods=['GET'])
+def obtener_resumen_gastos():
+    
+    """Endpoint principal para obtener datos de tarjetas resumen"""
+    try:
+        datos = generador_tarjetas.generar_datos_gastos()
+        
+        return jsonify({
+            "success": True,
+            "data": datos,
+            "fecha_generacion": datetime.now().isoformat()
+        }), 200
+        
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "data": []
+        }), 500
+
+@extras.route('/api/tipos_gastos_pagos', methods=['GET'])
+def obtener_resumen_gastos_pagos():
+    try:
+        datos = generador_tarjetas.cargar_tipos_pagos_tipos_gastos()
+        return jsonify({
+            "success": True,
+            "data": datos,
+            "fecha_generacion": datetime.now().isoformat()
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "data": []
+        }), 500
+
+@extras.route('/api/guardar_categoria_gastos', methods=['POST'])
+def guardar_categoria_gastos():
+    try:
+        datos = request.get_json()
+        if not datos or "descripcion" not in datos:
+            return jsonify({
+                "success": False,
+                "error": "Falta el campo 'descripcion'"
+            }), 400
+
+        id_cat_gastos, error = generador_tarjetas.conn.insertar(
+            "categoria_gastos",
+            {"descripcion": datos["descripcion"]}
+        )
+
+        if not id_cat_gastos:
+            return jsonify({
+                "success": False,
+                "error": error or "No se pudo insertar la categoría"
+            }), 500
+
+        return jsonify({
+            "success": True,
+            "id": id_cat_gastos
+        }), 200
+
+    except Exception as e:
+        # Detecta si la excepción es por clave duplicada
+        if "UNIQUE constraint failed" in str(e):
+            return jsonify({
+                "success": False,
+                "error": "La categoría ya existe"
+            }), 409  # 409 Conflict
+
+        return jsonify({
+            "success": False,
+            "error": "Excepción en el servidor",
+            "excepcion": str(e)
+        }), 500
+    
+@extras.route('/api/guardar_tipo_pago', methods=['POST'])
+def guardar_tipo_pago():
+    try:
+        datos = request.get_json()
+        
+        if not datos or "nombre" not in datos:
+            return jsonify({
+                "success": False,
+                "error": "Falta el campo 'nombre'"
+            }), 400
+        
+        nuevo_tipo = {
+            "nombre": datos["nombre"].strip(),
+            "descripcion": datos.get("descripcion", "").strip()
+        }
+
+        id_tipo_pago, error = generador_tarjetas.conn.insertar("tipos_pago", nuevo_tipo)
+
+        if error:
+            return jsonify({
+                "success": False,
+                "error": error
+            }), 409 if "columna" in error else 500
+
+        return jsonify({
+            "success": True,
+            "id": id_tipo_pago
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": "Excepción inesperada",
+            "excepcion": str(e)
+        }), 500
+
+@extras.route('/api/guardar_gasto', methods=['POST'])
+def guardar_gasto():
+    try:
+        datos = request.get_json()
+
+        campos_requeridos = ['monto', 'descripcion', 'categoria', 'metodo_pago']
+        if not all(campo in datos and datos[campo] for campo in campos_requeridos):
+            return jsonify({
+                "success": False,
+                "error": "Faltan campos obligatorios"
+            }), 400
+
+        nuevo_gasto = {
+            "monto": float(datos["monto"]),
+            "descripcion": datos["descripcion"].strip(),
+            "categoria": int(datos["categoria"]),
+            "metodo_pago": int(datos["metodo_pago"]),
+        }
+
+        id_gasto, error = generador_tarjetas.conn.insertar("gastos", nuevo_gasto)
+
+        if error:
+            return jsonify({
+                "success": False,
+                "error": error
+            }), 500
+
+        return jsonify({
+            "success": True,
+            "id": id_gasto
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": "Excepción inesperada",
+            "excepcion": str(e)
+        }), 500
+
+@extras.route('/api/obtener_gastos', methods=['GET'])
+def obtener_gastos():
+    try:
+        consulta = '''
+            SELECT g.id, g.descripcion, g.monto, g.fecha_entrada AS fecha, cg.descripcion AS categoria
+            FROM gastos g
+            JOIN categoria_gastos cg ON g.categoria = cg.id
+            WHERE DATE(g.fecha_entrada) = DATE('now')
+            ORDER BY g.fecha_entrada DESC
+        '''
+        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta)
+
+        if filas is None:
+            return jsonify({
+                "success": False,
+                "error": "Error al ejecutar la consulta."
+            }), 500
+
+        gastos = [
+            {
+                "id": fila[0],
+                "descripcion": fila[1],
+                "monto": fila[2],
+                "fecha": fila[3],
+                "categoria": fila[4]
+            }
+            for fila in filas
+        ]
+
+        return jsonify({
+            "success": True,
+            "gastos": gastos
+        }), 200
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
         }), 500
 
 @extras.route('/api/tarjetas-resumen/bolsillo/<int:tipo_pago_id>', methods=['GET'])

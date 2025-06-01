@@ -866,10 +866,10 @@ def login():
    
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
-    data = request.get_json()    
+    data = request.get_json()
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
-    
+
     new_venta = {
         'vendedor_id': data['vendedor_id'],
         "cliente_id": data["cliente_id"],
@@ -878,13 +878,13 @@ def crear_venta():
         "total_compra": 0,
         "total_utilidad": 0
     }
-    
+
     id, error = conn_db.insertar("ventas", new_venta)
     if not id:
         return jsonify({"valido": False, "mensaje": "Venta no registrada"}), 401
-    
+
     total_precio_compra = 0
-    
+
     for producto in data["productos"]:
         detalles_ventas = {
             "venta_id": id,
@@ -893,55 +893,24 @@ def crear_venta():
             "precio_unitario": producto["precio_unitario"]
         }
         conn_db.insertar("detalles_ventas", detalles_ventas)
-        
-        # Actualizar stock en tabla productos
+
+        # Actualizar stock
         can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
         nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
         conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
-        
-        cantidad_a_descontar = float(producto["cantidad"])
-        lotes = conn_db.ejecutar_personalizado("""
-                SELECT 
-                    l.id, l.cantidad, l.precio_compra
-                FROM 
-                    lotes_productos l
-                JOIN 
-                    productos p ON l.id_producto = p.codigo
-                WHERE 
-                    p.id = ?
-                ORDER BY 
-                    l.fecha_ingreso ASC
-            """, (producto["codigo"],))
-        print(lotes)
-        for lote in lotes:
-            if cantidad_a_descontar <= 0:
-                break
-            
-            id_lote, cantidad_lote, precio_compra = lote
-            descontar = min(cantidad_lote, cantidad_a_descontar)
-            nuevo_cantidad_lote = cantidad_lote - descontar
-            
-            if nuevo_cantidad_lote == 0:
-                conn_db.eliminar("lotes_productos", "id = ?", (id_lote,))
-            else:
-                conn_db.actualizar("lotes_productos", {"cantidad": nuevo_cantidad_lote}, "id = ?", (id_lote,))
-            
-            compra_venta = {
-                "id_venta": id,
-                "id_lote": id_lote,
-                "precio_compra": precio_compra,
-                "cantidad": descontar
-            }
-            conn_db.insertar("compra_venta", compra_venta)
-            
-            total_precio_compra += precio_compra * descontar
-            print(total_precio_compra)
-            
-            cantidad_a_descontar -= descontar
-    
+
+        # Obtener precio_compra directamente desde productos
+        resultado = conn_db.seleccionar("productos", "precio_compra", "id= ?", (producto["codigo"],))
+        if resultado:
+            precio_compra = float(resultado[0][0])
+        else:
+            precio_compra = 0
+
+        total_precio_compra += precio_compra * float(producto["cantidad"])
+
     total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
     total_utilidad = total_precio_venta - total_precio_compra
-    
+
     for pago in data["metodos_pago"]:
         detalles_pagos = {
             "venta_id": id,
@@ -956,11 +925,12 @@ def crear_venta():
             (pago["metodo"],),
             expresion_sql=True
         )
-    
+
     conn_db.actualizar("ventas", {
         "total_compra": total_precio_compra,
         "total_utilidad": total_utilidad
     }, "id = ?", (id,))
+
     print("vamos bien")
     return jsonify({
         "valido": True,

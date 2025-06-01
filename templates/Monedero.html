@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="/static/css/monederos/Monedero.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/static/css/menu-global.css" />
+  <link rel="stylesheet" href="/static/css/monederos/tarjetas.css">
 </head>
 
 <body>
@@ -76,56 +77,63 @@
       <div class="texto"><span><b>Informes</b></span></div>
     </div>
   </div>
-   <div class="contenedor-principal">
+  <div class="contenedor-principal">
     <!-- Contenido principal -->
     <main class="contenido">
       <h1 class="titulo-principal"><i class="fas fa-cash-register"></i> Cierre de Caja</h1>
 
       <!-- Acciones rápidas -->
       <div class="acciones-rapidas">
-        <div class="accion-rapida"
-          onclick="document.getElementById('nuevo-tipo-pago').scrollIntoView({behavior: 'smooth'})">
+
+        <div class="accion-rapida" data-target="nuevo-tipo-pago">
           <i class="fas fa-credit-card"></i>
           <h3>Agregar Pago</h3>
           <p>Nuevo método de pago</p>
         </div>
-        <div class="accion-rapida" onclick="document.getElementById('gastos').scrollIntoView({behavior: 'smooth'})">
+
+        <div class="accion-rapida" data-target="gastos">
           <i class="fas fa-money-bill-wave"></i>
           <h3>Registrar Gasto</h3>
           <p>Agregar nuevo gasto</p>
         </div>
-        <div class="accion-rapida"
-          onclick="document.getElementById('cuentas-por-cobrar').scrollIntoView({behavior: 'smooth'})">
+
+        <div class="accion-rapida" data-target="cuentas-por-cobrar">
           <i class="fas fa-file-invoice"></i>
           <h3>Cuentas por Cobrar</h3>
+          <p>Administrar tickets pendientes</p>
+        </div>
+
+        <div class="accion-rapida" data-target="cuentas-por-pagar">
+          <i class="fas fa-file-invoice"></i>
+          <h3>Cuentas por pagar</h3>
           <p>Administrar facturas pendientes</p>
         </div>
       </div>
 
+
       <!-- Resumen de tarjetas (bolsillos) -->
-      <section class="seccion">
+      <section class="seccion" id="nuevo-tipo-pago">
         <h2><i class="fas fa-chart-pie"></i> Resumen Financiero</h2>
         <div id="resumenTarjetas" class="resumen-tarjetas">
           <!-- Las tarjetas de bolsillos se cargarán dinámicamente con JavaScript -->
         </div>
-      </section>
-
-      <!-- Formulario para nuevo tipo de pago -->
-      <section class="seccion" id="nuevo-tipo-pago">
-        <h2><i class="fas fa-plus-circle"></i> Agregar Tipo de Pago</h2>
-        <div class="formulario">
-          <div class="grupo-form">
-            <label for="nombre">Nombre del tipo de pago</label>
-            <input type="text" id="nombre" placeholder="Ej: Transferencia Bancaria">
+        <!-- Formulario para nuevo tipo de pago -->
+        <section class="seccion">
+          <h2><i class="fas fa-plus-circle"></i> Agregar Tipo de Pago</h2>
+          <div class="formulario">
+            <div class="grupo-form">
+              <label for="nombre">Nombre del tipo de pago</label>
+              <input type="text" id="nombre" placeholder="Ej: Transferencia Bancaria">
+            </div>
+            <div class="grupo-form">
+              <label for="descripcion">Descripción</label>
+              <textarea id="descripcion" placeholder="Detalles del método de pago"></textarea>
+            </div>
           </div>
-          <div class="grupo-form">
-            <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" placeholder="Detalles del método de pago"></textarea>
+          <div class="acciones-form">
+            <button onclick="guardarTipoPago()" class="btn btn-verde"><i class="fas fa-save"></i> Guardar</button>
           </div>
-        </div>
-        <div class="acciones-form">
-          <button onclick="guardarTipoPago()" class="btn btn-verde"><i class="fas fa-save"></i> Guardar</button>
-        </div>
+        </section>
       </section>
 
       <!-- Sección de gastos -->
@@ -142,18 +150,34 @@
             <input type="number" id="monto-gasto" placeholder="0.00" step="0.01">
           </div>
           <div class="grupo-form">
-            <label for="categoria-gasto">Categoría</label>
-            <select id="categoria-gasto">
-              <option value="operativos">Gastos Operativos</option>
-              <option value="administrativos">Gastos Administrativos</option>
-              <option value="comerciales">Gastos Comerciales</option>
-              <option value="otros">Otros Gastos</option>
+            <label for="tipo-pago">Tipo de pago</label>
+            <select id="tipo-pago">
+            </select>
+          </div>
+          <div class="grupo-form">
+            <label for="categoria-gastos">Categoría</label>
+            <select id="categoria-gastos">
             </select>
           </div>
         </div>
         <div class="acciones-form">
           <button onclick="agregarGasto()" class="btn btn-rojo"><i class="fas fa-plus"></i> Agregar Gasto</button>
         </div>
+
+        <!-- Formulario para nueva categoria de gasto -->
+        <section class="seccion">
+          <h2><i class="fas fa-plus-circle"></i> Agregar categoria de gastos</h2>
+          <div class="formulario">
+            <div class="grupo-form">
+              <label for="categoria">Nombre de nueva categoria de gastos</label>
+              <input type="text" id="categoria" placeholder="Ej: Administrativos">
+            </div>
+            <div class="acciones-form">
+              <button onclick="guardarNuevaCategoria()" class="btn btn-verde"><i class="fas fa-save"></i>
+                Guardar</button>
+            </div>
+          </div>
+        </section>
       </section>
 
       <!-- Sección de cuentas por cobrar -->
@@ -161,6 +185,13 @@
         <h2><i class="fas fa-file-invoice-dollar"></i> Cuentas por Cobrar</h2>
         <div id="lista-cuentas"></div>
       </section>
+
+      <!-- Sección de cuentas por pagar -->
+      <section class="seccion" id="cuentas-por-pagar">
+        <h2><i class="fas fa-file-invoice-dollar"></i> Cuentas por Pagar</h2>
+        <div id="lista-cuentas-cxp"></div>
+      </section>
+
     </main>
   </div>
 
@@ -194,5 +225,7 @@
 
 </body>
 <script src="/static/js/Monedero/Monedero.js"></script>
+<script src="/static/js/Monedero/pestañas.js"></script>
+<script src="/static/js/Monedero/cargarDatosMonedero.js"></script>
 
 </html>

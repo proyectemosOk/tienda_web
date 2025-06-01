@@ -1,104 +1,15 @@
-body {
-    font-family: Arial, sans-serif;
-    margin: 20px;
-    background-color: #f5f7fa;
+/* Estilo general para las acciones rápidas */
+.accion-rapida {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border-radius: 10px;
+  padding: 10px;
 }
 
-.container {
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-.titulo {
-    text-align: center;
-    color: #333;
-    margin-bottom: 30px;
-}
-
-.loading {
-    text-align: center;
-    font-size: 18px;
-    color: #666;
-}
-
-.error {
-    color: red;
-    text-align: center;
-    padding: 20px;
-}
-
-.tarjetas-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 20px;
-    justify-content: center;
-}
-
-.tarjeta-bolsillo {
-    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-    border: 1px solid #e1e8ed;
-    border-radius: 12px;
-    padding: 15px 20px;
-    width: 250px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-}
-
-.tarjeta-bolsillo:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-}
-
-.tarjeta-bolsillo::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, #4f46e5, #06b6d4);
-}
-
-.encabezado {
-    font-weight: 600;
-    font-size: 1.1em;
-    color: #1f2937;
-    margin-bottom: 16px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.total {
-    font-size: 1.8em;
-    font-weight: 700;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-}
-
-.modulos {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 6px;
-    padding-top: 8px;
-    border-top: 1px solid #e5e7eb;
-}
-
-.modulo {
-    text-align: center;
-    padding: 0px 0px;
-    background-color: rgba(249, 250, 251, 0.8);
-    border-radius: 8px;
-}
-
-.color-verde {
-    color: #059669;
-}
-
-.color-rojo {
-    color: #dc2626;
+/* Pestaña activa resaltada de forma profesional */
+.accion-rapida.activa {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); /* Sombra elegante */
+  transform: translateY(-2px); /* Ligera elevación */
+  transition: all 0.2s ease-in-out;
 }

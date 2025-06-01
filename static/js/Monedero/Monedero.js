@@ -1,17 +1,35 @@
-// Datos de ejemplo para los bolsillos en el formato especificado
-const datosBolsillos = [
-  {
-    bolsillo: "Caja",
-    total: 1000000,
-    porcentaje: 15,
-    comportamiento: 1,
-    modulos: {
-      ventas: { porcentaje: 10, sub_comportamiento: 1 },
-      servicios: { porcentaje: 5, sub_comportamiento: 0 }
+async function obtenerDatosJSONBolsillos() {
+  try {
+    const response = await fetch("/api/tarjetas-resumen");
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
     }
-  },
 
-];
+    const data = await response.json();
+    return data.data;  // <-- Corregido
+  } catch (error) {
+    console.error("Error al obtener datos de ventas:", error);
+    return {
+      desglose_pagos: {},
+      ventas: []
+    };
+  }
+}
+// Datos de ejemplo para los bolsillos en el formato especificado
+var datosBolsillos;
+// const datosBolsillos = [
+//   {
+//     bolsillo: "Caja",
+//     total: 1000000,
+//     porcentaje: 15,
+//     comportamiento: 1,
+//     modulos: {
+//       ventas: { porcentaje: 10, sub_comportamiento: 1 },
+//       servicios: { porcentaje: 5, sub_comportamiento: 0 }
+//     }
+//   },
+
+// ];
 
 // Datos de ejemplo para gastos
 let gastosIniciales = [
@@ -38,165 +56,176 @@ const btnCerrarModal = document.querySelectorAll('.cerrar-modal');
 const btnGuardarEdicion = document.getElementById('btn-guardar-edicion');
 
 // Función para mostrar los bolsillos con filtros
-function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
+async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
   const contenedor = document.getElementById('resumenTarjetas');
-  let html = '';
+  contenedor.innerHTML = '<div class="cargando">Cargando resumen...</div>';
 
-  // Calcular totales generales
-  const totalGeneral = datosBolsillos.reduce((total, bolsillo) => total + bolsillo.total, 0);
-  const totalGastos = gastosIniciales.reduce((total, gasto) => total + gasto.monto, 0);
-  const utilidadNeta = totalGeneral - totalGastos;
+  try {
+    // Cargar bolsillos desde la API
+    const datosBolsillos = await obtenerDatosJSONBolsillos();
 
-  // Filtrar bolsillos
-  const bolsillosFiltrados = datosBolsillos.filter(bolsillo => {
-    if (filtroBolsillo === "todos") return true;
-    return bolsillo.bolsillo.includes(filtroBolsillo);
-  });
+    // Cargar gastos desde la API
+    const response = await fetch('/api/obtener_gastos');
+    const data = await response.json();
 
-  // Mostrar cada bolsillo filtrado
-  bolsillosFiltrados.forEach(bolsillo => {
-    const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
-    const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
+    if (!data.success) {
+      contenedor.innerHTML = `<div class="error">Error al cargar gastos: ${data.error}</div>`;
+      return;
+    }
 
-    html += `
-          <div class="tarjeta-bolsillo">
-            <div class="encabezado">
-              <i class="fas fa-wallet"></i>
-              <span>${bolsillo.bolsillo}</span>
-            </div>
-            <div class="total ${colorTotal}">
-              <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
-              <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
-            </div>
-            <div class="modulos">
-              <div class="modulo">
-                <div class="etiqueta">
-                  <i class="fas fa-shopping-cart"></i>
-                  <span>Ventas</span>
-                </div>
-                <div class="valor">${bolsillo.modulos.ventas.porcentaje}%</div>
-              </div>
-              <div class="modulo">
-                <div class="etiqueta">
-                  <i class="fas fa-tools"></i>
-                  <span>Servicios</span>
-                </div>
-                <div class="valor">${bolsillo.modulos.servicios.porcentaje}%</div>
-              </div>
-               <button class="btn-icono btn-eliminar" onclick="eliminarBolsillo(${bolsillo.id})">
-                                <i class="fas fa-trash"></i>
-                            </button>
-            </div>
+    const gastos = data.gastos;
 
-          </div>
-          
-                            
-  
-                        
-        `;
-  });
+    // Calcular totales
+    const totalGeneral = datosBolsillos.reduce((total, bolsillo) => total + bolsillo.total, 0);
+    const totalGastos = gastos.reduce((total, gasto) => total + gasto.monto, 0);
+    const utilidadNeta = totalGeneral - totalGastos;
 
-  // Tarjeta de Resumen Financiero
-  html += `
-        <div class="tarjeta-bolsillo tarjeta-resumen">
+    // Filtrar bolsillos
+    const bolsillosFiltrados = datosBolsillos.filter(bolsillo => {
+      if (filtroBolsillo === "todos") return true;
+      return bolsillo.bolsillo.includes(filtroBolsillo);
+    });
+
+    let html = '';
+
+    // Mostrar cada bolsillo filtrado
+    bolsillosFiltrados.forEach(bolsillo => {
+      const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
+      const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
+
+      html += `
+        <div class="tarjeta-bolsillo">
           <div class="encabezado">
-            <i class="fas fa-chart-line"></i>
-            <span>Resumen</span>
+            <i class="fas fa-wallet"></i>
+            <span>${bolsillo.bolsillo}</span>
+          </div>
+          <div class="total ${colorTotal}">
+            <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
+            <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
           </div>
           <div class="modulos">
             <div class="modulo">
               <div class="etiqueta">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Total General</span>
+                <i class="fas fa-shopping-cart"></i>
+                <span>Ventas</span>
               </div>
-              <div class="valor">$${totalGeneral.toLocaleString('es-ES')}</div>
+              <div class="valor">${bolsillo.modulos.ventas.porcentaje}%</div>
             </div>
             <div class="modulo">
               <div class="etiqueta">
-                <i class="fas fa-money-bill-wave"></i>
-                <span>Gastos Totales</span>
+                <i class="fas fa-tools"></i>
+                <span>Servicios</span>
               </div>
-              <div class="valor color-rojo">$${totalGastos.toLocaleString('es-ES')}</div>
+              <div class="valor">${bolsillo.modulos.servicios.porcentaje}%</div>
             </div>
-            <div class="modulo">
-              <div class="etiqueta">
-                <i class="fas fa-coins"></i>
-                <span>Utilidad Neta</span>
-              </div>
-              <div class="valor color-verde">$${utilidadNeta.toLocaleString('es-ES')}</div>
-            </div>
-            
+          </div>
+        </div>
       `;
+    });
 
-  contenedor.innerHTML = html;
+    // Tarjeta de Resumen Financiero
+    html += `
+      <div class="tarjeta-bolsillo tarjeta-resumen">
+        <div class="encabezado">
+          <i class="fas fa-chart-line"></i>
+          <span>Resumen</span>
+        </div>
+        <div class="modulos">
+          <div class="modulo">
+            <div class="etiqueta">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Total General</span>
+            </div>
+            <div class="valor">$${totalGeneral.toLocaleString('es-ES')}</div>
+          </div>
+          <div class="modulo">
+            <div class="etiqueta">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Gastos Totales</span>
+            </div>
+            <div class="valor color-rojo">$${totalGastos.toLocaleString('es-ES')}</div>
+          </div>
+          <div class="modulo">
+            <div class="etiqueta">
+              <i class="fas fa-coins"></i>
+              <span>Utilidad Neta</span>
+            </div>
+            <div class="valor color-verde">$${utilidadNeta.toLocaleString('es-ES')}</div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    contenedor.innerHTML = html;
+  } catch (error) {
+    console.error("❌ Error al mostrar bolsillos:", error);
+    contenedor.innerHTML = '<div class="error">Error al cargar el resumen financiero.</div>';
+  }
 }
+
 
 // Función para mostrar los gastos con filtros
-function mostrarGastos(filtroCategoria = "todas", filtroFecha = "", filtroMonto = 0) {
+async function mostrarGastos(filtroCategoria = "todas", filtroFecha = "", filtroMonto = 0) {
   const contenedor = document.getElementById('lista-gastos');
-  contenedor.innerHTML = '';
+  contenedor.innerHTML = '<div class="cargando">Cargando gastos...</div>';
 
-  // Filtrar gastos
-  const gastosFiltrados = gastosIniciales.filter(gasto => {
-    // Filtrar por categoría
-    if (filtroCategoria !== "todas" && gasto.categoria !== filtroCategoria) {
-      return false;
+  try {
+    const response = await fetch('/api/obtener_gastos');
+    const data = await response.json();
+
+    if (!data.success) {
+      contenedor.innerHTML = `<div class="error">Error: ${data.error || "No se pudieron cargar los gastos."}</div>`;
+      return;
     }
 
-    // Filtrar por fecha
-    if (filtroFecha && gasto.fecha !== filtroFecha) {
-      return false;
+    const gastosFiltrados = data.gastos.filter(gasto => {
+      // Filtrar por categoría
+      if (filtroCategoria !== "todas" && gasto.categoria !== filtroCategoria) return false;
+
+      // Filtrar por fecha
+      if (filtroFecha && gasto.fecha !== filtroFecha) return false;
+
+      // Filtrar por monto mínimo
+      if (filtroMonto > 0 && gasto.monto < filtroMonto) return false;
+
+      return true;
+    });
+
+    contenedor.innerHTML = '';
+
+    if (gastosFiltrados.length === 0) {
+      contenedor.innerHTML = '<div class="no-resultados">No se encontraron gastos con los filtros seleccionados</div>';
+      return;
     }
 
-    // Filtrar por monto mínimo
-    if (filtroMonto > 0 && gasto.monto < filtroMonto) {
-      return false;
-    }
-
-    return true;
-  });
-
-  // Mostrar gastos filtrados
-  if (gastosFiltrados.length === 0) {
-    contenedor.innerHTML = '<div class="no-resultados">No se encontraron gastos con los filtros seleccionados</div>';
-    return;
+    gastosFiltrados.forEach(gasto => {
+      const div = document.createElement('div');
+      div.className = 'gasto-item';
+      div.innerHTML = `
+        <div class="info">
+          <p class="descripcion">${gasto.descripcion}</p>
+          <div class="detalles">
+            <span><i class="fas fa-money-bill"></i> $${gasto.monto.toLocaleString('es-ES')}</span>
+            <span><i class="fas fa-tag"></i> ${gasto.categoria}</span>
+            <span><i class="fas fa-calendar"></i> ${gasto.fecha}</span>
+          </div>
+        </div>
+        <div class="monto">$${gasto.monto.toLocaleString('es-ES')}</div>
+        <div class="acciones">
+          <button class="btn-icono btn-editar" onclick="editarGasto(${gasto.id})">
+            <i class="fas fa-edit"></i>
+          </button>
+          <button class="btn-icono btn-eliminar" onclick="eliminarGasto(${gasto.id})">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      `;
+      contenedor.appendChild(div);
+    });
+  } catch (error) {
+    console.error("❌ Error al obtener gastos:", error);
+    contenedor.innerHTML = '<div class="error">Error al cargar los gastos.</div>';
   }
-
-  gastosFiltrados.forEach(gasto => {
-    const div = document.createElement('div');
-    div.className = 'gasto-item';
-    div.innerHTML = `
-          <div class="info">
-            <p class="descripcion">${gasto.descripcion}</p>
-            <div class="detalles">
-              <span><i class="fas fa-money-bill"></i> $${gasto.monto.toLocaleString('es-ES')}</span>
-              <span><i class="fas fa-tag"></i> ${obtenerNombreCategoria(gasto.categoria)}</span>
-              <span><i class="fas fa-calendar"></i> ${gasto.fecha}</span>
-            </div>
-          </div>
-          <div class="monto">$${gasto.monto.toLocaleString('es-ES')}</div>
-          <div class="acciones">
-            <button class="btn-icono btn-editar" onclick="editarGasto(${gasto.id})">
-              <i class="fas fa-edit"></i>
-            </button>
-            <button class="btn-icono btn-eliminar" onclick="eliminarGasto(${gasto.id})">
-              <i class="fas fa-trash"></i>
-            </button>
-          </div>
-        `;
-    contenedor.appendChild(div);
-  });
-}
-
-// Función para obtener el nombre de la categoría
-function obtenerNombreCategoria(codigo) {
-  const categorias = {
-    "operativos": "Gastos Operativos",
-    "administrativos": "Gastos Administrativos",
-    "comerciales": "Gastos Comerciales",
-    "otros": "Otros Gastos"
-  };
-  return categorias[codigo] || "Sin categoría";
 }
 
 // Función para mostrar las cuentas por cobrar con filtros
@@ -293,64 +322,98 @@ function filtrarCuentas() {
 async function guardarTipoPago() {
   const nombre = document.getElementById('nombre').value.trim();
   const descripcion = document.getElementById('descripcion').value.trim();
+  const select = document.getElementById('tipo-pago');
 
   if (!nombre) {
-    alert("El nombre es obligatorio");
+    alert("⚠️ El nombre es obligatorio");
     return;
   }
 
   try {
-    // Simulación de llamada a API
-    console.log("Enviando datos a la API:", { nombre, descripcion });
+    const respuesta = await fetch('/api/guardar_tipo_pago', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nombre, descripcion })
+    });
 
-    // Simulamos un retraso de red
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    const resultado = await respuesta.json();
 
-    // Simulamos una respuesta exitosa de la API
-    const resultado = { ok: true, id: Math.floor(Math.random() * 100) + 1 };
-
-    if (resultado.ok) {
-      alert("Tipo de pago guardado con éxito. ID: " + resultado.id);
+    if (respuesta.ok && resultado.success) {
+      alert("✅ Tipo de pago guardado con éxito. ID: " + resultado.id);
       document.getElementById('nombre').value = '';
       document.getElementById('descripcion').value = '';
 
-      // Aquí podrías actualizar la UI con el nuevo tipo de pago
+      // Crear nueva opción y agregarla al <select>
+      const nuevaOpcion = document.createElement('option');
+      nuevaOpcion.value = resultado.id;
+      nuevaOpcion.textContent = nombre;
+
+      const totalOpciones = select.options.length;
+      const posicion = Math.max(0, totalOpciones - 1);
+      select.insertBefore(nuevaOpcion, select.options[posicion]);
+
+      // Seleccionamos automáticamente la nueva opción
+      select.value = resultado.id;
+
+    } else if (resultado.error) {
+      alert("⚠️ Error: " + resultado.error);
     } else {
-      alert("Error al guardar: " + resultado.error);
+      alert("❌ Error desconocido al guardar.");
     }
+
   } catch (error) {
-    alert("Error de red o del servidor");
+    alert("❌ Error de red o del servidor.");
     console.error(error);
   }
 }
 
+
 // Función para agregar un gasto
-function agregarGasto() {
+async function agregarGasto() {
   const descripcion = document.getElementById('descripcion-gasto').value.trim();
   const monto = parseFloat(document.getElementById('monto-gasto').value);
-  const categoria = document.getElementById('categoria-gasto').value;
+  const metodo_pago = document.getElementById('tipo-pago').value;
+  const categoria = document.getElementById('categoria-gastos').value;
 
-  if (!descripcion || isNaN(monto) || monto <= 0) {
-    alert("Descripción y monto válido son obligatorios");
+  if (!descripcion || isNaN(monto) || monto <= 0 || !categoria || !metodo_pago) {
+    alert("Todos los campos son obligatorios y deben ser válidos.");
     return;
   }
 
-  const nuevoGasto = {
-    id: gastosIniciales.length + 1,
+  const gasto = {
     descripcion,
     monto,
-    categoria,
-    fecha: new Date().toISOString().split('T')[0]
+    categoria: parseInt(categoria),
+    metodo_pago: parseInt(metodo_pago)
   };
 
-  gastosIniciales.push(nuevoGasto);
-  mostrarGastos();
-  mostrarBolsillos(); // Actualizar el resumen financiero
+  try {
+    const response = await fetch('/api/guardar_gasto', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(gasto)
+    });
 
-  alert(`Gasto agregado: ${descripcion} - $${monto.toLocaleString('es-ES')}`);
-  document.getElementById('descripcion-gasto').value = '';
-  document.getElementById('monto-gasto').value = '';
+    const resultado = await response.json();
+
+    if (resultado.success) {
+      alert("Gasto guardado con éxito.");
+      document.getElementById('descripcion-gasto').value = '';
+      document.getElementById('monto-gasto').value = '';
+      // Opcional: recargar lista de gastos desde backend o agregarlo al frontend
+      mostrarGastos();  // si tienes función que refresca
+      mostrarBolsillos(); // si aplicas resumen
+    } else {
+      alert("Error al guardar el gasto: " + (resultado.error || "desconocido"));
+    }
+  } catch (error) {
+    console.error("Error en la solicitud:", error);
+    alert("Error al conectar con el servidor.");
+  }
 }
+
 
 // Función para editar un gasto
 function editarGasto(id) {
@@ -411,7 +474,8 @@ function pagarFactura(id) {
 }
 
 // Inicialización al cargar la página
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
+  // Ahora sí se pueden mostrar los datos correctamente
   mostrarBolsillos();
   mostrarGastos();
   mostrarCuentasPorCobrar();
@@ -430,3 +494,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
