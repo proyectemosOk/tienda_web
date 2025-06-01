@@ -1032,6 +1032,38 @@ def cerrar_turno():
         return jsonify({'ok': True, 'mensaje': "Regisstro exitoso"}), 201
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
+    
+@app.route('/api/servicios', methods=['GET'])
+def obtener_servicios():
+    try:
+        servicios = conn_db.ejecutar_personalizado('''
+            SELECT o.id, o.estado_entrada, o.fecha, es.estado
+            FROM ordenes o
+            LEFT JOIN estados_servicios es ON o.estado = es.id
+        ''')
+
+        resultado = []
+        conteo_estados = {}
+
+        for id_orden, descripcion, fecha, estado in servicios:
+            estado = estado or "Desconocido"
+            conteo_estados[estado] = conteo_estados.get(estado, 0) + 1
+            resultado.append({
+                "id": id_orden,
+                "descripcion": descripcion,
+                "fecha": fecha,
+                "estado": estado
+            })
+
+        return jsonify({
+            "servicios": resultado,
+            "conteo_estados": conteo_estados
+        })
+
+    except Exception as e:
+        print(f"Error al obtener resumen de servicios: {e}")
+        return jsonify({"error": "Error al obtener servicios"}), 500
+
 if __name__ == '__main__':
     host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
     print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
