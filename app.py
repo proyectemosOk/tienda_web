@@ -968,19 +968,77 @@ def crear_venta():
     }), 200
 
 # API cargar usuarios
-@app.route("/api/cargar/usuarios", methods = ["GET"])
+@app.route("/api/cargar/usuarios", methods=["GET"])
 def cargar_usuarios():
-    usuarios = conn_db.seleccionar(tabla = "usuarios",
-                                   columnas= "id, nombre, rol")
-    if usuarios:        
-        lista_usuarios = [{"id":id, "nombre":nombre, "rol":rol} for id, nombre, rol in usuarios]
+    usuarios = conn_db.seleccionar(
+        tabla="usuarios",
+        columnas="id, nombre, rol, email, telefono",
+        condicion="estado = 1"
+    )
+    if usuarios:
+        lista_usuarios = [
+            {
+                "id": id_,
+                "nombre": nombre,
+                "rol": rol,
+                "email": email,
+                "telefono": telefono
+            }
+            for id_, nombre, rol, email, telefono in usuarios
+        ]
         return jsonify(lista_usuarios), 200
     else:
-        return jsonify({
-            "valido": False,
-            "mensaje": "Venta no registrada"
-        }), 401        
-        
+        return jsonify([]), 200
+
+#API Editar usuario
+@app.route("/api/usuarios/<int:id_usuario>", methods=["PUT"])
+def editar_usuario(id_usuario):
+    datos = request.get_json()
+    if not datos:
+        return jsonify({"error": "No se enviaron datos"}), 400
+
+    campos_validos = ['nombre', 'email', 'telefono', 'rol', 'contrasena']
+    datos_actualizar = {}
+
+    for campo in campos_validos:
+        valor = datos.get(campo)
+        if campo == 'contrasena' and valor:
+            import bcrypt
+            hashed = bcrypt.hashpw(valor.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            datos_actualizar['contrasena'] = hashed
+        elif campo != 'contrasena' and valor is not None:
+            datos_actualizar[campo] = valor
+
+    if not datos_actualizar:
+        return jsonify({"error": "No se proporcionaron campos válidos"}), 400
+
+    try:
+        conn_db.actualizar(
+            tabla="usuarios",
+            datos=datos_actualizar,
+            condicion="id = ?",
+            parametros_condicion=(id_usuario,)
+        )
+        return jsonify({"mensaje": "Usuario actualizado correctamente"}), 200
+    except Exception as e:
+        print(f"Error al actualizar usuario: {e}")
+        return jsonify({"error": "Error al actualizar usuario"}), 500
+
+#API Eliminar usuario
+@app.route("/api/usuarios/<int:id_usuario>", methods=["DELETE"])
+def eliminar_usuario(id_usuario):
+    try:
+        conn_db.actualizar(
+            tabla="usuarios",
+            datos={"estado": 0},
+            condicion="id = ?",
+            parametros_condicion=(id_usuario,)
+        )
+        return jsonify({"mensaje": "Usuario desactivado correctamente"}), 200
+    except Exception as e:
+        print(f"Error al eliminar usuario: {e}")
+        return jsonify({"error": "Error al eliminar usuario"}), 500
+
 # API guardar usuario
 @app.route("/api/new_usuario", methods = ["POST"])
 def new_usuario():
@@ -1000,6 +1058,7 @@ def new_usuario():
             "error": error
         }), 401      
 
+#
 @app.route("/api/monedero_dia_actual", methods = ["GET"])
 def cargar_monedero():
     fecha =  datetime.now().strftime("%Y-%m-%d")
