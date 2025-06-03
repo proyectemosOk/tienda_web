@@ -27,6 +27,7 @@ class TarjetasEmpresariales:
             consulta = """
                 SELECT id, nombre, descripcion, actual 
                 FROM tipos_pago
+                WHERE actual != 0
                 ORDER BY nombre
             """
             

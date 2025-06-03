@@ -161,7 +161,7 @@ def crear_tablas(base):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         vendedor_id TEXT NOT NULL,
         cliente_id INTEGER NOT NULL,
-        fecha TEXT NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_DATE,
         total_venta REAL NOT NULL,
         total_compra REAL,
         total_utilidad REAL,
@@ -232,7 +232,7 @@ def crear_tablas(base):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 producto_id INTEGER,
                 cantidad INTEGER,
-                fecha DATETIME,
+                fecha DATETIME DEFAULT CURRENT_DATE,
                 precio_compra REAL NOT NULL,
                 precio_venta REAL NOT NULL,
                 usuario TEXT NOT NULL,
@@ -354,7 +354,8 @@ def crear_tablas(base):
     cursor.execute('''CREATE TABLE IF NOT EXISTS tipos_pago (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
-            descripcion TEXT
+            descripcion TEXT,
+            actual REAL DEFAULT 0
         )
     ''')
     # Tabla de Tipos de Pago
@@ -362,7 +363,7 @@ def crear_tablas(base):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
             descripcion TEXT,
-            monto INTEGER
+            monto INTEGER DEFAULT 0
         )
     ''')
     cursor.executemany("INSERT OR IGNORE INTO tipos_pago (id, nombre, descripcion) VALUES (?, ?, ?)", 
@@ -474,27 +475,38 @@ def crear_tablas(base):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ordenes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        telefono TEXT,
-        correo TEXT,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        cliente INTEGER,
         tipo INTEGER,
         marca TEXT,
         modelo TEXT,
         estado_entrada TEXT,
-        servicio INTEGER,
         perifericos TEXT,
         observaciones TEXT,
-        fecha TEXT,
-        tipo_pago TEXT,
-        pago REAL,
-        estado INTEGER,
-        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
-        FOREIGN KEY (servicio) REFERENCES tipos_pago(nombre),
+        total_servicio REAL,
+        estado INTEGER DEFAULT 0,
+        FOREIGN KEY (cliente) REFERENCES clientes(id),
         FOREIGN KEY (tipo) REFERENCES tipos(id),
         FOREIGN KEY (estado) REFERENCES estados_servicios(id)
 
     )""")
-
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orden_servicios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_orden INTEGER NOT NULL,
+        servicio INTEGER NOT NULL,
+        FOREIGN KEY(id_orden) REFERENCES ordenes(id),
+        FOREIGN KEY (servicio) REFERENCES servicios(id)
+    )""")
+    
+    cursor.execute("""
+        CREATE TABLE img_ordenes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_orden INTEGER,
+        imagen BLOB,
+        FOREIGN KEY(id_orden) REFERENCES ordenes(id)
+    )""")
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS estados_servicios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -537,6 +549,17 @@ def crear_tablas(base):
         CREATE TABLE IF NOT EXISTS tipos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT UNIQUE NOT NULL
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pagos_servicios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_orden INTEGER NOT NULL,
+            tipo_pago INTEGER,
+            monto REAL NOT NULL,
+            FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id),
+            FOREIGN KEY(id_orden) REFERENCES ordenes(id)
         )
     """)
     tipos_default = [

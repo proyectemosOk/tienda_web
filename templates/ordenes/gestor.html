@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Gestor de Órdenes</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ordenes/gestor.css') }}">
+</head>
+
+<body>
+    <header>
+        <h1>Gestor de Órdenes</h1>
+        <button id="btn-nueva-orden">+ Nueva Orden</button>
+    </header>
+>
+    <section id="filtros">
+        <h3>Filtros Avanzados</h3>
+        <form id="form-filtros">
+            <input type="text" name="cliente" placeholder="Cliente">
+            <input type="date" name="fecha_inicio">
+            <input type="date" name="fecha_fin">
+            <select name="estado">
+                <option value="">Todos los estados</option>
+                <option value="0">Recibido</option>
+                <option value="1">En reparación</option>
+                <option value="2">Para entregar</option>
+                <option value="3">Entregado</option>
+            </select>
+            <button type="submit">Aplicar filtros</button>
+        </form>
+    </section>
+
+    <section id="listado-ordenes">
+        <h3>Listado de Órdenes</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Total</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tabla-ordenes">
+                <!-- Aquí se cargarán las órdenes dinámicamente -->
+            </tbody>
+        </table>
+    </section>
+
+    <section id="detalles-orden" style="display: none;">
+        <h3>Detalles de Orden</h3>
+        <div id="contenido-detalles">
+            <!-- Detalles ampliados -->
+        </div>
+        <button onclick="cerrarDetalles()">Cerrar</button>
+    </section>
+
+    <script src="{{ url_for('static', filename='js/ordenes/gestor.js') }}"></script>
+
+</body>
+
+</html>

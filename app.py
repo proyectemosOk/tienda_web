@@ -8,9 +8,11 @@ from datetime import date
 import json
 import socket
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import BadRequest
 from tarjetas import *
 import bcrypt
-
+from PIL import Image
+from io import BytesIO
 app = Flask(__name__)
 app.register_blueprint(extras)  # lo registramos
 UPLOAD_FOLDER = 'uploads'
@@ -20,6 +22,23 @@ DEFAULT_IMAGE = 'img.png'  # La imagen por defecto en la raíz del proyecto
 conn_db = ConexionBase("tienda_jfleong6_1.db")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def obtener_id_por_nombre(tabla, buscar, columna):
+    resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
+    print(resultado)
+    return resultado[0][0] if resultado else None
+
+def redimensionar_imagen(archivo, max_ancho=800, max_alto=800):
+    try:
+        img = Image.open(archivo)
+        img.thumbnail((max_ancho, max_alto))  # Redimensionar manteniendo proporción
+
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        return buffer.getvalue()
+    except Exception as e:
+        print("⚠️ Error redimensionando imagen:", e)
+        return None
 
 @app.route('/')
 def index():
@@ -37,9 +56,13 @@ def personal():
 def login_sesion():
     return render_template('login-sesion.html')
 
-@app.route('/orden')
+@app.route('/ordenes')
 def orden():
-    return render_template('orden.html')
+    return render_template('/ordenes/gestor.html')
+
+@app.route('/orden/nueva')
+def new_orden():
+    return render_template('/ordenes/orden.html')
 
 @app.route('/empresa')
 def empresa():
@@ -65,82 +88,143 @@ def cierre_dia():
 def submit():
     form = request.form
 
-    # Procesar TIPO
-    tipo = form['tipo']
-    if tipo == "__nuevo__":
-        tipo = form['nuevo_tipo'].strip()
-        if tipo and not conn_db.existe_registro("tipos", "nombre", tipo):
-            conn_db.insertar("tipos", {"nombre": tipo})
+    try:
+        # --- Validación básica obligatoria ---
+        campos_obligatorios = ['cliente', 'tipo', 'marca', 'modelo', 'estado_entrada', 'perifericos', 'observaciones', 'total_servicio', 'tipo_pago']
+        for campo in campos_obligatorios:
+            if campo not in form or not form[campo].strip():
+                raise BadRequest(f"El campo '{campo}' es obligatorio.")
 
-    # Procesar TIPO DE PAGO
-    tipo_pago = form['tipo_pago']
-    if tipo_pago == "__nuevo__":
-        tipo_pago = form['nuevo_tipo_pago'].strip()
-        if tipo_pago and not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
-            conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})
+        # --- Procesar TIPO ---
+        tipo = form['tipo'].strip()
+        if tipo == "__nuevo__":
+            tipo = form.get('nuevo_tipo', '').strip()
+            if not tipo:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo.")
+            if not conn_db.existe_registro("tipos", "nombre", tipo):
+                conn_db.insertar("tipos", {"nombre": tipo})
+        tipo = obtener_id_por_nombre("tipos", tipo, "nombre")
+        if not tipo:
+            raise BadRequest("Tipo no válido o no encontrado.")
 
-    # Procesar SERVICIOS
-    servicios = form.getlist('servicios')
-    print("Servicios seleccionados:", servicios)
+        # --- Procesar TIPO DE PAGO ---
+        tipo_pago = form['tipo_pago'].strip()
+        if tipo_pago == "__nuevo__":
+            tipo_pago = form.get('nuevo_tipo_pago', '').strip()
+            if not tipo_pago:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo de pago.")
+            if not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
+                conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})
+        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "nombre")
+        if not tipo_pago:
+            raise BadRequest("Tipo de pago no válido o no encontrado.")
 
-    if "__nuevo__" in servicios:
-        nuevo_servicio = form.get("nuevo_servicio", "").strip()
-        print("Nuevo servicio ingresado:", nuevo_servicio)
-        if nuevo_servicio:
-            servicios.remove("__nuevo__")
-            servicios.append(nuevo_servicio)
+        # --- Procesar SERVICIOS ---
+        servicios = form.getlist('servicios')
+        servicios_nuevos = form.getlist('servicios_nuevo[]')
+        servicios_finales = []
 
-            if not conn_db.existe_registro("servicios", "nombre", nuevo_servicio):
-                conn_db.insertar("servicios", {"nombre": nuevo_servicio})
+        for nuevo in servicios_nuevos:
+            nuevo = nuevo.strip()
+            if nuevo:
+                if not conn_db.existe_registro("servicios", "nombre", nuevo):
+                    conn_db.insertar("servicios", {"nombre": nuevo})
+                servicio_id = obtener_id_por_nombre("servicios", nuevo, "nombre")
+                if servicio_id:
+                    servicios_finales.append(servicio_id)
 
-    # Crear objeto Orden
-    orden = Orden(
-        nombre=form['nombre'],
-        telefono=form['telefono'],
-        correo=form['correo'],
-        tipo=tipo,
-        marca=form['marca'],
-        modelo=form['modelo'],
-        estado_entrada=form['estado_entrada'],
-        servicios=servicios,
-        perifericos=form['perifericos'],
-        observaciones=form['observaciones'],
-        fecha=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        tipo_pago=tipo_pago,
-        pago=float(form.get('pago', 0)),
-        estado=0  # Estado inicial: recibido
-    )
+        for servicio in servicios:
+            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "nombre")
+            if servicio_id:
+                servicios_finales.append(servicio_id)
 
-    orden_dict = orden.a_dict()
+        if not servicios_finales:
+            raise BadRequest("Debe seleccionar al menos un servicio válido.")
 
-    # Convertir servicios (lista) a texto para guardarlo en SQLite
-    orden_dict['servicios'] = json.dumps(servicios)  # o ", ".join(servicios)
+        # --- Obtener ID del cliente ---
+        cliente_id = obtener_id_por_nombre("clientes", form['cliente'].strip(), "numero")
+        if not cliente_id:
+            raise BadRequest("Cliente no válido o no encontrado.")
 
-    # Guardar localmente
-    conn_db.insertar("ordenes", orden_dict)
-    
-    can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(orden_dict["tipo_pago"],))[0][0]
-            
-    actulizar = {"actual":float(orden_dict["pago"])+float(can_sum)}
-    conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (orden_dict["tipo_pago"],))
+        # --- Convertir monto total del servicio ---
+        try:
+            total_servicio = float(form.get('total_servicio', "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del servicio no es un número válido.")
 
-    print("✅ Orden registrada correctamente.")
-    return redirect(url_for('index'))
+        # --- Crear objeto Orden ---
+        orden = Orden(
+            cliente=cliente_id,
+            tipo=tipo,
+            marca=form['marca'].strip(),
+            modelo=form['modelo'].strip(),
+            estado_entrada=form['estado_entrada'].strip(),
+            perifericos=form['perifericos'].strip(),
+            observaciones=form['observaciones'].strip(),
+            total_servicio=total_servicio
+        )
+        orden_dict = orden.a_dict()
+        orden_id = conn_db.insertar("ordenes", orden_dict)
+
+        # --- Insertar servicios relacionados ---
+        for servicio_id in servicios_finales:
+            conn_db.insertar("orden_servicios", {
+                "id_orden": orden_id,
+                "servicio": servicio_id
+            })
+
+        # --- Registrar pago ---
+        try:
+            monto_pago = float(form.get("pago", "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del pago no es válido.")
+
+        conn_db.insertar("pagos_servicios", {
+            "id_orden": orden_id,
+            "tipo_pago": tipo_pago,
+            "monto": monto_pago
+        })
+        
+        imagenes = request.files.getlist("imagenes")
+        for archivo in imagenes:
+            if archivo and archivo.filename != "":
+                imagen_redimensionada = redimensionar_imagen(archivo)
+                if imagen_redimensionada:
+                    conn_db.insertar("img_ordenes", {
+                        "id_orden": orden_id,
+                        "imagen": imagen_redimensionada
+                    })
+
+        # --- Respuesta de éxito ---
+        return jsonify({
+            "mensaje": "✅ Orden registrada correctamente.",
+            "orden_id": orden_id,
+            "orden": orden_dict
+        })
+
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+
+    except Exception as e:
+        # Error inesperado del servidor
+        print("❌ Error interno:", e)
+        return jsonify({"error": "Error interno del servidor"}), 500
+
 
 @app.route('/api/tipos')
 def api_tipos():
-    tipos = conn_db.seleccionar("tipos", "nombre")
-    return jsonify([{"nombre": t[0]} for t in tipos])
+    tipos = conn_db.seleccionar("tipos","*")
+    return jsonify({t[0]: t[1] for t in tipos})
 
 @app.route('/api/servicios')
 def api_servicios():
-    servicios = conn_db.seleccionar("servicios", "nombre")
-    return jsonify([{"nombre": s[0]} for s in servicios])
+    servicios = conn_db.seleccionar("servicios", "id, nombre")
+    return jsonify({s[0]: s[1] for s in servicios})
 
 @app.route('/api/tipos_pago')
 def api_tipos_pago():
-    tipos_pago = conn_db.seleccionar("tipos_pago", "nombre")
-    return jsonify([{"nombre": t[0]} for t in tipos_pago])
+    tipos_pago = conn_db.seleccionar("tipos_pago", "id, nombre")
+    return jsonify({t[0]: t[1] for t in tipos_pago})
 
 @app.route('/api/productos')
 def productos():
@@ -821,7 +905,65 @@ def obtener_clientes():
     except Exception as e:
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
- 
+
+@app.route('/api/clientes', methods=['POST'])
+def crear_o_actualizar_cliente():
+    try:
+        data = request.get_json()
+        nombre = data.get("nombre")
+        tipo_documento = data.get("tipo_document")
+        numero = data.get("numero")
+        telefono = data.get("telefono")
+        email = data.get("email")
+
+        if not nombre or not numero:
+            return jsonify({"error": "Nombre y número de documento son obligatorios"}), 400
+
+        # Verificar si el cliente ya existe
+        cliente_existente = conn_db.seleccionar(
+            tabla="clientes",
+            columnas="numero",
+            condicion="numero = ?",
+            parametros=(numero,)
+        )
+
+        if cliente_existente:
+            # Actualizar cliente existente
+            conn_db.actualizar(
+                tabla="clientes",
+                datos={
+                    "nombre": nombre,
+                    "tipo_documento": tipo_documento,
+                    "telefono": telefono,
+                    "email": email
+                },
+                condicion="numero = ?",
+                parametros_condicion=(numero,)
+            )
+        else:
+            # Insertar nuevo cliente
+            _, error = conn_db.insertar(
+                tabla="clientes",
+                datos={
+                    "numero": numero,
+                    "nombre": nombre,
+                    "tipo_documento": tipo_documento,
+                    "telefono": telefono,
+                    "email": email
+                }
+            )
+            if error:
+                return jsonify(error), 400
+
+        return jsonify({
+            "numero": numero,
+            "nombre": nombre
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error en /api/clientes: {e}")
+        return jsonify({"error": "Error interno al guardar cliente"}), 500
+
 @app.route('/api/login-segunda', methods=['POST'])
 def login():
     try:
@@ -992,6 +1134,7 @@ def insertar_tipo_pago():
         return jsonify({'ok': True, 'id': id_pagos}), 201
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
+
 @app.route('/api/turno/cerrar_dia', methods=['POST'])
 def cerrar_turno():
     data = request.get_json()
