@@ -112,6 +112,37 @@
     </div>
   </div>
 
+  <div id="modalEditarUsuario" class="modal" style="display:none;">
+
+    <div class="modal-content">
+
+      <span id="cerrarModal" class="close">&times;</span>
+      <h3>Editar Usuario</h3>
+
+      <form id="formEditarUsuario">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-nombre" placeholder="Nombre" required>
+        <input type="email" id="edit-email" placeholder="Email" required>
+        <input type="tel" id="edit-telefono" placeholder="Teléfono" required>
+
+        <select id="edit-rol" required>
+          <option>Administrador</option>
+          <option>Empleado</option>
+          <option>Supervisor</option>
+        </select>
+
+        <input type="password" id="edit-pass" placeholder="Nueva contraseña (opcional)">
+        <button type="submit">Guardar cambios</button>
+        
+      </form>
+
+    </div>
+
+  </div>
+
+  <style>
+
+  </style>
 
   <!-- <script src="/static/js/personal.js"></script> -->
   <script src="{{ url_for('static', filename='js/personal.js') }}"></script>

@@ -23,39 +23,43 @@ async function insertarUserTabla() {
 }
 
 function agregarFila(usuario) {
-  const form = document.getElementById('formUsuario');
   const tabla = document.getElementById('tablaUsuarios');
   const fila = document.createElement('tr');
 
   fila.innerHTML = `
-      <td>${usuario.id}</td>
-      <td>${usuario.nombre}</td>
-      <td>${usuario.rol}</td>
-      <td>
-        <button class="editar-btn">✏️</button>
-        <button class="eliminar-btn">🗑️</button>
-      </td>
-    `;
+    <td>${usuario.id}</td>
+    <td>${usuario.nombre}</td>
+    <td>${usuario.rol}</td>
+    <td>
+      <button class="editar-btn">✏️</button>
+      <button class="eliminar-btn">🗑️</button>
+    </td>
+  `;
 
-  fila.querySelector('.eliminar-btn').addEventListener('click', () => {
-    tabla.removeChild(fila);
-    Swal.fire({
-      icon: 'success',
-      title: '✅ Usuario eliminado correctamente'
-    });
+  // Botón Eliminar
+  fila.querySelector('.eliminar-btn').addEventListener('click', async () => {
+    const res = await fetch(`/api/usuarios/${usuario.id}`, { method: "DELETE" });
+    if (res.ok) {
+      tabla.removeChild(fila);
+      Swal.fire("✅ Usuario eliminado");
+    }
   });
 
+  // Botón Editar (abre el modal)
   fila.querySelector('.editar-btn').addEventListener('click', () => {
-    document.getElementById('nombre').value = fila.cells[1].textContent;
-    document.getElementById('rol').value = fila.cells[4].textContent;
+    document.getElementById('edit-id').value = usuario.id;
+    document.getElementById('edit-nombre').value = usuario.nombre;
+    document.getElementById('edit-email').value = usuario.email;
+    document.getElementById('edit-telefono').value = usuario.telefono;
+    document.getElementById('edit-rol').value = usuario.rol;
+    document.getElementById('edit-pass').value = "";
 
-    filaEditando = fila;
-    modoEdicion = true;
-    form.querySelector('button[type="submit"]').textContent = "Actualizar Usuario";
+    document.getElementById('modalEditarUsuario').style.display = 'flex';
   });
 
   tabla.appendChild(fila);
 }
+
 // const usuarios = [
 //   {
 //     "id": 1,
@@ -71,6 +75,7 @@ function agregarFila(usuario) {
 // return usuarios;
 
 
+
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('formUsuario');
   const tabla = document.getElementById('tablaUsuarios');
@@ -78,6 +83,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let modoEdicion = false;
   let filaEditando = null;
   insertarUserTabla();
+
+  document.getElementById('cerrarModal').addEventListener('click', () => {
+    document.getElementById('modalEditarUsuario').style.display = 'none';
+  });
 
   form.addEventListener('submit', async function (e) {
     e.preventDefault();
@@ -88,69 +97,117 @@ document.addEventListener('DOMContentLoaded', () => {
     const telefono = document.getElementById('telefono').value.trim();
     const rol = document.getElementById('rol').value;
 
-    if (!nombre || !pass || !email || !telefono || !rol) {
+    if (!nombre || (!modoEdicion && !pass) || !email || !telefono || !rol) {
       Swal.fire({
         icon: 'error',
         title: '❌ Error',
-        text: 'No se pudo guardar el usuario. Verifica los datos.'
+        text: 'Faltan datos obligatorios.'
       });
       return;
     }
 
-    const usuario = {nombre:nombre,contrasena:pass, email:email, telefono:telefono, rol:rol };
+    const usuario = { nombre, email, telefono, rol };
+
+    if (!modoEdicion) {
+      usuario.contrasena = pass;  // solo en nuevo
+    }
+
     try {
-            const respuesta = await fetch("/api/new_usuario", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(usuario),
-            });
+      const url = modoEdicion
+        ? `/api/usuarios/${filaEditando.id}`
+        : "/api/new_usuario";
+      const method = modoEdicion ? "PUT" : "POST";
 
-            if (respuesta.ok) {
-                const resultado = await respuesta.json();
+      const respuesta = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(usuario),
+      });
 
-                Swal.fire({
-                    title: 'Usuario Guardado',
-                    html: `
-                    <div class="text-start">
-                        <p><strong>ID:</strong> ${resultado.id}</p>
-                        <p><strong>Nombre:</strong> ${usuario.nombre}</p>
-                        <p><strong>Rol:</strong> ${usuario.rol}</p>
-                        <p><strong>Teléfono:</strong> ${usuario.telefono}</p>
-                        <p><strong>Email:</strong> ${usuario.email}</p>
-                    </div>
-                    `,
-                    icon: 'success'
-                });
+      const resultado = await respuesta.json();
 
-                form.reset();
-                agregarFila(resultado);
-            } else {
-                const error = await respuesta.json();
-                if (error.columna) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: `El valor ya existe en la columna: ${error.columna}.`
-                    });
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: `No se pudo guardar el proveedor: ${error.error}`
-                    });
-                }
-            }
-        } catch (error) {
-            console.error("Error al enviar los datos:", error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'Ocurrió un error al guardar el proveedor. Por favor, intenta nuevamente.'
-            });
-        }
+      if (respuesta.ok) {
+        Swal.fire({
+          icon: 'success',
+          title: modoEdicion ? 'Usuario actualizado' : 'Usuario guardado',
+        });
+
+        form.reset();
+        modoEdicion = false;
+        filaEditando = null;
+        form.querySelector('button[type="submit"]').textContent = "Guardar Usuario";
+        tabla.innerHTML = "";
+        insertarUserTabla();
+      } else {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: resultado.error || 'No se pudo guardar el usuario'
+        });
+      }
+    } catch (error) {
+      console.error("Error al enviar datos:", error);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Ocurrió un error al enviar los datos'
+      });
+    }
   });
+});
 
+// Mostrar modal con datos del usuario
+fila.querySelector('.editar-btn').addEventListener('click', () => {
+  document.getElementById('edit-id').value = usuario.id;
+  document.getElementById('edit-nombre').value = usuario.nombre;
+  document.getElementById('edit-email').value = usuario.email;
+  document.getElementById('edit-telefono').value = usuario.telefono;
+  document.getElementById('edit-rol').value = usuario.rol;
+  document.getElementById('edit-pass').value = "";
 
+  document.getElementById('modalEditarUsuario').style.display = 'block';
+});
+
+// Cerrar modal
+document.getElementById('cerrarModal').addEventListener('click', () => {
+  document.getElementById('modalEditarUsuario').style.display = 'none';
+});
+
+// Guardar cambios desde el modal
+document.getElementById('formEditarUsuario').addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const id = document.getElementById('edit-id').value;
+  const nombre = document.getElementById('edit-nombre').value;
+  const email = document.getElementById('edit-email').value;
+  const telefono = document.getElementById('edit-telefono').value;
+  const rol = document.getElementById('edit-rol').value;
+  const contrasena = document.getElementById('edit-pass').value;
+
+  const datos = { nombre, email, telefono, rol };
+  if (contrasena.trim() !== "") datos.contrasena = contrasena;
+
+  try {
+    const res = await fetch(`/api/usuarios/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(datos)
+    });
+
+    const result = await res.json();
+
+    if (res.ok) {
+      Swal.fire("✅ Usuario actualizado correctamente");
+      document.getElementById('modalEditarUsuario').style.display = 'none';
+      tabla.innerHTML = "";
+      insertarUserTabla();
+    } else {
+      Swal.fire("❌ Error: " + (result.error || "No se pudo actualizar"));
+    }
+  } catch (err) {
+    console.error(err);
+    Swal.fire("❌ Error al enviar los datos");
+  }
 });

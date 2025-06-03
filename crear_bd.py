@@ -10,17 +10,13 @@ def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
     try:
         print("🔧 Iniciando modificación de la tabla 'usuarios'...")
 
-        # 1. Desactivar validación de claves foráneas temporalmente
+        # Desactivar claves foráneas
         cursor.execute("PRAGMA foreign_keys = OFF;")
-        
-        # 1.1. Borrar la tabla original
-        cursor.execute("DROP TABLE usuarios_old;")
 
-        # 2. Renombrar la tabla original
-        # cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
-        
+        # Renombrar la tabla original (por si existe)
+        cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
 
-        # 3. Crear nueva tabla sin CHECK en 'rol'
+        # Crear nueva tabla con la columna 'estado'
         cursor.execute('''
             CREATE TABLE usuarios (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,41 +24,92 @@ def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
                 contrasena TEXT NOT NULL,
                 rol TEXT NOT NULL,
                 email TEXT,
-                telefono TEXT
+                telefono TEXT,
+                estado INTEGER DEFAULT 1
             );
         ''')
 
-        # # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
-        # cursor.execute('''
-        #     INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
-        #     SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
-        # ''')
+        # Copiar los datos de la tabla vieja
+        cursor.execute('''
+            INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+            SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+        ''')
 
-        # # 5. Borrar la tabla original
-        # cursor.execute("DROP TABLE usuarios_old;")
+        # Borrar la tabla vieja
+        cursor.execute("DROP TABLE usuarios_old;")
 
-        # 6. Volver a activar claves foráneas
+        # Reactivar claves foráneas
         cursor.execute("PRAGMA foreign_keys = ON;")
 
-        # 7. Comprobar integridad referencial
-        cursor.execute("PRAGMA foreign_key_check;")
-        errores_fk = cursor.fetchall()
-
         conexion.commit()
-
-        if errores_fk:
-            print("⚠️ ¡Alerta! Se encontraron errores de claves foráneas:")
-            for err in errores_fk:
-                print("➡️", err)
-        else:
-            print("✅ Tabla 'usuarios' modificada correctamente. Integridad referencial OK.")
-
+        print("✅ Tabla 'usuarios' modificada con la columna 'estado' incluida.")
     except Exception as e:
         conexion.rollback()
-        print("❌ Error durante la modificación:", e)
-
+        print("❌ Error:", e)
     finally:
         conexion.close()
+    # try:
+    #     print("🔧 Iniciando modificación de la tabla 'usuarios'...")
+
+    #     # 1. Desactivar validación de claves foráneas temporalmente
+    #     cursor.execute("PRAGMA foreign_keys = OFF;")
+        
+    #     # 1.1. Borrar la tabla original
+    #     cursor.execute("DROP TABLE usuarios_old;")
+
+    #     # 2. Renombrar la tabla original
+    #     # cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+        
+
+    #     # 3. Crear nueva tabla sin CHECK en 'rol'
+    #     cursor.execute('''
+    #         CREATE TABLE usuarios (
+    #             id INTEGER PRIMARY KEY AUTOINCREMENT,
+    #             nombre TEXT NOT NULL UNIQUE,
+    #             contrasena TEXT NOT NULL,
+    #             rol TEXT NOT NULL,
+    #             email TEXT,
+    #             telefono TEXT,
+    #             estado INTEGER DEFAULT 1
+    #         );
+    #     ''')
+
+    #     # Copiar los datos de la tabla vieja
+    #     cursor.execute('''
+    #         INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+    #         SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+    #     ''')
+    #     # # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
+    #     # cursor.execute('''
+    #     #     INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+    #     #     SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+    #     # ''')
+
+    #     # # 5. Borrar la tabla original
+    #     # cursor.execute("DROP TABLE usuarios_old;")
+
+    #     # 6. Volver a activar claves foráneas
+    #     cursor.execute("PRAGMA foreign_keys = ON;")
+
+    #     # 7. Comprobar integridad referencial
+    #     cursor.execute("PRAGMA foreign_key_check;")
+    #     errores_fk = cursor.fetchall()
+
+    #     conexion.commit()
+
+    #     if errores_fk:
+    #         print("⚠️ ¡Alerta! Se encontraron errores de claves foráneas:")
+    #         for err in errores_fk:
+    #             print("➡️", err)
+    #     else:
+    #         print("✅ Tabla 'usuarios' modificada correctamente. Integridad referencial OK.")
+
+    # except Exception as e:
+    #     conexion.rollback()
+    #     print("❌ Error durante la modificación:", e)
+
+    # finally:
+    #     conexion.close()
 
 def conectar_bd(nombre_bd):
     return sqlite3.connect(nombre_bd)
