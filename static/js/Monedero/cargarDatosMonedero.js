@@ -1,3 +1,57 @@
+// Función para cargar categorías de gastos desde la API
+async function cargarCategoriasGastos() {
+    try {
+        const response = await fetch("/api/tipos_gastos_pagos");
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error("Error en la respuesta de la API");
+            return null;
+        }
+
+        return data.data.tipos_gastos;
+    } catch (error) {
+        console.error("Error al obtener categorías de gastos:", error);
+        return null;
+    }
+}
+
+// Función para poblar el selector de categorías
+async function poblarCategoriasGastos(selectElement) {
+    const categorias = await cargarCategoriasGastos();
+    
+    if (!categorias) {
+        console.error("No se pudieron cargar las categorías de gastos");
+        return;
+    }
+
+    // Guardar la opción "Otros" si existe
+    const otrosOption = selectElement.querySelector('option[value="0"]');
+    
+    // Limpiar el selector
+    selectElement.innerHTML = '';
+    
+    // Poblar con todas las categorías de la base de datos
+    for (const [key, value] of Object.entries(categorias)) {
+        const option = document.createElement("option");
+        option.value = key;
+        option.textContent = value;
+        selectElement.appendChild(option);
+    }
+    
+    // Agregar la opción "Otros" al final si no existe en la base de datos
+    if (!Object.values(categorias).includes("Otros")) {
+        const nuevosOtrosOption = document.createElement("option");
+        nuevosOtrosOption.value = 0;
+        nuevosOtrosOption.textContent = "Otros";
+        selectElement.appendChild(nuevosOtrosOption);
+    } else if (otrosOption) {
+        // Si ya existe, simplemente agregarlo
+        selectElement.appendChild(otrosOption);
+    }
+}
+
+// Función para guardar una nueva categoría
 async function guardarNuevaCategoria() {
     const input = document.getElementById("categoria");
     const descripcion = input.value.trim();
@@ -24,15 +78,8 @@ async function guardarNuevaCategoria() {
             alert("✅ Categoría guardada con éxito.");
             input.value = "";
 
-            // Crear nueva opción
-            const nuevaOpcion = document.createElement("option");
-            nuevaOpcion.value = resultado.id;
-            nuevaOpcion.textContent = descripcion;
-
-            // Insertar como penúltima opción
-            const totalOpciones = select.options.length;
-            const posicion = Math.max(0, totalOpciones - 1); // Penúltima posición o primera si está vacío
-            select.insertBefore(nuevaOpcion, select.options[posicion]);
+            // Recargar las categorías desde la base de datos
+            await poblarCategoriasGastos(select);
 
             // Seleccionar automáticamente la nueva opción
             select.value = resultado.id;
@@ -50,46 +97,83 @@ async function guardarNuevaCategoria() {
     }
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    fetch("/api/tipos_gastos_pagos")
-        .then(response => response.json())
-        .then(data => {
-            if (!data.success) {
-                console.error("Error en la respuesta de la API");
-                return;
-            }
+// Al cargar la página
+document.addEventListener("DOMContentLoaded", async () => {
+    const tipoPagoSelect = document.getElementById("tipo-pago");
+    const categoriaGastosSelect = document.getElementById("categoria-gastos");
 
-            const tiposPagos = data.data.tipos_pagos;
-            const tiposGastos = data.data.tipos_gastos;
+    try {
+        // Cargar categorías primero
+        await poblarCategoriasGastos(categoriaGastosSelect);
+        
+        // Cargar tipos de pago
+        const data = await fetch("/api/tipos_gastos_pagos").then(r => r.json());
+        
+        if (!data.success) {
+            console.error("Error en la respuesta de la API");
+            return;
+        }
 
-            const tipoPagoSelect = document.getElementById("tipo-pago");
-            const categoriaGastosSelect = document.getElementById("categoria-gastos");
+        const tiposPagos = data.data.tipos_pagos;
 
-            // Poblar tipos de pago
-            for (const [key, value] of Object.entries(tiposPagos)) {
-                const option = document.createElement("option");
-                option.value = key;
-                option.textContent = value;
-                tipoPagoSelect.appendChild(option);
-            }
-
-            // Poblar categorías de gastos
-            for (const [key, value] of Object.entries(tiposGastos)) {
-                if (value !== "Otros") {
-                    const option = document.createElement("option");
-
-                    option.value = key;
-                    option.textContent = value;
-                    categoriaGastosSelect.appendChild(option);
-                }
-            }
+        // Poblar tipos de pago
+        for (const [key, value] of Object.entries(tiposPagos)) {
             const option = document.createElement("option");
-            option.value = 0;
-            option.textContent = "Otros";
-            categoriaGastosSelect.appendChild(option);
+            option.value = key;
+            option.textContent = value;
+            tipoPagoSelect.appendChild(option);
+        }
 
-        })
-        .catch(error => {
-            console.error("Error al obtener datos de la API:", error);
-        });
-})
+    } catch (error) {
+        console.error("Error al obtener datos de la API:", error);
+    }
+
+    // Si estamos en una página de edición, cargar los datos del gasto
+    if (window.location.pathname.includes("editar-gasto")) {
+        await cargarDatosGastoParaEdicion();
+    }
+});
+
+// Función para cargar datos del gasto en modo edición
+async function cargarDatosGastoParaEdicion() {
+    try {
+        // Obtener ID del gasto de la URL
+        const gastoId = obtenerIdGastoDeURL();
+        
+        if (!gastoId) return;
+
+        // Obtener datos del gasto
+        const response = await fetch(`/api/obtener_gasto/${gastoId}`);
+        const resultado = await response.json();
+
+        if (!response.ok || !resultado.success) {
+            throw new Error('Error al obtener el gasto');
+        }
+
+        const gasto = resultado.data;
+
+        // Rellenar el formulario con los datos del gasto
+        document.getElementById("monto").value = gasto.monto;
+        document.getElementById("descripcion").value = gasto.descripcion;
+        document.getElementById("fecha").value = gasto.fecha;
+        
+        // Seleccionar el tipo de pago
+        const tipoPagoSelect = document.getElementById("tipo-pago");
+        tipoPagoSelect.value = gasto.tipo_pago_id;
+        
+        // Seleccionar la categoría
+        const categoriaSelect = document.getElementById("categoria-gastos");
+        categoriaSelect.value = gasto.categoria_id;
+
+    } catch (error) {
+        console.error("Error al cargar datos del gasto:", error);
+        alert("Error al cargar los datos del gasto. Por favor, recarga la página.");
+    }
+}
+
+// Función para obtener ID del gasto de la URL
+function obtenerIdGastoDeURL() {
+    // Buscar el ID en la URL (ejemplo: /editar-gasto/123)
+    const match = window.location.pathname.match(/editar-gasto\/(\d+)/);
+    return match ? match[1] : null;
+}
