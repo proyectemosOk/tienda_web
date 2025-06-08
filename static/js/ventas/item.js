@@ -318,25 +318,6 @@ const ticket = new TicketDeVenta();
 document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 
 
-// Modificar el evento change del select
-// document.querySelector('.otros-metodos').addEventListener('change', function() {
-//     const metodoSeleccionado = this.value;
-//     if (metodoSeleccionado) {
-//         // Remover selección previa
-//         document.querySelectorAll('.otros-metodos option').forEach(opt => {
-//             opt.style.fontWeight = 'normal';
-//         });
-        
-//         // Resaltar opción seleccionada
-//         this.querySelector(`option[value="${metodoSeleccionado}"]`).style.fontWeight = 'bold';
-        
-//         // Mostrar input para este método
-//         mostrarInputPago({ 
-//             id: metodoSeleccionado, 
-//             nombre: this.options[this.selectedIndex].text 
-//         });
-//     }
-// });
 
 document.addEventListener('DOMContentLoaded', () => {
     const clienteCombo = document.getElementById('clientes');
@@ -370,7 +351,3 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarClientes();
 });
 
-
-// // Ejemplo de agregar items (esto vendría desde tu interfaz de productos)
-// ticket.agregarItem(1, "Producto 1", 10000, 10);
-// ticket.agregarItem(2, "Producto 2", 20000, 5);
