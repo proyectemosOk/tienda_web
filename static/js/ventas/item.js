@@ -318,6 +318,7 @@ const ticket = new TicketDeVenta();
 document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 
 
+<<<<<<< HEAD:static/js/vista de producto/item.js
 // Modificar el evento change del select
 // document.querySelector('.otros-metodos').addEventListener('change', function() {
 //     const metodoSeleccionado = this.value;
@@ -337,6 +338,8 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 //         });
 //     }
 // });
+=======
+>>>>>>> 17f6562ad9b0fba21ba0ec06ff16c7b2436707a2:static/js/ventas/item.js
 
 document.addEventListener('DOMContentLoaded', () => {
   const clienteCombo = document.getElementById('clientes');
@@ -370,7 +373,3 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarClientes();
 });
 
-
-// // Ejemplo de agregar items (esto vendría desde tu interfaz de productos)
-// ticket.agregarItem(1, "Producto 1", 10000, 10);
-// ticket.agregarItem(2, "Producto 2", 20000, 5);
