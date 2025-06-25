@@ -1205,7 +1205,7 @@ def cerrar_turno():
     except Exception as e:
         return jsonify({'ok': False, 'error': str(e)}), 500
     
-@app.route('/api/servicios', methods=['GET'])
+@app.route('/api/lista/servicios', methods=['GET'])
 def obtener_servicios():
     try:
         servicios = conn_db.ejecutar_personalizado('''
