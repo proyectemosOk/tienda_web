@@ -173,7 +173,7 @@
               <input type="text" id="categoria" placeholder="Ej: Administrativos">
             </div>
             <div class="acciones-form">
-              <button onclick="guardarNuevaCategoria()" class="btn btn-verde"><i class="fas fa-save"></i>
+              <button class="btn btn-verde btn-guardar-categoria onclick="guardarNuevaCategoria()" class="btn btn-verde"><i class="fa-save"></i>
                 Guardar</button>
             </div>
           </div>
@@ -195,34 +195,65 @@
     </main>
   </div>
 
-  <!-- Modal para editar gasto -->
-  <div id="modal-editar-gasto" class="modal">
-    <div class="modal-contenido">
-      <span class="cerrar-modal">&times;</span>
-      <h2>Editar Gasto</h2>
-      <div class="formulario">
-        <div class="grupo-form">
-          <label for="editar-descripcion">Descripción</label>
-          <input type="text" id="editar-descripcion">
+  <div id="modal-editar" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-edit"></i> Editar Gasto</h2>
+                <button class="close-btn" onclick="cerrarModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="alert-message" class="alert" style="display:none;"></div>
+                
+                <form id="form-editar-gasto">
+                    <input type="hidden" id="gasto-id">
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="monto-editar">Monto ($)</label>
+                            <input type="number" id="monto-editar" class="form-control" min="0" step="0.01" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="fecha-editar">Fecha</label>
+                            <input type="date" id="fecha-editar" class="form-control" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="descripcion-editar">Descripción</label>
+                        <textarea id="descripcion-editar" class="form-control" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="tipo-pago-editar">Tipo de Pago</label>
+                        <select id="tipo-pago-editar" class="form-control" required>
+                            <option value="">Seleccionar tipo de pago</option>
+                            <!-- Opciones se cargan dinámicamente -->
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="categoria-gastos-editar">Categoría</label>
+                        <select id="categoria-gastos-editar" class="form-control" required>
+                            <option value="">Seleccionar categoría</option>
+                            <!-- Categorías se cargarán dinámicamente -->
+                        </select>
+                        
+                        <div class="categoria-agregar">
+                            <input type="text" id="nueva-categoria" class="form-control" placeholder="Nueva categoría">
+                            <button type="button" class="btn btn-sm btn-primary" onclick="agregarCategoria()">
+                                <i class="fas fa-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="btn-container">
+                        <button type="button" class="btn btn-outline" onclick="cerrarModal()">Cancelar</button>
+                        <button type="button" class="btn btn-primary" onclick="guardarCambiosGasto()">Guardar Cambios</button>
+                    </div>
+                </form>
+            </div>
         </div>
-        <div class="grupo-form">
-          <label for="editar-monto">Monto</label>
-          <input type="number" id="editar-monto" step="0.01">
-        </div>
-        <div class="grupo-form">
-          <label for="editar-categoria">Categoría</label>
-          <select id="editar-categoria">
-            <option value="operativos">Gastos Operativos</option>
-            <option value="administrativos">Gastos Administrativos</option>
-            <option value="comerciales">Gastos Comerciales</option>
-            <option value="otros">Otros Gastos</option>
-          </select>
-        </div>
-      </div>
-      <button id="btn-guardar-edicion" class="btn btn-verde">Guardar Cambios</button>
-    </div>
-  </div>
-
+    </div> 
 </body>
 <script src="/static/js/Monedero/Monedero.js"></script>
 <script src="/static/js/Monedero/pestañas.js"></script>

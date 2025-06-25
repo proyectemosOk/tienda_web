@@ -1,3 +1,13 @@
+let gastosData = [];
+        let tiposPagos = {};
+        let tiposGastos = {};
+  
+const modalEditar = document.getElementById('modal-editar');
+        const gastosContainer = document.getElementById('gastos-container');
+        const selectCategoria = document.getElementById('categoria-gastos-editar');
+        const selectTipoPago = document.getElementById('tipo-pago-editar');
+        const alertMessage = document.getElementById('alert-message');
+        const filtroCategoria = document.getElementById('filtro-categoria');
 async function obtenerDatosJSONBolsillos() {
   try {
     const response = await fetch("/api/tarjetas-resumen");
@@ -414,51 +424,154 @@ async function agregarGasto() {
   }
 }
 
-
-// Función para editar un gasto
-function editarGasto(id) {
-  gastoEditando = gastosIniciales.find(g => g.id === id);
-  if (!gastoEditando) return;
-
-  document.getElementById('editar-descripcion').value = gastoEditando.descripcion;
-  document.getElementById('editar-monto').value = gastoEditando.monto;
-  document.getElementById('editar-categoria').value = gastoEditando.categoria;
-
-  modalEditarGasto.style.display = 'block';
+ async function abrirModalEditar(gastoId) {
+  // Mostrar el modal
+  modalEditar.style.display = 'flex';
+  gastoEditando = gastoId;
+  
+  // Poblar selectores
+  poblarTiposPagos();
+  poblarCategoriasGastos();
+  
+  try {
+    // Obtener datos del gasto desde la API
+    const response = await fetch(`/api/obtener_gasto/${gastoId}`);
+    const resultado = await response.json();
+    
+    if (!resultado.success) {
+      throw new Error("Error al obtener el gasto");
+    }
+    
+    const gasto = resultado.data;
+    
+    // Rellenar el formulario con los datos del gasto
+    document.getElementById('gasto-id').value = gastoId;
+    document.getElementById('monto-editar').value = gasto.monto;
+    
+    // Formatear fecha para input date (YYYY-MM-DD)
+    const fechaObj = new Date(gasto.fecha);
+    const fechaFormateada = fechaObj.toISOString().split('T')[0];
+    document.getElementById('fecha-editar').value = fechaFormateada;
+    
+    document.getElementById('descripcion-editar').value = gasto.descripcion;
+    selectTipoPago.value = gasto.tipo_pago_id;
+    selectCategoria.value = gasto.categoria_id;
+    
+  } catch (error) {
+    console.error('Error al cargar gasto:', error);
+    mostrarAlerta('Error al cargar los datos del gasto', 'danger');
+  }
 }
 
-// Función para guardar los cambios de edición
-function guardarCambiosGasto() {
+// Función para cerrar el modal
+function cerrarModal() {
+  modalEditar.style.display = 'none';
+  gastoEditando = null;
+}
+
+// Función para guardar los cambios del gasto
+async function guardarCambiosGasto() {
   if (!gastoEditando) return;
-
-  const descripcion = document.getElementById('editar-descripcion').value.trim();
-  const monto = parseFloat(document.getElementById('editar-monto').value);
-  const categoria = document.getElementById('editar-categoria').value;
-
-  if (!descripcion || isNaN(monto)) {
-    alert("Descripción y monto son obligatorios");
+  
+  const gastoId = document.getElementById('gasto-id').value;
+  const monto = document.getElementById('monto-editar').value;
+  const fecha = document.getElementById('fecha-editar').value;
+  const descripcion = document.getElementById('descripcion-editar').value;
+  const tipoPago = selectTipoPago.value;
+  const categoria = selectCategoria.value;
+  
+  // Validación básica
+  if (!monto || !fecha || !descripcion || !tipoPago || !categoria) {
+    mostrarAlerta('Por favor, completa todos los campos.', 'danger');
     return;
   }
-
-  gastoEditando.descripcion = descripcion;
-  gastoEditando.monto = monto;
-  gastoEditando.categoria = categoria;
-
-  mostrarGastos();
-  mostrarBolsillos(); // Actualizar el resumen financiero
-  modalEditarGasto.style.display = 'none';
-  alert("Gasto actualizado correctamente");
+  
+  try {
+    // Mostrar indicador de carga
+    const guardarBtn = document.querySelector('#form-editar-gasto .btn-primary');
+    const originalText = guardarBtn.innerHTML;
+    guardarBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Guardando...';
+    guardarBtn.disabled = true;
+    
+    const response = await fetch(`/api/actualizar_gasto/${gastoId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        monto: parseFloat(monto),
+        fecha,
+        descripcion,
+        tipo_pago_id: tipoPago,
+        categoria_id: categoria
+      })
+    });
+    
+    const resultado = await response.json();
+    
+    if (response.ok && resultado.success) {
+      mostrarAlerta('✅ Gasto actualizado con éxito!');
+      
+      
+    } else {
+      console.error("Error al actualizar:", resultado);
+      mostrarAlerta('❌ Error al actualizar el gasto: ' + (resultado.error || ''), 'danger');
+    }
+    
+  } catch (error) {
+    console.error('Error al guardar gasto:', error);
+    mostrarAlerta('❌ Error de conexión con el servidor. No se guardaron los cambios.', 'danger');
+  } finally {
+    // Restaurar botón
+    const guardarBtn = document.querySelector('#form-editar-gasto .btn-primary');
+    if (guardarBtn) {
+      guardarBtn.innerHTML = 'Guardar Cambios';
+      guardarBtn.disabled = false;
+    }
+  }
 }
 
 // Función para eliminar un gasto
-function eliminarGasto(id) {
-  if (!confirm("¿Estás seguro de eliminar este gasto?")) return;
-
-  gastosIniciales = gastosIniciales.filter(gasto => gasto.id !== id);
-  mostrarGastos();
-  mostrarBolsillos(); // Actualizar el resumen financiero
-  alert("Gasto eliminado correctamente");
+async function eliminarGasto(gastoId) {
+  if (!confirm('¿Estás seguro de que deseas eliminar este gasto?')) {
+    return;
+  }
+  
+  try {
+    
+    const response = await fetch(`/api/eliminar_gasto/${gastoId}`, {
+      method: "DELETE"
+    });
+    
+    const resultado = await response.json();
+    
+    if (response.ok && resultado.success) {
+      mostrarAlerta('✅ Gasto eliminado con éxito!', 'success');
+      
+    } else {
+      console.error("Error al eliminar:", resultado);
+      mostrarAlerta('❌ Error al eliminar el gasto: ' + (resultado.error || ''), 'danger');
+    }
+    
+  } catch (error) {
+    console.error('Error al eliminar gasto:', error);
+    mostrarAlerta('❌ Error de conexión con el servidor. No se eliminó el gasto.', 'danger');
+  } finally {
+    // Restaurar botones
+    const botones = document.querySelectorAll(`.btn-eliminar[data-id="${gastoId}"]`);
+    botones.forEach(btn => {
+      btn.innerHTML = '<i class="fas fa-trash"></i> Eliminar';
+      btn.disabled = false;
+    });
+  }
 }
+  // Cerrar modal al hacer clic fuera del contenido
+  modalEditar.addEventListener('click', (e) => {
+    if (e.target === modalEditar) {
+      cerrarModal();
+    }
+  });
+  
 
 // Función para pagar una factura
 function pagarFactura(id) {
