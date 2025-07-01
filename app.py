@@ -25,7 +25,7 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 def obtener_id_por_nombre(tabla, buscar, columna):
     resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
-    print(resultado)
+
     return resultado[0][0] if resultado else None
 
 def redimensionar_imagen(archivo, max_ancho=800, max_alto=800):
@@ -46,7 +46,7 @@ def index():
 
 @app.route('/home')
 def home():
-    return render_template('menu-global.html')
+    return render_template('home.html')
 
 @app.route('/personal')
 def personal():
@@ -75,6 +75,9 @@ def ventas():
 @app.route('/inventarios')
 def inventarios():
     return render_template('gestor_inventario.html')
+@app.route('/principal')
+def menu_global():
+    return render_template('menu-global.html')
 
 @app.route("/monederos")
 def monedero():
@@ -87,14 +90,16 @@ def cierre_dia():
 @app.route('/submit', methods=['POST'])
 def submit():
     form = request.form
-
+    
     try:
         # --- Validación básica obligatoria ---
         campos_obligatorios = ['cliente', 'tipo', 'marca', 'modelo', 'estado_entrada', 'perifericos', 'observaciones', 'total_servicio', 'tipo_pago']
         for campo in campos_obligatorios:
             if campo not in form or not form[campo].strip():
                 raise BadRequest(f"El campo '{campo}' es obligatorio.")
-
+        
+        for key in form:
+            print(key+":\t"+form[key])
         # --- Procesar TIPO ---
         tipo = form['tipo'].strip()
         if tipo == "__nuevo__":
@@ -102,8 +107,8 @@ def submit():
             if not tipo:
                 raise BadRequest("Debe ingresar un nombre para el nuevo tipo.")
             if not conn_db.existe_registro("tipos", "nombre", tipo):
-                conn_db.insertar("tipos", {"nombre": tipo})
-        tipo = obtener_id_por_nombre("tipos", tipo, "nombre")
+                tipo = conn_db.insertar("tipos", {"nombre": tipo})[0]
+        tipo = obtener_id_por_nombre("tipos", tipo, "id")
         if not tipo:
             raise BadRequest("Tipo no válido o no encontrado.")
 
@@ -114,33 +119,34 @@ def submit():
             if not tipo_pago:
                 raise BadRequest("Debe ingresar un nombre para el nuevo tipo de pago.")
             if not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
-                conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})
-        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "nombre")
+                tipo_pago = conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})[0]
+        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "id")
         if not tipo_pago:
             raise BadRequest("Tipo de pago no válido o no encontrado.")
 
         # --- Procesar SERVICIOS ---
-        servicios = form.getlist('servicios')
+        servicios = form.getlist('servicios[]')
         servicios_nuevos = form.getlist('servicios_nuevo[]')
+        
         servicios_finales = []
 
-        for nuevo in servicios_nuevos:
-            nuevo = nuevo.strip()
+        for nuevos in servicios_nuevos:
+            nuevo = nuevos.strip()
             if nuevo:
                 if not conn_db.existe_registro("servicios", "nombre", nuevo):
                     conn_db.insertar("servicios", {"nombre": nuevo})
-                servicio_id = obtener_id_por_nombre("servicios", nuevo, "nombre")
+                servicio_id = obtener_id_por_nombre("servicios", nuevo, "id")
                 if servicio_id:
                     servicios_finales.append(servicio_id)
 
         for servicio in servicios:
-            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "nombre")
+            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "id")
             if servicio_id:
                 servicios_finales.append(servicio_id)
 
         if not servicios_finales:
             raise BadRequest("Debe seleccionar al menos un servicio válido.")
-
+        print(servicios_finales)
         # --- Obtener ID del cliente ---
         cliente_id = obtener_id_por_nombre("clientes", form['cliente'].strip(), "numero")
         if not cliente_id:
@@ -168,9 +174,10 @@ def submit():
 
         # --- Insertar servicios relacionados ---
         for servicio_id in servicios_finales:
+
             conn_db.insertar("orden_servicios", {
-                "id_orden": orden_id,
-                "servicio": servicio_id
+                "id_orden": int(orden_id[0]),
+                "servicio": int(servicio_id)
             })
 
         # --- Registrar pago ---
@@ -180,7 +187,7 @@ def submit():
             raise BadRequest("El monto del pago no es válido.")
 
         conn_db.insertar("pagos_servicios", {
-            "id_orden": orden_id,
+            "id_orden": int(orden_id[0]),
             "tipo_pago": tipo_pago,
             "monto": monto_pago
         })
@@ -1239,4 +1246,4 @@ def obtener_servicios():
 if __name__ == '__main__':
     host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
     print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
-    app.run(debug=True, host=host_ip, port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

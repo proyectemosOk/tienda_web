@@ -318,7 +318,6 @@ const ticket = new TicketDeVenta();
 document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 
 
-<<<<<<< HEAD:static/js/vista de producto/item.js
 // Modificar el evento change del select
 // document.querySelector('.otros-metodos').addEventListener('change', function() {
 //     const metodoSeleccionado = this.value;
@@ -338,8 +337,6 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 //         });
 //     }
 // });
-=======
->>>>>>> 17f6562ad9b0fba21ba0ec06ff16c7b2436707a2:static/js/ventas/item.js
 
 document.addEventListener('DOMContentLoaded', () => {
   const clienteCombo = document.getElementById('clientes');

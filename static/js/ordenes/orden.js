@@ -10,39 +10,77 @@ function cargarSelectConOpciones({ url, selectId, inputNuevoId }) {
             otro.value = "__nuevo__";
             otro.textContent = "Otro...";
             select.appendChild(otro);
-
+            
             // Mostrar/ocultar campo adicional si elige "Otro..."
             select.addEventListener("change", () => {
+                
                 const inputNuevo = document.getElementById(inputNuevoId);
                 if (inputNuevo) {
-                    inputNuevo.style.display = select.value === "__nuevo__" ? "block" : "none";
+                    console.log("hola 56")
+                    // if(select.value === "__nuevo__"){
+                    //     inputNuevo.classList.remove("hidden")
+                    // }
+                    select.value === "__nuevo__" ? inputNuevo.classList.remove("hidden"): "";
                 }
             });
         });
 }
+function cargarServicios(data, name, contenedor) {
+    // Suponiendo que 'data' es un objeto { valor: etiqueta }
+    Object.entries(data).forEach(([key, valor]) => {
+        // Crear contenedor div
+        const div = document.createElement("div");
+        div.classList.add("checkbox-item");
 
+        // Crear input
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.id = `${name}_${key}`;
+        input.name = `${name}[]`;
+        input.value = key;
+
+        // Crear label
+        const label = document.createElement("label");
+        label.textContent = valor;
+        label.htmlFor = `${name}_${key}`;
+
+        div.appendChild(input);
+        div.appendChild(label);
+        
+        
+        // Agregar al contenedor principal
+        contenedor.appendChild(div);
+    });
+
+    // Checkbox "Otro..."
+    const otroId = `${name}_otro_checkbox`;
+    const otroDiv = document.createElement("div");
+    otroDiv.classList.add("checkbox-item");
+
+    const otroInput = document.createElement("input");
+    otroInput.type = "checkbox";
+    otroInput.id = otroId;
+    otroInput.value = "__nuevo__";
+    otroInput.name = name;
+
+    // Crear label
+    const otroLabel = document.createElement("label");
+    otroLabel.textContent = "Otro...";
+    otroLabel.htmlFor = otroId;
+
+    otroDiv.appendChild(otroInput);
+    otroDiv.appendChild(otroLabel);
+    contenedor.appendChild(otroDiv);
+    return otroId
+
+}
 function cargarCheckboxesConOtroMultiples({ url, contenedorId, inputNuevoId, name = "opciones" }) {
     fetch(url)
         .then(res => res.json())
         .then(data => {
             const contenedor = document.getElementById(contenedorId);
 
-            // Cargar checkboxes desde el objeto recibido
-            Object.entries(data).forEach(([key, valor]) => {
-                const label = document.createElement("label");
-                label.innerHTML = `
-                    <input type="checkbox" name="${name}" value="${key}"> ${valor}
-                `;
-                contenedor.appendChild(label);
-            });
-
-            // Checkbox "Otro..."
-            const otroId = `${name}_otro_checkbox`;
-            const otroLabel = document.createElement("label");
-            otroLabel.innerHTML = `
-                <input type="checkbox" id="${otroId}" value="__nuevo__" name="${name}"> Otro...
-            `;
-            contenedor.appendChild(otroLabel);
+           const otroId = cargarServicios(data, name, contenedor)
 
             // Contenedor de campos nuevos dinámicos
             const nuevoContainer = document.getElementById(inputNuevoId);
@@ -170,6 +208,7 @@ async function enviarOrden(e) {
 
     const form = e.target;
     const formData = new FormData(form);
+    console.log(formData)
     const submitButton = form.querySelector("button[type='submit']");
     submitButton.disabled = true;
     submitButton.textContent = "Enviando...";
@@ -178,7 +217,7 @@ async function enviarOrden(e) {
     const nuevoServicioInput = document.getElementById("nuevo_servicio_input");
     const nuevoServicio = nuevoServicioInput?.value.trim();
     if (nuevoServicio) {
-        formData.append("servicios_nuevo[]", nuevoServicio);
+        formData.append("servicios_nuevo", nuevoServicio);
     }
 
     try {

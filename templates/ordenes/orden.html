@@ -3,77 +3,252 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orden de Entrada</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ordenes/orden.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/ordenes/siguient-etapa.js" defer></script>
 </head>
 
 <body>
-    <h1>Formulario de Orden de Entrada</h1>
-    <form enctype="multipart/form-data">
-        <label>Cliente:
-            <input list="clientes" id="clienteInput" name="cliente" />
-            <datalist id="clientes">
-            </datalist>
-            <button type="button" id="btn-nuevo-cliente">+ Nuevo Cliente</button>
-        </label><br>
+    <div class="form-container">
+        <!-- Título Principal -->
+        <h1 class="main-title">Orden de Servicio</h1>
+        <p class="main-subtitle">Complete todos los campos para registrar la orden de entrada</p>
 
-        <label>Tipo:
-            <select name="tipo" id="tipo-select" required>
-                <option value="">Seleccione un tipo...</option>
-            </select>
-        </label><br>
-        <div id="nuevo-tipo-container" style="display:none;">
-            <label>Nuevo tipo: <input type="text" name="nuevo_tipo" id="nuevo_tipo_input"></label>
-        </div>
-
-        <label>Marca: <input type="text" name="marca"></label><br>
-        <label>Modelo: <input type="text" name="modelo"></label><br>
-        <label>Estado de Entrada: <textarea name="estado_entrada"></textarea></label><br>
-
-        <fieldset>
-            <legend>Servicios</legend>
-            <div id="servicios-checkboxes"></div>
-            <div id="servicio-nuevo-container" style="display:none; margin-top: 5px;">
-                <label>Nuevo servicio: <input type="text" name="nuevo_servicio" id="nuevo_servicio_input"></label>
+        <!-- Indicador de Progreso -->
+        <div class="progress-indicator">
+            <div class="step-indicator active">
+                <div class="step-number">1</div>
+                <div class="step-label">Cliente</div>
+                <div class="step-connector"></div>
             </div>
-        </fieldset>
-
-        <label>Periféricos que deja: <input type="text" name="perifericos"></label><br>
-        <label>Observaciones: <textarea name="observaciones"></textarea></label><br>
-
-        <label>Tipo de Pago:
-            <select name="tipo_pago" id="tipo_pago_select" required>
-                <option value="">Seleccione un tipo de pago...</option>
-            </select>
-        </label><br>
-        <div id="nuevo-tipo_pago-container" style="display:none;">
-            <label>Nuevo tipo de pago: <input type="text" name="nuevo_tipo_pago" id="nuevo_tipo_pago_input"></label>
+            <div class="step-indicator">
+                <div class="step-number">2</div>
+                <div class="step-label">Artículo</div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number">3</div>
+                <div class="step-label">Servicios</div>
+                <div class="step-connector"></div>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number">4</div>
+                <div class="step-label">Fotos</div>
+            </div>
         </div>
 
-        <label>Total del Servicio: <input type="number" name="total_servicio" step="0.01" min="0" required></label><br>
-        <label>Pago recibido: <input type="number" name="pago" step="0.01" min="0" required></label><br>
+        <!-- Formulario Principal -->
+        <form class="orden-form" enctype="multipart/form-data">
+            <!-- ETAPA 1: CLIENTE -->
+            <div class="form-stage" data-stage="1">
+                <div class="stage-header">
+                    <div class="stage-icon">🙎‍♂️</div>
+                    <div class="stage-info">
+                        <h2>Información del Cliente</h2>
+                        <p>Seleccione un cliente existente o registre uno nuevo</p>
+                    </div>
+                </div>
 
-        <label>Subir Fotos: <input type="file" name="imagenes" id="imagenes" multiple accept="image/*"></label><br><br>
+                <div class="form-group">
+                    <label for="clienteInput">Cliente</label>
+                    <div class="cliente-input-group">
+                        <div class="cliente-input-wrapper">
+                            <input list="clientes" id="clienteInput" name="cliente" class="form-control"
+                                placeholder="Buscar cliente por nombre o documento..." required>
+                            <datalist id="clientes"></datalist>
+                        </div>
+                        <button type="button" id="btn-nuevo-cliente" class="btn btn-secondary">
+                            + Nuevo Cliente
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-        <button type="submit">Enviar Orden</button>
-    </form>
-    <div id="form-nuevo-cliente" style="display: none; border: 1px solid #ccc; padding: 10px; margin-top: 10px;">
-        <h3>Nuevo Cliente</h3>
-        <label>Nombre: <input type="text" id="nuevo_nombre" required></label><br>
-        <label>Tipo de Documento:
-            <select id="nuevo_tipo_documento">
-                <option value="CC">CC</option>
-                <option value="CE">CE</option>
-                <option value="NIT">NIT</option>
-                <option value="Otro">Otro</option>
-            </select>
-        </label><br>
-        <label>Número de Documento: <input type="text" id="nuevo_numero" required></label><br>
-        <label>Teléfono: <input type="text" id="nuevo_telefono"></label><br>
-        <label>Email: <input type="email" id="nuevo_email"></label><br>
-        <button type="button" id="guardar-cliente">Guardar Cliente</button>
+            <!-- ETAPA 2: ARTÍCULO -->
+            <div class="form-stage" data-stage="2">
+                <div class="stage-header">
+                    <div class="stage-icon">📱</div>
+                    <div class="stage-info">
+                        <h2>Información del Artículo</h2>
+                        <p>Detalles del dispositivo o equipo a reparar</p>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="tipo-select">Tipo de Dispositivo *</label>
+                        <select name="tipo" id="tipo-select" class="form-control" required>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="marca">Marca</label>
+                        <input type="text" name="marca" id="marca" class="form-control"
+                            placeholder="Ej: Samsung, Apple, HP...">
+                    </div>
+                </div>
+
+                <div id="nuevo-tipo-container" class="additional-field hidden">
+                    <div class="form-group mb-0">
+                        <label for="nuevo_tipo_input">Nuevo Tipo de Dispositivo</label>
+                        <input type="text" name="nuevo_tipo" id="nuevo_tipo_input" class="form-control"
+                            placeholder="Especifique el nuevo tipo...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="modelo">Modelo</label>
+                    <input type="text" name="modelo" id="modelo" class="form-control"
+                        placeholder="Ej: Galaxy S21, iPhone 13, Pavilion...">
+                </div>
+
+                <div class="form-group">
+                    <label for="estado_entrada">Estado de Entrada</label>
+                    <textarea name="estado_entrada" id="estado_entrada" class="form-control"
+                        placeholder="Describa el estado físico y funcional del dispositivo al momento de la entrega..."
+                        rows="4"></textarea>
+                </div>
+            </div>
+
+            <!-- ETAPA 3: SERVICIOS, PERIFÉRICOS Y OBSERVACIONES -->
+            <div class="form-stage" data-stage="3">
+                <div class="stage-header">
+                    <div class="stage-icon">🔧</div>
+                    <div class="stage-info">
+                        <h2>Servicios y Detalles</h2>
+                        <p>Servicios a realizar, accesorios y observaciones</p>
+                    </div>
+                </div>
+
+                <fieldset class="services-fieldset">
+                    <legend>Servicios a Realizar</legend>
+                    <div id="servicios-checkboxes" class="checkbox-grid"></div>
+                    <div id="servicio-nuevo-container" class="additional-field hidden">
+                        <div class="form-group mb-0">
+                            <label for="nuevo_servicio_input">Servicios Adicionales</label>
+                            <div id="servicio-nuevo-container-campos">
+                                <input type="text" name="servicios_adicionales" class="form-control mb-2"
+                                    placeholder="Especifique el servicio adicional...">
+                            </div>
+                            <button type="button" class="btn btn-secondary mt-2 agregar-otro-btn">
+                                + Agregar Servicio
+                            </button>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="form-row mt-4">
+                    <div class="form-group">
+                        <label for="perifericos">Periféricos que Deja</label>
+                        <input type="text" name="perifericos" id="perifericos" class="form-control"
+                            placeholder="Ej: Cargador, funda, audífonos...">
+                    </div>
+                    <div class="form-group">
+                        <label for="observaciones">Observaciones</label>
+                        <textarea name="observaciones" id="observaciones" class="form-control"
+                            placeholder="Notas adicionales, instrucciones especiales..." rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- ETAPA 5: FOTOS -->
+            <div class="form-stage" data-stage="4">
+                <div class="stage-header">
+                    <div class="stage-icon">📸</div>
+                    <div class="stage-info">
+                        <h2>Fotografías del Dispositivo</h2>
+                        <p>Adjunte imágenes del estado actual del dispositivo</p>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="file-upload-area" onclick="document.getElementById('imagenes').click()">
+                        <div class="file-upload-icon">📷</div>
+                        <div class="file-upload-text">Haga clic para seleccionar imágenes</div>
+                        <div class="file-upload-hint">o arrastre y suelte archivos aquí</div>
+                        <div class="file-upload-hint mt-2">Formatos: JPG, PNG, GIF (Máx. 10MB por archivo)</div>
+                        <input type="file" name="imagenes" id="imagenes" class="file-input" multiple accept="image/*">
+                    </div>
+                    <div id="image-preview" class="image-preview mt-3"></div>
+                </div>
+            </div>
+
+            <!-- Controles de navegación -->
+            <div class="navigation-buttons">
+                <button type="button" id="prevBtn" class="btn btn-secondary">⬅️ Atrás</button>
+                <button type="button" id="nextBtn" class="btn btn-primary">Siguiente ➡️</button>
+            </div>
+
+            <!-- Sección de Envío -->
+            <div class="submit-section">
+                <button type="submit" class="btn btn-success submit-btn">
+                    ✅ Enviar Orden de Servicio
+                </button>
+                <p class="mt-2" style="color: var(--gray-600); font-size: 0.9rem;">
+                    Revise todos los datos antes de enviar la orden
+                </p>
+            </div>
+
+        </form>
     </div>
+
+    <!-- Modal Nuevo Cliente -->
+    <div id="modal-nuevo-cliente" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Registrar Nuevo Cliente</h3>
+                <button type="button" class="close-modal" id="close-modal">×</button>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nuevo_nombre">Nombre Completo *</label>
+                    <input type="text" id="nuevo_nombre" class="form-control" required
+                        placeholder="Nombre completo del cliente">
+                </div>
+                <div class="form-group">
+                    <label for="nuevo_tipo_documento">Tipo de Documento</label>
+                    <select id="nuevo_tipo_documento" class="form-control">
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                        <option value="NIT">NIT</option>
+                        <option value="Otro">Otro</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="nuevo_numero">Número de Documento *</label>
+                <input type="text" id="nuevo_numero" class="form-control" required
+                    placeholder="Número de identificación">
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="nuevo_telefono">Teléfono</label>
+                    <input type="tel" id="nuevo_telefono" class="form-control" placeholder="Número de contacto">
+                </div>
+                <div class="form-group">
+                    <label for="nuevo_email">Email</label>
+                    <input type="email" id="nuevo_email" class="form-control" placeholder="correo@ejemplo.com">
+                </div>
+            </div>
+
+            <div class="text-center mt-4">
+                <button type="button" id="guardar-cliente" class="btn btn-primary">
+                    💾 Guardar Cliente
+                </button>
+                <button type="button" class="btn btn-secondary ml-2" id="cancelar-cliente">
+                    Cancelar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/ordenes/orden.js') }}" defer></script>
+
 </body>
-    
+
 </html>

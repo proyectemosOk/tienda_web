@@ -28,14 +28,14 @@
     font-family: 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     line-height: 1.5;
     color: var(--dark-text);
-    background-color: #f5f7fa;
+    background-color: white;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
   
   /* Contenedor Principal */
   .container {
-    max-width: 1200px;
+    max-width: 1366px;
     margin: 40px auto;
     padding: 0 20px;
   }

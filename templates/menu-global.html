@@ -1,73 +1,84 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Menu</title>
-</head>
-<body>
-    <!-- menu-global.html -->
-<div for="menu-toggle" class="boton-menu" style="background-color: #f8fafc;" id="cont_menu">
-    <div id="casa" class="menu-item" data-page="home">
-        <img src="/static/Iconos/app.png" alt="CASA" class="casa">
-        <br>
-        <div class="texto"><span><b>Menu</b></span></div>
-    </div>
+    <link rel="stylesheet" href="/static/css/menu-global.css">
+    <script src="/static/js/menu-global.js" defer></script>
     
-    <div id="monederos" class="menu-item" data-page="monederos">
-        <img src="/static/Iconos/monedero.png" alt="MONEDERO">
-        <br>
-        <div class="texto"><span><b>Monederos</b></span></div>
+</head>
+
+<body class="modo-inicial">
+    <!-- menu-global.html -->
+    <button id="hamburger-btn" class="hamburger-btn">☰</button>
+    <div for="menu-toggle" class="vista-inicial" id="cont_menu">
+        <div id="casa" class="menu-item tarjeta " data-page="home">
+            <img src="/static/Iconos/app.png" alt="CASA" class="casa">
+            <br>
+            <div class="texto"><span><b>Menu</b></span></div>
+        </div>
+
+        <div id="monederos" class="menu-item tarjeta " data-page="monederos">
+            <img src="/static/Iconos/monedero.png" alt="MONEDERO">
+            <br>
+            <div class="texto"><span><b>Monederos</b></span></div>
+        </div>
+
+        <div id="ventas" class="menu-item tarjeta " data-page="ventas">
+            <img src="/static/Iconos/ventas.png" alt="VENTAS">
+            <br>
+            <div class="texto"><span><b>Ventas</b></span></div>
+        </div>
+
+        <div id="servicios" class="menu-item tarjeta " data-page="servicios">
+            <img src="/static/Iconos/mecanico.png" alt="SERVICIOS">
+            <br>
+            <div class="texto"><span><b>Servicios</b></span></div>
+        </div>
+
+        <div id="inventario" class="menu-item tarjeta " data-page="inventario">
+            <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
+            <br>
+            <div class="texto"><span><b>Inventario</b></span></div>
+        </div>
+
+        <div id="cuentas" class="menu-item tarjeta " data-page="cuentas">
+            <img src="/static/Iconos/cobro.png" alt="COBRO">
+            <br>
+            <div class="texto"><span><b>CXC/CXP</b></span></div>
+        </div>
+
+        <div id="personal" class="menu-item tarjeta " data-page="personal">
+            <img src="/static/Iconos/personal.png" alt="PERSONAL">
+            <br>
+            <div class="texto"><span><b>Personal</b></span></div>
+        </div>
+
+        <div id="configuraciones" class="menu-item tarjeta " data-page="configuraciones">
+            <img src="/static/Iconos/configuracion.png" alt="CONFIG">
+            <br>
+            <div class="texto"><span><b>Ajustes</b></span></div>
+        </div>
+
+        <div id="empresa" class="menu-item tarjeta " data-page="empresa">
+            <img src="/static/Iconos/empresa.png" alt="EMPRESA">
+            <br>
+            <div class="texto"><span><b>Empresa</b></span></div>
+        </div>
+
+        <div id="informes" class="menu-item tarjeta " data-page="informes">
+            <img src="/static/Iconos/informes.png" alt="INFORMES">
+            <br>
+            <div class="texto"><span><b>Informes</b></span></div>
+        </div>
+
     </div>
 
-    <div id="ventas" class="menu-item" data-page="ventas">
-        <img src="/static/Iconos/ventas.png" alt="VENTAS">
-        <br>
-        <div class="texto"><span><b>Ventas</b></span></div>
-    </div>
+    <iframe id="iframe-contenido" class="oculto"></iframe>
 
-    <div id="inventario" class="menu-item" data-page="inventario">
-        <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
-        <br>
-        <div class="texto"><span><b>Inventario</b></span></div>
-    </div>
-
-    <div id="cuentas" class="menu-item" data-page="cuentas">
-        <img src="/static/Iconos/cobro.png" alt="COBRO">
-        <br>
-        <div class="texto"><span><b>CXC/CXP</b></span></div>
-    </div>
-
-    <div id="personal" class="menu-item" data-page="personal">
-        <img src="/static/Iconos/personal.png" alt="PERSONAL">
-        <br>
-        <div class="texto"><span><b>Personal</b></span></div>
-    </div>
-
-    <div id="configuraciones" class="menu-item" data-page="configuraciones">
-        <img src="/static/Iconos/configuracion.png" alt="CONFIG">
-        <br>
-        <div class="texto"><span><b>Ajustes</b></span></div>
-    </div>
-
-    <div id="empresa" class="menu-item" data-page="empresa">
-        <img src="/static/Iconos/empresa.png" alt="EMPRESA">
-        <br>
-        <div class="texto"><span><b>Empresa</b></span></div>
-    </div>
-
-    <div id="informes" class="menu-item" data-page="informes">
-        <img src="/static/Iconos/informes.png" alt="INFORMES">
-        <br>
-        <div class="texto"><span><b>Informes</b></span></div>
-    </div>
-
-</div>
-<div id="contenido" style="flex-grow: 1; padding: 10px;">
-    <!-- Aquí se cargará cada vista -->
-</div>
-
-<script src="/static/js/menu-global.js"></script>
 
 </body>
+
 </html>
