@@ -138,8 +138,6 @@ async function editarProveedor(id) {
     }
 }
 
-
-
 async function eliminarProveedor(id) {
     const confirmacion = await Swal.fire({
         title: '¿Estás seguro?',

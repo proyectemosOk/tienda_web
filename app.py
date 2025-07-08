@@ -13,6 +13,8 @@ from tarjetas import *
 import bcrypt
 from PIL import Image
 from io import BytesIO
+from flask import request, jsonify
+import math
 app = Flask(__name__)
 app.register_blueprint(extras)  # lo registramos
 UPLOAD_FOLDER = 'uploads'
@@ -233,57 +235,115 @@ def api_tipos_pago():
     tipos_pago = conn_db.seleccionar("tipos_pago", "id, nombre")
     return jsonify({t[0]: t[1] for t in tipos_pago})
 
-@app.route('/api/productos')
-def productos():
-    try:        
-        # Si la columna existe, obtener productos inactivos
-        lista_productos = conn_db.seleccionar(
-            "productos", 
-            "codigo, nombre, categoria, stock, precio_compra, precio_venta", 
-            "activo = ?", 
-            ('1',)
-        )
-               
-        # Manejar el caso de lista vacía
-        if not lista_productos:
-            return jsonify({
-                'mensaje': 'No se encontraron productos',
-                'productos': [],
-                'total': 0
-            }), 400
-        
-        # Transformar la lista de productos
+@app.route('/api/productos', methods=['GET'])
+def api_productos():
+    try:
+        # 1️⃣ Obtener parámetros con valores por defecto
+        pagina = request.args.get('pagina', default=1, type=int)
+        limite = request.args.get('limite', default=10, type=int)
+        search = request.args.get('search', default='', type=str).strip()
+        print(pagina, limite, search)
+        offset = (pagina - 1) * limite
+
+        # 2️⃣ Construir filtro de búsqueda dinámico
+        filtro_where = "WHERE p.activo = 1"
+        parametros = []
+
+        if search:
+            # Agregar búsqueda en id, codigo, nombre, descripcion, categoria
+            search_like = f"%{search}%"
+            filtro_where += """
+                AND (
+                    p.id LIKE ?
+                    OR p.codigo LIKE ?
+                    OR p.nombre LIKE ?
+                    OR p.descripcion LIKE ?
+                    OR p.categoria LIKE ?
+                )
+            """
+            parametros.extend([search_like]*5)
+
+        # 3️⃣ Consulta principal paginada con JOIN, GROUP BY, ORDER BY
+        consulta_datos = f"""
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.categoria,
+                p.stock,
+                p.precio_compra,
+                p.precio_venta,
+                COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
+            FROM productos p
+            LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+            {filtro_where}
+            GROUP BY p.id
+            ORDER BY cantidad_vendida DESC
+            LIMIT ? OFFSET ?
+        """
+
+        parametros_datos = parametros + [limite, offset]
+
+        resultados = conn_db.ejecutar_personalizado(consulta_datos, parametros_datos)
+
+        # 4️⃣ Consulta para contar el total (sin LIMIT/OFFSET)
+        consulta_total = f"""
+            SELECT COUNT(*) FROM (
+                SELECT p.id
+                FROM productos p
+                LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+                {filtro_where}
+                GROUP BY p.id
+            ) AS subquery
+        """
+
+        total_resultados = conn_db.ejecutar_personalizado(consulta_total, parametros)
+        total_resultados = total_resultados[0][0] if total_resultados else 0
+        total_paginas = math.ceil(total_resultados / limite) if limite else 1
+
+        # 5️⃣ Formatear resultados
         productos_formateados = [
             {
-                "codigo": str(items[0]),
-                "nombre": items[1],
-                "categoria": items[2],
-                "stock": items[3],
-                "precio_compra": float(items[4]),
-                "precio_venta": float(items[5])
-            } for items in lista_productos
+                "id": item[0],
+                "codigo": item[1],
+                "nombre": item[2],
+                "descripcion": item[3],
+                "categoria": item[4],
+                "stock": item[5],
+                "precio_compra": float(item[6]),
+                "precio_venta": float(item[7]),
+                "cantidad_vendida": item[8]
+            }
+            for item in resultados
         ]
-        
+
+        # 6️⃣ Respuesta JSON
         return jsonify({
-            'productos': productos_formateados,
-            'total': len(productos_formateados)
+            "productos": productos_formateados,
+            "total": total_resultados,
+            "pagina_actual": pagina,
+            "total_paginas": total_paginas
         }), 200
-    
+
     except Exception as e:
-        # Manejo de errores más detallado
-        print(f"Error al obtener productos: {str(e)}")
+        print(f"❌ Error en /api/productos: {str(e)}")
         return jsonify({
-            'mensaje': 'Error interno al recuperar productos',
-            'error': str(e)
+            "mensaje": "Error interno al recuperar productos",
+            "error": str(e)
         }), 500
 
 @app.route('/api/productos/<codigo>', methods=['GET'])
 def obtener_producto(codigo):
     try:
-        
+        print(codigo)
         # Consulta para obtener todos los detalles del producto
         producto = conn_db.seleccionar("productos", "codigo, nombre, categoria, stock, precio_compra, precio_venta", "codigo = ?",(codigo,))
-        
+        if producto ==[]:
+            return jsonify({
+                "error": "Producto no encontrado",
+                "mensaje": "No se encenctra ningun producto"
+            }), 500
         # Formatear el resultado
         detalle_producto = {
             "categoria": producto[0][2],
@@ -293,8 +353,8 @@ def obtener_producto(codigo):
             "precio_venta": float(producto[0][5]),
             "stock": producto[0][3]
         }
-        
-        return jsonify(detalle_producto)
+
+        return jsonify({"ok":True,"detalles":detalle_producto}), 200
     
     except Exception as e:
         # Manejo de errores
@@ -453,6 +513,7 @@ def cargar_ventas():
         print(f"Error al cargar las ventas del día: {e}")
         return jsonify({"error": "Ocurrió un error al cargar las ventas del día."}), 500
     
+
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
     try:
@@ -551,6 +612,80 @@ def eliminar_producto(codigo):
             'error': str(e)
         }), 500
 
+
+@app.route('/api/productos', methods=['POST'])
+def crear_producto():
+    try:
+        
+        data = request.get_json()
+
+        # Validar campos obligatorios
+        campos_obligatorios = ['codigo', 'nombre', 'categoria', 'unidad', 'stock', 'precio_compra', 'precio_venta']
+        for campo in campos_obligatorios:
+            if campo not in data or not str(data[campo]).strip():
+                return jsonify({"ok": False, "error": f"El campo '{campo}' es obligatorio."}), 400
+
+        codigo = data['codigo'].strip()
+        nombre = data['nombre'].strip()
+        descripcion = data.get('descripcion', '').strip()
+        categoria = data['categoria'].strip()
+        unidad = data['unidad'].strip()
+        unidad_simbolo = data.get('unidad_simbolo', '').strip() or None
+        stock = int(data['stock'])
+        precio_compra = float(data['precio_compra'])
+        precio_venta = float(data['precio_venta'])
+
+        # Validar valores numéricos
+        if stock < 0 or precio_compra < 0 or precio_venta < 0:
+            return jsonify({"ok": False, "error": "Valores numéricos no pueden ser negativos."}), 400
+
+        # 1️⃣ Verificar/crear categoría
+        cat_resultado = conn_db.seleccionar(
+            "categorias", columnas="id, categoria", condicion="categoria = ?", parametros=(categoria,)
+        )
+        if not cat_resultado:
+            conn_db.insertar("categorias", {"categoria": categoria})
+
+        # 2️⃣ Verificar/crear unidad
+        unidad_resultado = conn_db.seleccionar(
+            "unidades", columnas="id, unidad", condicion="unidad = ?", parametros=(unidad,)
+        )
+        if not unidad_resultado:
+            conn_db.insertar("unidades", {
+                "unidad": unidad,
+                "simbolo": unidad_simbolo
+            })
+
+        # 3️⃣ Insertar producto
+        conn_db.insertar("productos", {
+            "codigo": codigo,
+            "nombre": nombre,
+            "descripcion": descripcion,
+            "categoria": categoria,
+            "unidad": unidad,
+            "stock": stock,
+            "precio_compra": precio_compra,
+            "precio_venta": precio_venta,
+            "activo": 1
+        })
+
+        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente."})
+
+    except Exception as e:
+        print("Error en /api/productos:", e)
+        return jsonify({"ok": False, "error": "Ocurrió un error al crear el producto."}), 500
+
+@app.route('/api/opciones_producto', methods=['GET'])
+def obtener_opciones_producto():
+    categorias = conn_db.seleccionar("categorias", columnas="id, categoria")
+    unidades = conn_db.seleccionar("unidades", columnas="id, unidad")
+
+    return jsonify({
+        "ok": True,
+        "categorias": {c[0]:c[1] for c in categorias},
+        "unidades": {u[0]:u[1] for u in unidades}
+    })
+
 @app.route('/api/crear_proveedor', methods=['POST'])
 def crear_proveedor():
     try:
@@ -597,7 +732,155 @@ def crear_proveedor():
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
     
-    
+@app.route('/api/proveedores/buscar')
+def buscar_proveedor():
+    termino = request.args.get('termino', '').strip()
+
+    if not termino:
+        return jsonify({'ok': False, 'error': 'Debe proporcionar un término de búsqueda'}), 400
+
+    # Buscar por documento EXACTO primero
+    resultado = conn_db.seleccionar(
+        "proveedores",
+        columnas="id, nombre, rut",
+        condicion="rut = ?",
+        parametros=(termino,)
+    )
+    print(resultado)
+    if resultado:
+        proveedor = resultado[0]
+        return jsonify({
+            'id': proveedor[0],
+            'nombre': proveedor[1],
+            'documento': proveedor[2]
+        }), 200
+    print(resultado)
+    # Si no encontró por documento, buscar por nombre (LIKE)
+    like_term = f"%{termino}%"
+    resultado_nombre = conn_db.seleccionar(
+        "proveedores",
+        columnas="id, nombre, rut",
+        condicion="nombre LIKE ?",
+        parametros=(like_term,)
+    )
+
+    if resultado_nombre:
+        proveedor = resultado_nombre[0]
+        return jsonify({
+            'id': proveedor[0],
+            'nombre': proveedor[1],
+            'documento': proveedor[2]
+        }), 200
+
+    return jsonify({'ok': False, 'error': 'Proveedor no encontrado'}), 404
+
+@app.route('/api/entradas', methods=['POST'])
+def registrar_entrada():
+    data = request.get_json()
+    try:
+        # ✅ 1️⃣ Validar campos principales
+        proveedor_id = data.get('proveedor')
+        numero_factura = data.get('numero_factura')
+        fecha_emision = data.get('fecha_emision')
+        fecha_vencimiento = data.get('fecha_vencimiento')
+        usuario_id = data.get('usuario_id')
+        monto_total = data.get('monto_total', 0)
+        monto_pagado = data.get('monto_pagado', 0)
+
+        productos = data.get('productos', [])
+        pagos = data.get('pagos', [])
+        for key, valor in data.items():
+            print(f"{key}: {valor}")
+
+        if not proveedor_id or not numero_factura or not fecha_emision or not productos:            
+            return jsonify({'ok': False, 'error': 'Datos incompletos'}), 400
+
+        # ✅ 2️⃣ Determinar estado de pago
+        if monto_pagado <= 0:
+            estado_pago_id = 1  # Pendiente
+        elif monto_pagado >= monto_total:
+            estado_pago_id = 3  # Pagado
+        else:
+            estado_pago_id = 2  # Parcial
+
+            
+        # ✅ 3️⃣ Insertar en facturas_proveedor
+        factura_data = {
+            "numero_factura": numero_factura,
+            "proveedor_id": proveedor_id,
+            "fecha_emision": fecha_emision,
+            "fecha_vencimiento": fecha_vencimiento,
+            "monto_total": monto_total,
+            "estado_pago_id": estado_pago_id,
+            "usuario_id": usuario_id
+        }
+        print(factura_data, "\nhola\n")
+        factura_id, error = conn_db.insertar("facturas_proveedor", factura_data)
+        print("Vamos bien 2", factura_id, "\nerror")
+        if error:
+            return jsonify({'ok': False, 'error': f'Error insertando factura: {error}'}), 500
+
+        # ✅ 4️⃣ Insertar cada producto en detalle_factura y actualizar stock
+        for item in productos:
+            # Obtener producto_id real
+            producto_result = conn_db.seleccionar(
+                "productos", 
+                columnas="id", 
+                condicion="codigo = ?", 
+                parametros=(item["codigo_producto"],)
+            )
+            if not producto_result:
+                return jsonify({'ok': False, 'error': f"Producto no encontrado: {item['codigo_producto']}"}), 400
+            producto_id = producto_result[0][0]
+
+            detalle_data = {
+                "factura_id": factura_id,
+                "producto_id": producto_id,
+                "cantidad": item["cantidad"],
+                "precio_compra": item["precio_compra"],
+                "precio_venta": item["precio_venta"],
+                "fecha_entrada": item["fecha_vencimiento"]
+            }
+            conn_db.insertar("detalle_factura", detalle_data)
+
+            conn_db.actualizar(
+                "productos",
+                {
+                    "stock": f"stock + {item['cantidad']}",
+                    "precio_compra": item["precio_compra"],
+                    "precio_venta": item["precio_venta"]
+                },
+                "id = ?",
+                (producto_id,),
+                expresion_sql=True
+            )
+
+
+            # Registrar lote
+            conn_db.insertar("lotes_productos", {
+                "id_producto": producto_id,
+                "cantidad": item["cantidad"],
+                "precio_compra": item["precio_compra"],
+                "fecha_ingreso": fecha_emision
+            })
+
+        # ✅ 5️⃣ Insertar pagos
+        for pago in pagos:
+            pago_data = {
+                "factura_id": factura_id,
+                "tipo_pago_id": pago["tipo_pago_id"],
+                "fecha_pago": pago["fecha_pago"],
+                "monto": pago["monto"],
+                "observaciones": pago.get("observaciones", "")
+            }
+            conn_db.insertar("pagos_factura", pago_data)
+
+        return jsonify({'ok': True, 'factura_id': factura_id}), 201
+
+    except Exception as e:
+        print(f"❌ Error al registrar entrada: {e}")
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:

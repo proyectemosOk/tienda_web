@@ -165,9 +165,12 @@ def crear_tablas(base):
         precio_venta REAL,
         stock INTEGER,
         categoria TEXT NOT NULL,
-        unidad TEXT NOT NULL
+        unidad TEXT NOT NULL,
+        FOREIGN KEY (categoria) REFERENCES categorias (id),
+        FOREIGN KEY (unidad) REFERENCES unidades (id)
     )
     ''')
+    
     productos = [
     (1,1,"Laptop", "Laptop básica para oficina",1200000, 1500000, 10, "Tecnología", "Unidad"),
     (2,2,"Mouse", "Mouse inalámbrico",20000, 25000, 50, "Tecnología", "Unidad"),
@@ -358,19 +361,31 @@ def crear_tablas(base):
 
     # Tabla de Facturas de Proveedor
     cursor.execute('''CREATE TABLE IF NOT EXISTS facturas_proveedor (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero_factura TEXT NOT NULL,
+    proveedor_id INTEGER,
+    fecha_emision DATE NOT NULL,
+    fecha_vencimiento DATE,
+    monto_total INTEGER NOT NULL,
+    estado_pago_id INTEGER DEFAULT 1,
+    usuario_id INTEGER,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (estado_pago_id) REFERENCES estado_pago(id)
+    )''')
+    print("hola")
+    # Tabla de Estados de pagos
+    cursor.execute('''CREATE TABLE IF NOT EXISTS estado_pago (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numero_factura TEXT NOT NULL,
-        proveedor_id INTEGER,
-        fecha_emision DATE NOT NULL,
-        fecha_vencimiento DATE,
-        "tipo_pago" TEXT,
-        monto_total INTEGER NOT NULL,
-        monto_pagado INTEGER DEFAULT 0,
-        estado_pago TEXT DEFAULT 'PENDIENTE', -- PENDIENTE, PARCIAL, PAGADO
-        usuario_id TEXT,
-        FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)
+        estado TEXT NOT NULL
         )
     ''')
+    # Corregir la sentencia INSERT
+    cursor.executemany(
+    "INSERT OR IGNORE INTO estado_pago (id, estado) VALUES (?, ?)", 
+    [(1, "Pendiente"),(2, "Parcial"),(3, "Pagado")]
+    )
+    
     # Tabla de Pagos de Factura
     cursor.execute('''CREATE TABLE IF NOT EXISTS pagos_factura (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -547,7 +562,7 @@ def crear_tablas(base):
     )""")
     
     cursor.execute("""
-        CREATE TABLE img_ordenes (
+        CREATE TABLE IF NOT EXISTS img_ordenes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         id_orden INTEGER,
         imagen BLOB,
@@ -673,25 +688,25 @@ if __name__ == "__main__":
     
     
     # Conexión a la base de datos (cambia el nombre si es diferente)
-    conexion = sqlite3.connect("tienda_jfleong6_1.db")
-    cursor = conexion.cursor()
+    # conexion = sqlite3.connect("tienda_jfleong6_1.db")
+    # cursor = conexion.cursor()
 
-    # Intentar agregar la columna 'activo'
-    try:
-        cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
-    except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e):
-            pass
-        else:
-            raise
-    # Intentar agregar la columna 'actual'
-    try:
-        cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
-    except sqlite3.OperationalError as e:
-        if "duplicate column name" in str(e):
-            pass
-        else:
-            raise
+    # # Intentar agregar la columna 'activo'
+    # try:
+    #     cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
+    # except sqlite3.OperationalError as e:
+    #     if "duplicate column name" in str(e):
+    #         pass
+    #     else:
+    #         raise
+    # # Intentar agregar la columna 'actual'
+    # try:
+    #     cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
+    # except sqlite3.OperationalError as e:
+    #     if "duplicate column name" in str(e):
+    #         pass
+    #     else:
+    #         raise
     print("Tablas creadas exitosamente.")
 
     

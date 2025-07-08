@@ -1,3 +1,4 @@
+
 #iframe-contenido {
     background-color: transparent;
     width: 93vw;
@@ -11,7 +12,7 @@
     /* transition: width margin-left ease-in 500ms; */
 }
 .alto{
-    height: 100vh;
+    height: 98vh;
 }
 #cont_menu.expandido+#iframe-contenido {
     margin-left: 13vw;
@@ -59,15 +60,15 @@ body.modo-inicial #cont_menu {
 
 /* En modo-inicial, los items son tarjetas */
 body.modo-inicial .menu-item {
-    width: 15vw;
-    height: 15vw;
+    width: 14vw;
+    height: 14vw;
     background-color: white;
     border-radius: 1vw;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    margin: 1vw;
+    margin: 0.9vw;
     /* flex-direction: column; */
     justify-content: center;
-    align-items: center;
+    align-items: self-start;
     text-align: center;
     transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
@@ -78,8 +79,8 @@ body.modo-inicial .menu-item:hover {
 }
 
 body.modo-inicial .menu-item img {
-    width: 8vw;
-    height: 8vw;
+    width: 7vw;
+    height: 7vw;
     object-fit: contain;
 }
 

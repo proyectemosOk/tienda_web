@@ -1,6 +1,7 @@
 // gestor_entradas.js
 
 document.addEventListener("DOMContentLoaded", () => {
+    let pagosAgregados = [];
     // Variables globales
     const proveedorInput = document.getElementById("proveedor");
     const buscarProveedorBtn = document.getElementById("buscar-proveedor");
@@ -11,56 +12,88 @@ document.addEventListener("DOMContentLoaded", () => {
     const listaProductos = document.getElementById("lista-productos");
     const totalEntrada = document.getElementById("total-entrada");
 
-    // Array para almacenar productos agregados
     let productosAgregados = [];
+    // Referencias
+    const agregarPagoBtn = document.getElementById("agregar-pago");
+    const listaPagos = document.getElementById("lista-pagos");
 
-    // Función para buscar proveedor (simulación)
-    buscarProveedorBtn.addEventListener("click", () => {
-        const proveedor = proveedorInput.value.trim();
-        if (!proveedor) {
-            alert("Por favor, ingresa un código o nombre de proveedor.");
-            return;
-        }
-        // Aquí puedes implementar la lógica para buscar un proveedor en el backend
-        console.log(`Buscando proveedor: ${proveedor}`);
-        // Simulación de búsqueda exitosa
-        alert(`Proveedor encontrado: ${proveedor}`);
+    document.getElementById("factura-pagada").addEventListener("change", function () {
+        document.getElementById("seccion-pagos").style.display = this.checked ? "block" : "none";
     });
 
-    buscarProductoBtn.addEventListener("click", () => {
-        const terminoBusqueda = codigoProductoInput.value.trim();
-    
-        if (!terminoBusqueda) {
-            alert("Por favor, ingresa un código o nombre de producto.");
+    // 🔎 Buscar proveedor
+    buscarProveedorBtn.addEventListener("click", () => {
+        const termino = proveedorInput.value.trim();
+
+        if (!termino) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Dato requerido',
+                text: 'Por favor ingresa un código o nombre de proveedor.'
+            });
             return;
         }
-    
-        // Realizar la búsqueda en el backend
-        fetch(`/api/productos?q=${encodeURIComponent(terminoBusqueda)}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
+
+        fetch(`/api/proveedores/buscar?termino=${encodeURIComponent(termino)}`)
+            .then(res => {
+                if (!res.ok) throw new Error("No se encontró el proveedor");
+                return res.json();
+            })
+            .then(proveedor => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Proveedor encontrado',
+                    html: `
+                    <b>${proveedor.nombre}</b><br>
+                    Documento: ${proveedor.documento}
+                `
+                });
+
+                // Mostrar en inputs
+                document.getElementById("nombre-proveedor").value = proveedor.nombre || "";
+                document.getElementById("rut-proveedor").value = proveedor.documento || "";
+
+                // Guardar el ID real si lo necesitas luego
+                proveedorInput.dataset.proveedorId = proveedor.id;
+            })
+            .catch(err => {
+                console.error("Error al buscar proveedor:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Proveedor no encontrado',
+                    text: 'No se encontró un proveedor con ese término.'
+                });
+
+                document.getElementById("nombre-proveedor").value = "";
+                document.getElementById("rut-proveedor").value = "";
+            });
+    });
+
+
+
+    // 🔎 Buscar producto en el backend
+    buscarProductoBtn.addEventListener("click", () => {
+        const terminoBusqueda = codigoProductoInput.value.trim();
+
+        if (!terminoBusqueda) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Dato requerido',
+                text: 'Por favor ingresa un código o nombre de producto.'
+            });
+            return;
+        }
+
+        fetch(`/api/productos/${encodeURIComponent(terminoBusqueda)}`)
             .then(res => res.json())
-            .then(productos => {
-                if (productos.error) {
-                    throw new Error(productos.error);
-                }
-    
-                // Si hay una sola coincidencia, cargar directamente los datos del producto
-                if (productos.length === 1) {
-                    const producto = productos[0];
-                    cargarDatosProducto(producto);
-                } else if (productos.length > 1) {
-                    // Si hay varias coincidencias, mostrar una lista para seleccionar
-                    mostrarListaProductos(productos);
+            .then(producto => {
+                if (producto.ok) {
+                    cargarDatosProducto(producto.detalles);
                 } else {
-                    // Si no hay coincidencias
                     Swal.fire({
                         icon: 'warning',
                         title: 'Sin resultados',
-                        text: 'No se encontraron productos con ese término de búsqueda.'
+                        text: 'No se encontró ningún producto con ese código.'
                     });
                 }
             })
@@ -73,63 +106,15 @@ document.addEventListener("DOMContentLoaded", () => {
                 });
             });
     });
-    
-    // Función para cargar los datos del producto en el formulario
+
+    // ✅ Cargar datos del producto en el formulario
     function cargarDatosProducto(producto) {
-        document.getElementById("codigo-producto").value = producto.codigo;
+        codigoProductoInput.value = producto.codigo;
         document.getElementById("nombre-producto").value = producto.nombre;
-        document.getElementById("cantidad").focus(); // Enfocar en la cantidad para facilitar el flujo
+        document.getElementById("cantidad").focus();
     }
-    
-    // Función para mostrar una lista de productos en una ventana emergente
-    function mostrarListaProductos(productos) {
-        // Crear el HTML para la lista de productos
-        const listaHTML = productos.map(producto => `
-            <div class="producto-item" style="margin-bottom: 10px; cursor: pointer;" onclick="seleccionarProducto('${producto.codigo}')">
-                <strong>${producto.nombre}</strong> (Código: ${producto.codigo})<br>
-                Categoría: ${producto.categoria || 'Sin categoría'} - Stock: ${producto.stock}
-            </div>
-        `).join('');
-    
-        // Mostrar la ventana emergente con la lista
-        Swal.fire({
-            title: 'Seleccionar Producto',
-            html: `
-                <div style="text-align: left; max-height: 300px; overflow-y: auto;">
-                    ${listaHTML}
-                </div>
-            `,
-            showConfirmButton: false // No mostrar botón de confirmación, ya que seleccionamos directamente
-        });
-    }
-    
-    // Función global para seleccionar un producto desde la lista
-    function seleccionarProducto(codigo) {
-        // Cerrar la ventana emergente
-        Swal.close();
-    
-        // Buscar el producto seleccionado en el backend y cargar los datos
-        fetch(`/api/productos/${codigo}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        })
-            .then(res => res.json())
-            .then(producto => {
-                cargarDatosProducto(producto);
-            })
-            .catch(err => {
-                console.error("Error obteniendo detalles del producto:", err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error',
-                    text: 'No se pudieron cargar los detalles del producto.'
-                });
-            });
-    }
-    
-    // Función para agregar un producto a la tabla
+
+    // ✅ Agregar producto a la tabla
     agregarProductoBtn.addEventListener("click", () => {
         const codigoProducto = codigoProductoInput.value.trim();
         const nombreProducto = document.getElementById("nombre-producto").value.trim();
@@ -138,57 +123,60 @@ document.addEventListener("DOMContentLoaded", () => {
         const precioVenta = parseFloat(document.getElementById("precio-venta").value.trim());
         const fechaVencimiento = document.getElementById("fecha-vencimiento").value;
 
-        // Validaciones
+        // ✅ Validaciones
         if (!codigoProducto || !nombreProducto || isNaN(cantidad) || isNaN(precioCompra) || isNaN(precioVenta) || !fechaVencimiento) {
-            alert("Por favor, completa todos los campos del producto.");
-            return;
-        }
-        if (cantidad <= 0 || precioCompra <= 0 || precioVenta <= 0) {
-            alert("Cantidad, precio de compra y precio de venta deben ser mayores a 0.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Campos incompletos',
+                text: 'Por favor completa todos los campos del producto, incluyendo la fecha de vencimiento.'
+            });
             return;
         }
 
-        // Calcular subtotal
+        if (cantidad <= 0 || precioCompra <= 0 || precioVenta <= 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Valores inválidos',
+                text: 'Cantidad y precios deben ser mayores a 0.'
+            });
+            return;
+        }
+
         const subtotal = cantidad * precioCompra;
 
-        // Agregar producto al array
+        // ✅ Guardar el producto con todos sus datos, incluyendo fecha de vencimiento
         productosAgregados.push({
-            codigoProducto,
-            nombreProducto,
+            codigo_producto: codigoProducto,
+            nombre_producto: nombreProducto,
             cantidad,
-            precioCompra,
-            precioVenta,
-            fechaVencimiento,
+            precio_compra: precioCompra,
+            precio_venta: precioVenta,
+            fecha_vencimiento: fechaVencimiento,
             subtotal
         });
 
-        // Actualizar la tabla
         actualizarTabla();
-
-        // Limpiar los campos del formulario de producto
         limpiarFormularioProducto();
     });
 
-    // Función para actualizar la tabla de productos
-    function actualizarTabla() {
-        // Limpiar la tabla
-        listaProductos.innerHTML = "";
 
-        // Variables para calcular el total
+    // ✅ Actualizar tabla de productos
+    function actualizarTabla() {
+        listaProductos.innerHTML = "";
         let total = 0;
 
-        // Recorrer los productos agregados y agregarlos a la tabla
         productosAgregados.forEach((producto, index) => {
+            console.log(producto)
             const fila = document.createElement("tr");
 
             fila.innerHTML = `
-                <td>${producto.codigoProducto}</td>
-                <td>${producto.nombreProducto}</td>
+                <td>${producto.codigo_producto}</td>
+                <td>${producto.nombre_producto}</td>
                 <td>${producto.cantidad}</td>
-                <td>${producto.precioCompra.toFixed(2)}</td>
-                <td>${producto.precioVenta.toFixed(2)}</td>
-                <td>${producto.fechaVencimiento}</td>
-                <td>${producto.subtotal.toFixed(2)}</td>
+                <td>$${producto.precio_compra.toFixed(2)}</td>
+                <td>$${producto.precio_venta.toFixed(2)}</td>
+                <td>${producto.fecha_vencimiento}</td>
+                <td>$${producto.subtotal.toFixed(2)}</td>
                 <td>
                     <button class="btn btn-danger btn-sm" data-index="${index}">
                         <i class="fas fa-trash-alt"></i>
@@ -196,24 +184,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 </td>
             `;
 
-            // Agregar evento para eliminar producto
-            fila.querySelector("button").addEventListener("click", (e) => {
-                const index = e.target.closest("button").dataset.index;
+            fila.querySelector("button").addEventListener("click", () => {
                 productosAgregados.splice(index, 1);
                 actualizarTabla();
             });
 
             listaProductos.appendChild(fila);
-
-            // Sumar al total
             total += producto.subtotal;
         });
 
-        // Actualizar el total
-        totalEntrada.textContent = total.toFixed(2);
+        totalEntrada.textContent = `$${total.toFixed(2)}`;
     }
 
-    // Función para limpiar el formulario de producto
+    // ✅ Limpiar formulario producto
     function limpiarFormularioProducto() {
         codigoProductoInput.value = "";
         document.getElementById("nombre-producto").value = "";
@@ -223,38 +206,232 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById("fecha-vencimiento").value = "";
     }
 
-    // Función para finalizar la entrada
+    // ✅ Finalizar entrada
     finalizarEntradaBtn.addEventListener("click", () => {
         if (productosAgregados.length === 0) {
-            alert("No hay productos agregados a la entrada.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Sin productos',
+                text: 'Agrega al menos un producto antes de finalizar.'
+            });
             return;
         }
 
-        // Aquí puedes enviar los datos al backend
-        const proveedor = proveedorInput.value.trim();
+        // Obtener datos del formulario
+        const proveedor = parseInt(proveedorInput.dataset.proveedorId || 0);
         const numeroFactura = document.getElementById("numero-factura").value.trim();
         const fechaEmision = document.getElementById("fecha-emision").value;
+        const fechaVencimientoFactura = document.getElementById("fecha-vencimiento-factura")?.value || null;
 
         if (!proveedor || !numeroFactura || !fechaEmision) {
-            alert("Por favor, completa los datos del proveedor y la factura.");
+            Swal.fire({
+                icon: 'warning',
+                title: 'Datos incompletos',
+                text: 'Completa los datos del proveedor, número de factura y fecha de emisión.'
+            });
             return;
         }
 
-        const entrada = {
+        // Validar pagos si la factura tiene abonos
+        if (pagosAgregados.length === 0) {
+            Swal.fire({
+                icon: 'warning',
+                title: 'Pagos faltantes',
+                text: 'Agrega al menos un pago para registrar la forma de pago.'
+            });
+            return;
+        }
+
+        // Calcular monto total de la factura
+        const montoTotal = productosAgregados.reduce((sum, item) => sum + item.subtotal, 0);
+
+        // Calcular monto pagado
+        const montoPagado = pagosAgregados.reduce((sum, pago) => sum + pago.monto, 0);
+
+        // Simular usuario logueado (o toma de sesión)
+        const usuarioId = 1; // Ajusta o remueve si aún no usas login
+
+        // Construir el objeto para enviar
+        const factura = {
             proveedor,
-            numeroFactura,
-            fechaEmision,
-            productos: productosAgregados
+            numero_factura: numeroFactura,
+            fecha_emision: fechaEmision,
+            fecha_vencimiento: fechaVencimientoFactura,
+            usuario_id: usuarioId,
+            monto_total: montoTotal,
+            monto_pagado: montoPagado,
+            productos: productosAgregados,
+            pagos: pagosAgregados
         };
 
-        console.log("Enviando entrada al backend:", entrada);
+        console.log("📦 Factura lista para enviar:", factura);
 
-        // Aquí puedes usar fetch o axios para enviar los datos al servidor
-        alert("Entrada registrada exitosamente.");
-        // Limpiar todo después de finalizar
-        limpiarFormularioProducto();
-        listaProductos.innerHTML = "";
-        totalEntrada.textContent = "0.00";
-        productosAgregados = [];
+        // Mostrar alerta de envío
+        Swal.fire({
+            title: 'Enviando',
+            text: 'Registrando la entrada en el sistema...',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Enviar al backend
+        fetch('/api/entradas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(factura)
+        })
+            .then(res => {
+                if (!res.ok) throw new Error('Error al guardar la entrada');
+                return res.json();
+            })
+            .then(() => {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Registro exitoso',
+                    text: 'La entrada se ha guardado correctamente.'
+                });
+                // Limpiar formulario y variables
+                limpiarFormularioProducto();
+                listaProductos.innerHTML = "";
+                totalEntrada.textContent = "$0.00";
+                productosAgregados = [];
+                pagosAgregados = [];
+                listaPagos.innerHTML = "";
+                proveedorInput.value = "";
+                document.getElementById("numero-factura").value = "";
+                document.getElementById("fecha-emision").value = "";
+                document.getElementById("nombre-proveedor").value = "";
+                document.getElementById("rut-proveedor").value = "";
+                cargar_productos()
+                if (document.getElementById("fecha-vencimiento-factura")) {
+                    document.getElementById("fecha-vencimiento-factura").value = "";
+                }
+            })
+            .catch(err => {
+                console.error("❌ Error guardando entrada:", err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudo registrar la entrada. Intenta nuevamente.'
+                });
+            });
     });
+
+    // Escuchar el botón de agregar pago
+    agregarPagoBtn.addEventListener("click", () => {
+        cargarTiposPago().then(tiposPago => {
+
+            if (!tiposPago || Object.keys(tiposPago).length === 0) {
+                Swal.fire("Advertencia", "No hay tipos de pago configurados. Por favor crea al menos uno.", "warning");
+                return;
+            }
+
+            // Adaptar objeto {id: nombre} a opciones
+            const opciones = Object.entries(tiposPago).map(
+                ([id, nombre]) => `<option value="${id}">${nombre}</option>`
+            ).join('');
+
+            Swal.fire({
+                title: "Agregar Pago",
+                html: `
+        <div class="mb-3 text-start">
+          <label class="form-label">Tipo de Pago</label>
+          <select class="form-select" id="pago-tipo">
+            ${opciones}
+          </select>
+        </div>
+        <div class="mb-3 text-start">
+          <label class="form-label">Fecha de Pago</label>
+          <input type="date" class="form-control" id="pago-fecha" value="${(new Date()).toISOString().split('T')[0]}">
+        </div>
+        <div class="mb-3 text-start">
+          <label class="form-label">Monto</label>
+          <input type="number" class="form-control" id="pago-monto" min="1" step="0.01">
+        </div>
+        <div class="mb-3 text-start">
+          <label class="form-label">Observaciones</label>
+          <input type="text" class="form-control" id="pago-observaciones" placeholder="Opcional">
+        </div>
+      `,
+                showCancelButton: true,
+                confirmButtonText: 'Agregar',
+                cancelButtonText: 'Cancelar',
+                preConfirm: () => {
+                    const tipoPagoId = parseInt(document.getElementById("pago-tipo").value);
+                    const fechaPago = document.getElementById("pago-fecha").value;
+                    const monto = parseFloat(document.getElementById("pago-monto").value);
+                    const observaciones = document.getElementById("pago-observaciones").value.trim();
+                    const nombreTipoPago = tiposPago[tipoPagoId] || "";
+
+                    if (!tipoPagoId || isNaN(monto) || monto <= 0 || !fechaPago) {
+                        Swal.showValidationMessage("Todos los campos obligatorios deben estar completos y correctos.");
+                        return false;
+                    }
+
+                    return {
+                        tipo_pago_id: tipoPagoId,
+                        nombre_tipo_pago: nombreTipoPago,
+                        fecha_pago: fechaPago,
+                        monto,
+                        observaciones
+                    };
+                }
+            }).then(result => {
+                if (result.isConfirmed) {
+                    pagosAgregados.push(result.value);
+                    renderizarTablaPagos();
+                }
+            });
+        });
+    });
+
+
+    // Función para renderizar la tabla de pagos
+    function renderizarTablaPagos() {
+        listaPagos.innerHTML = "";
+
+        pagosAgregados.forEach((pago, index) => {
+            const fila = document.createElement("tr");
+            fila.innerHTML = `
+      <td>${pago.fecha_pago}</td>
+      <td>${pago.nombre_tipo_pago}</td>
+      <td>${pago.monto.toFixed(2)}</td>
+      <td>
+        <button class="btn btn-danger btn-sm" data-index="${index}">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </td>
+    `;
+            // Botón para eliminar pago
+            fila.querySelector("button").addEventListener("click", () => {
+                pagosAgregados.splice(index, 1);
+                renderizarTablaPagos();
+            });
+            listaPagos.appendChild(fila);
+        });
+    }
+
+    // Función para cargar tipos de pago desde tu API
+    async function cargarTiposPago() {
+        try {
+            const res = await fetch('/api/tipos_pago');
+            const data = await res.json();
+
+            console.log("Tipos de pago recibidos:", data);
+
+            if (data) {
+                return data;
+            } else {
+                console.warn("No se recibieron tipos de pago válidos:", data);
+                return [];
+            }
+        } catch (err) {
+            console.error("Error al cargar tipos de pago:", err);
+            return [];
+        }
+    }
+
+
 });
