@@ -1254,7 +1254,4 @@ def api_informes_estadisticas():
         return jsonify({'error': 'Error al obtener estadísticas'}), 500
 
 if __name__ == '__main__':
-    
-    host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
-    print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
-    app.run(debug=True, host=host_ip, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)
