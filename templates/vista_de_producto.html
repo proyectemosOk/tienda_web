@@ -8,80 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/static/css/item.css" />
     <link rel="stylesheet" href="/static/css/menu-global.css" />
+    <script src="/static/js/ventas/item.js" defer ></script>
+    <script src="/static/js/ventas/productos.js" defer ></script>
     <title>Vista del Producto</title>
+
 </head>
 
 <body>
 
-<!-- Botón para abrir el menú -->
-    <label for="menu-toggle" class="boton-menu">
-        <div id="casa">
-            <img src="/Iconos/app.png" alt="CASA" class="casa">
-            <br>
-            <span><b>Menu</b></span>
-        </div>
-        <!-- Monederos -->
-        <div id="monederos">
-            <img src="/Iconos/monedero.png" alt="MONEDERO">
-            <br>
-            <span><b>Monederos</b></span>
-        </div>
-    
-        <!-- Ventas -->
-        <div id="ventas">
-            <img src="/Iconos/ventas.png" alt="VENTAS">
-            <br>
-            <span><b>Ventas</b></span>
-        </div>
-    
-        <!-- Inventario -->
-        <div id="inventario">
-            <img src="/Iconos/inventario.png" alt="INVENTARIO">
-            <br>
-            <span><b>Inventario</b></span>
-        </div>
-    
-        <!-- Cuentas por cobrar/pagar -->
-        <div id="cuentas">
-            <img src="/Iconos/cobro.png" alt="COBRO">
-            <br>
-            <span><b>CXC/CXP</b></span>
-        </div>
-    
-        <!-- Personal -->
-        <div id="personal">
-            <img src="/Iconos/personal.png" alt="PERSONAL">
-            <br>
-            <span><b>Personal</b></span>
-        </div>
-    
-        <!-- Configuraciones -->
-        <div id="configuraciones">
-            <img src="/Iconos/configuracion.png" alt="CONFIG">
-            <br>
-            <span><b>Configuración</b></span>
-        </div>
-    
-        <!-- Empresa -->
-        <div id="empresa">
-            <img src="/Iconos/empresa.png" alt="EMPRESA">
-            <br>
-            <span><b>Empresa</b></span>
-        </div>
-    
-        <!-- Informes -->
-        <div id="informes">
-            <img src="/Iconos/informes.png" alt="INFORMES">
-            <br>
-            <span><b>Informes</b></span>
-        </div>
-    </label>
-    <!-- Fondo sombreado -->
-    <div id="overlay" class="fondo-oscuro"></div>
     <div class="container">
         <!-- Sección de productos (izquierda) -->
         <div class="product-list-container">
-            <label for="search-input">Buscar productos:</label>
             <input type="text" id="search-input" placeholder="Buscar productos..." />
             <div id="product-list" class="product-list"></div>
         </div>
@@ -92,39 +29,37 @@
                 <div class="ticket-container">
                     <!-- Encabezado con cliente -->
                     <div class="ticket-header">
-                        <input type="text" id="clienteSearch" placeholder="Buscar cliente" />
+                        <input list="clientes" id="clienteSearch" placeholder="Buscar cliente" />
                         <select class="cliente-combo" id="clienteCombo">
                             <option value="1">Cliente común</option>
                         </select>
+                        <datalist id="clientes">
 
+                        </datalist>
 
 
                     <!-- Lista de productos -->
-                    <div class="items-container" id="itemsContainer">
+                        <div class="items-container" id="itemsContainer">
                         <!-- Los items se agregarán dinámicamente aquí -->
                     </div>
 
                     <!-- Métodos de pago -->
-                </div>
+        </div>
             </section>
             <section class="pagos-section">
                 <div class="payment-methods">
                     <!-- Botones existentes -->
                     <div class="payment-method-group">
-                        <button class="btn-payment" data-method="efectivo">Efectivo</button>
-                        <input type="text" class="payment-input" id="input-efectivo" placeholder="$0"
-                            style="display:none;">
+                    
                     </div>
                 </div>
 
 
                 <!-- Total y botón de vender -->
                 <div class="ticket-footer">
-                    <button class="btn-btn-success" id="venderBtn">Vender</button>
-                    <div class="total-display">
-                        <span><b>Total:</b></span>
-                        <span id="totalLabel"><b>$0</b></span>
-                    </div>
+                    <button class="btn-btn-success" id="venderBtn">Vender <span><b>Total:</b></span>
+                    <span id="totalLabel"><b>$0</b></span>
+                </button>
                 </div>
             </section>
         </div>
@@ -143,10 +78,7 @@
     </div>
 
     <!-- Incluye tu JavaScript aquí -->
-    <script src="/static/js/vista de producto/item.js"></script>
-    <script src="/static/js/vista de producto/productos.js"></script>
-    <script src="/static/js/home.js"></script>
-
+    
 </body>
 
 </html>

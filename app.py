@@ -4,11 +4,19 @@ from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
 from datetime import datetime, timedelta
+from datetime import date
 import json
 import socket
 from werkzeug.utils import secure_filename
-
+from werkzeug.exceptions import BadRequest
+from tarjetas import *
+import bcrypt
+from PIL import Image
+from io import BytesIO
+from flask import request, jsonify
+import math
 app = Flask(__name__)
+app.register_blueprint(extras)  # lo registramos
 UPLOAD_FOLDER = 'uploads'
 
 IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
@@ -16,6 +24,23 @@ DEFAULT_IMAGE = 'img.png'  # La imagen por defecto en la raíz del proyecto
 conn_db = ConexionBase("tienda_jfleong6_1.db")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def obtener_id_por_nombre(tabla, buscar, columna):
+    resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
+
+    return resultado[0][0] if resultado else None
+
+def redimensionar_imagen(archivo, max_ancho=800, max_alto=800):
+    try:
+        img = Image.open(archivo)
+        img.thumbnail((max_ancho, max_alto))  # Redimensionar manteniendo proporción
+
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        return buffer.getvalue()
+    except Exception as e:
+        print("⚠️ Error redimensionando imagen:", e)
+        return None
 
 @app.route('/')
 def index():
@@ -25,13 +50,25 @@ def index():
 def home():
     return render_template('home.html')
 
+@app.route('/personal')
+def personal():
+    return render_template('personal.html')
+
 @app.route('/login-sesion')
 def login_sesion():
     return render_template('login-sesion.html')
 
-@app.route('/orden')
+@app.route('/ordenes')
 def orden():
-    return render_template('orden.html')
+    return render_template('/ordenes/gestor.html')
+
+@app.route('/orden/nueva')
+def new_orden():
+    return render_template('/ordenes/orden.html')
+
+@app.route('/empresa')
+def empresa():
+    return render_template('datos_empresa.html')
 
 @app.route('/ventas')
 def ventas():
@@ -40,138 +77,273 @@ def ventas():
 @app.route('/inventarios')
 def inventarios():
     return render_template('gestor_inventario.html')
+@app.route('/principal')
+def menu_global():
+    return render_template('menu-global.html')
+
+@app.route("/monederos")
+def monedero():
+    return render_template('monedero.html')
 
 @app.route('/cierre_dia')
 def cierre_dia():
-    return render_template('cierre_dia.html')
+    return render_template('informe-cierre-dia.html')
 
 @app.route('/submit', methods=['POST'])
 def submit():
     form = request.form
+    
+    try:
+        # --- Validación básica obligatoria ---
+        campos_obligatorios = ['cliente', 'tipo', 'marca', 'modelo', 'estado_entrada', 'perifericos', 'observaciones', 'total_servicio', 'tipo_pago']
+        for campo in campos_obligatorios:
+            if campo not in form or not form[campo].strip():
+                raise BadRequest(f"El campo '{campo}' es obligatorio.")
+        
+        for key in form:
+            print(key+":\t"+form[key])
+        # --- Procesar TIPO ---
+        tipo = form['tipo'].strip()
+        if tipo == "__nuevo__":
+            tipo = form.get('nuevo_tipo', '').strip()
+            if not tipo:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo.")
+            if not conn_db.existe_registro("tipos", "nombre", tipo):
+                tipo = conn_db.insertar("tipos", {"nombre": tipo})[0]
+        tipo = obtener_id_por_nombre("tipos", tipo, "id")
+        if not tipo:
+            raise BadRequest("Tipo no válido o no encontrado.")
 
-    # Procesar TIPO
-    tipo = form['tipo']
-    if tipo == "__nuevo__":
-        tipo = form['nuevo_tipo'].strip()
-        if tipo and not conn_db.existe_registro("tipos", "nombre", tipo):
-            conn_db.insertar("tipos", {"nombre": tipo})
+        # --- Procesar TIPO DE PAGO ---
+        tipo_pago = form['tipo_pago'].strip()
+        if tipo_pago == "__nuevo__":
+            tipo_pago = form.get('nuevo_tipo_pago', '').strip()
+            if not tipo_pago:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo de pago.")
+            if not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
+                tipo_pago = conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})[0]
+        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "id")
+        if not tipo_pago:
+            raise BadRequest("Tipo de pago no válido o no encontrado.")
 
-    # Procesar TIPO DE PAGO
-    tipo_pago = form['tipo_pago']
-    if tipo_pago == "__nuevo__":
-        tipo_pago = form['nuevo_tipo_pago'].strip()
-        if tipo_pago and not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
-            conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})
+        # --- Procesar SERVICIOS ---
+        servicios = form.getlist('servicios[]')
+        servicios_nuevos = form.getlist('servicios_nuevo[]')
+        
+        servicios_finales = []
 
-    # Procesar SERVICIOS
-    servicios = form.getlist('servicios')
-    print("Servicios seleccionados:", servicios)
+        for nuevos in servicios_nuevos:
+            nuevo = nuevos.strip()
+            if nuevo:
+                if not conn_db.existe_registro("servicios", "nombre", nuevo):
+                    conn_db.insertar("servicios", {"nombre": nuevo})
+                servicio_id = obtener_id_por_nombre("servicios", nuevo, "id")
+                if servicio_id:
+                    servicios_finales.append(servicio_id)
 
-    if "__nuevo__" in servicios:
-        nuevo_servicio = form.get("nuevo_servicio", "").strip()
-        print("Nuevo servicio ingresado:", nuevo_servicio)
-        if nuevo_servicio:
-            servicios.remove("__nuevo__")
-            servicios.append(nuevo_servicio)
+        for servicio in servicios:
+            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "id")
+            if servicio_id:
+                servicios_finales.append(servicio_id)
 
-            if not conn_db.existe_registro("servicios", "nombre", nuevo_servicio):
-                conn_db.insertar("servicios", {"nombre": nuevo_servicio})
+        if not servicios_finales:
+            raise BadRequest("Debe seleccionar al menos un servicio válido.")
+        print(servicios_finales)
+        # --- Obtener ID del cliente ---
+        cliente_id = obtener_id_por_nombre("clientes", form['cliente'].strip(), "numero")
+        if not cliente_id:
+            raise BadRequest("Cliente no válido o no encontrado.")
 
-    # Crear objeto Orden
-    orden = Orden(
-        nombre=form['nombre'],
-        telefono=form['telefono'],
-        correo=form['correo'],
-        tipo=tipo,
-        marca=form['marca'],
-        modelo=form['modelo'],
-        estado_entrada=form['estado_entrada'],
-        servicios=servicios,
-        perifericos=form['perifericos'],
-        observaciones=form['observaciones'],
-        fecha=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        tipo_pago=tipo_pago,
-        pago=float(form.get('pago', 0)),
-        estado=0  # Estado inicial: recibido
-    )
+        # --- Convertir monto total del servicio ---
+        try:
+            total_servicio = float(form.get('total_servicio', "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del servicio no es un número válido.")
 
-    orden_dict = orden.a_dict()
+        # --- Crear objeto Orden ---
+        orden = Orden(
+            cliente=cliente_id,
+            tipo=tipo,
+            marca=form['marca'].strip(),
+            modelo=form['modelo'].strip(),
+            estado_entrada=form['estado_entrada'].strip(),
+            perifericos=form['perifericos'].strip(),
+            observaciones=form['observaciones'].strip(),
+            total_servicio=total_servicio
+        )
+        orden_dict = orden.a_dict()
+        orden_id = conn_db.insertar("ordenes", orden_dict)
 
-    # Convertir servicios (lista) a texto para guardarlo en SQLite
-    orden_dict['servicios'] = json.dumps(servicios)  # o ", ".join(servicios)
+        # --- Insertar servicios relacionados ---
+        for servicio_id in servicios_finales:
 
-    # Guardar localmente
-    conn_db.insertar("ordenes", orden_dict)
+            conn_db.insertar("orden_servicios", {
+                "id_orden": int(orden_id[0]),
+                "servicio": int(servicio_id)
+            })
 
-    print("✅ Orden registrada correctamente.")
-    return redirect(url_for('index'))
+        # --- Registrar pago ---
+        try:
+            monto_pago = float(form.get("pago", "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del pago no es válido.")
+
+        conn_db.insertar("pagos_servicios", {
+            "id_orden": int(orden_id[0]),
+            "tipo_pago": tipo_pago,
+            "monto": monto_pago
+        })
+        
+        imagenes = request.files.getlist("imagenes")
+        for archivo in imagenes:
+            if archivo and archivo.filename != "":
+                imagen_redimensionada = redimensionar_imagen(archivo)
+                if imagen_redimensionada:
+                    conn_db.insertar("img_ordenes", {
+                        "id_orden": orden_id,
+                        "imagen": imagen_redimensionada
+                    })
+
+        # --- Respuesta de éxito ---
+        return jsonify({
+            "mensaje": "✅ Orden registrada correctamente.",
+            "orden_id": orden_id,
+            "orden": orden_dict
+        })
+
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
+
+    except Exception as e:
+        # Error inesperado del servidor
+        print("❌ Error interno:", e)
+        return jsonify({"error": "Error interno del servidor"}), 500
+
 
 @app.route('/api/tipos')
 def api_tipos():
-    tipos = conn_db.seleccionar("tipos", "nombre")
-    return jsonify([{"nombre": t[0]} for t in tipos])
+    tipos = conn_db.seleccionar("tipos","*")
+    return jsonify({t[0]: t[1] for t in tipos})
 
 @app.route('/api/servicios')
 def api_servicios():
-    servicios = conn_db.seleccionar("servicios", "nombre")
-    return jsonify([{"nombre": s[0]} for s in servicios])
+    servicios = conn_db.seleccionar("servicios", "id, nombre")
+    return jsonify({s[0]: s[1] for s in servicios})
 
 @app.route('/api/tipos_pago')
 def api_tipos_pago():
-    tipos_pago = conn_db.seleccionar("tipos_pago", "nombre")
-    return jsonify([{"nombre": t[0]} for t in tipos_pago])
+    tipos_pago = conn_db.seleccionar("tipos_pago", "id, nombre")
+    return jsonify({t[0]: t[1] for t in tipos_pago})
 
-@app.route('/api/productos')
-def productos():
-    try:        
-        # Si la columna existe, obtener productos inactivos
-        lista_productos = conn_db.seleccionar(
-            "productos", 
-            "codigo, nombre, categoria, stock, precio_compra, precio_venta", 
-            "activo = ?", 
-            ('1',)
-        )
-               
-        # Manejar el caso de lista vacía
-        if not lista_productos:
-            return jsonify({
-                'mensaje': 'No se encontraron productos',
-                'productos': [],
-                'total': 0
-            }), 400
-        
-        # Transformar la lista de productos
+@app.route('/api/productos', methods=['GET'])
+def api_productos():
+    try:
+        # 1️⃣ Obtener parámetros con valores por defecto
+        pagina = request.args.get('pagina', default=1, type=int)
+        limite = request.args.get('limite', default=10, type=int)
+        search = request.args.get('search', default='', type=str).strip()
+        print(pagina, limite, search)
+        offset = (pagina - 1) * limite
+
+        # 2️⃣ Construir filtro de búsqueda dinámico
+        filtro_where = "WHERE p.activo = 1"
+        parametros = []
+
+        if search:
+            # Agregar búsqueda en id, codigo, nombre, descripcion, categoria
+            search_like = f"%{search}%"
+            filtro_where += """
+                AND (
+                    p.id LIKE ?
+                    OR p.codigo LIKE ?
+                    OR p.nombre LIKE ?
+                    OR p.descripcion LIKE ?
+                    OR p.categoria LIKE ?
+                )
+            """
+            parametros.extend([search_like]*5)
+
+        # 3️⃣ Consulta principal paginada con JOIN, GROUP BY, ORDER BY
+        consulta_datos = f"""
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.categoria,
+                p.stock,
+                p.precio_compra,
+                p.precio_venta,
+                COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
+            FROM productos p
+            LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+            {filtro_where}
+            GROUP BY p.id
+            ORDER BY cantidad_vendida DESC
+            LIMIT ? OFFSET ?
+        """
+
+        parametros_datos = parametros + [limite, offset]
+
+        resultados = conn_db.ejecutar_personalizado(consulta_datos, parametros_datos)
+
+        # 4️⃣ Consulta para contar el total (sin LIMIT/OFFSET)
+        consulta_total = f"""
+            SELECT COUNT(*) FROM (
+                SELECT p.id
+                FROM productos p
+                LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+                {filtro_where}
+                GROUP BY p.id
+            ) AS subquery
+        """
+
+        total_resultados = conn_db.ejecutar_personalizado(consulta_total, parametros)
+        total_resultados = total_resultados[0][0] if total_resultados else 0
+        total_paginas = math.ceil(total_resultados / limite) if limite else 1
+
+        # 5️⃣ Formatear resultados
         productos_formateados = [
             {
-                "codigo": str(items[0]),
-                "nombre": items[1],
-                "categoria": items[2],
-                "stock": items[3],
-                "precio_compra": float(items[4]),
-                "precio_venta": float(items[5])
-            } for items in lista_productos
+                "id": item[0],
+                "codigo": item[1],
+                "nombre": item[2],
+                "descripcion": item[3],
+                "categoria": item[4],
+                "stock": item[5],
+                "precio_compra": float(item[6]),
+                "precio_venta": float(item[7]),
+                "cantidad_vendida": item[8]
+            }
+            for item in resultados
         ]
-        
+
+        # 6️⃣ Respuesta JSON
         return jsonify({
-            'productos': productos_formateados,
-            'total': len(productos_formateados)
+            "productos": productos_formateados,
+            "total": total_resultados,
+            "pagina_actual": pagina,
+            "total_paginas": total_paginas
         }), 200
-    
+
     except Exception as e:
-        # Manejo de errores más detallado
-        print(f"Error al obtener productos: {str(e)}")
+        print(f"❌ Error en /api/productos: {str(e)}")
         return jsonify({
-            'mensaje': 'Error interno al recuperar productos',
-            'error': str(e)
+            "mensaje": "Error interno al recuperar productos",
+            "error": str(e)
         }), 500
 
 @app.route('/api/productos/<codigo>', methods=['GET'])
 def obtener_producto(codigo):
     try:
-        
+        print(codigo)
         # Consulta para obtener todos los detalles del producto
         producto = conn_db.seleccionar("productos", "codigo, nombre, categoria, stock, precio_compra, precio_venta", "codigo = ?",(codigo,))
-        
+        if producto ==[]:
+            return jsonify({
+                "error": "Producto no encontrado",
+                "mensaje": "No se encenctra ningun producto"
+            }), 500
         # Formatear el resultado
         detalle_producto = {
             "categoria": producto[0][2],
@@ -181,8 +353,8 @@ def obtener_producto(codigo):
             "precio_venta": float(producto[0][5]),
             "stock": producto[0][3]
         }
-        
-        return jsonify(detalle_producto)
+
+        return jsonify({"ok":True,"detalles":detalle_producto}), 200
     
     except Exception as e:
         # Manejo de errores
@@ -194,66 +366,132 @@ def obtener_producto(codigo):
     
 # API para obtener las ventas del día
 @app.route('/api/ventas/dia', methods=['GET'])
-def obtener_ventas_dia():
+def obtener_resumen_ventas():
     try:
-        # Obtener la fecha actual
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-        # Total de ventas del día
-        total_ventas = conn_db.seleccionar(
-            tabla="ventas",
-            columnas="SUM(total_venta)",
-            condicion="estado = ?",
-            parametros=('1',)
-        )[0][0] or 0
-
-        # Desglose por método de pago
+        # Desglose global por método de pago
+        fecha_hoy = date.today().isoformat()
+        print(fecha_hoy)
         desglose_pagos = conn_db.ejecutar_personalizado('''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
             JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = ? 
+            WHERE DATE(fecha) = ?
             GROUP BY tp.nombre
-        ''', ('1',))
+        ''',((fecha_hoy),))
         print(desglose_pagos)
-        # Formatear el desglose en un diccionario
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
+        ventas = conn_db.ejecutar_personalizado('''
+            SELECT v.id, v.fecha, v.total_venta, c.nombre
+            FROM ventas v
+            JOIN clientes c ON v.cliente_id = c.id
+            WHERE DATE(fecha) = ?
+        ''',((fecha_hoy),))
 
-        # Respuesta JSON
+        resumen = [
+            {
+                "id": id_venta,
+                "fecha": fecha,
+                "cliente": cliente_nombre,
+                "total": float(total)
+            }
+            for id_venta, fecha, total, cliente_nombre in ventas
+        ]
+
         return jsonify({
-            "fecha": fecha_hoy,
-            "total_ventas": total_ventas,
-            "desglose_pagos": desglose
+            "desglose_pagos": desglose,
+            "ventas": resumen
         })
 
     except Exception as e:
-        print(f"Error al obtener las ventas del día: {e}")
-        return jsonify({"error": "Ocurrió un error al obtener las ventas del día."}), 500
+        print(f"Error al obtener resumen de ventas: {e}")
+        return jsonify({"error": "Error al obtener ventas."}), 500
+
+# API para obtener detalles de venta por ID
+@app.route('/api/ventas/<int:id_venta>/detalle', methods=['GET'])
+def obtener_detalle_venta(id_venta):
+    try:
+        # Datos generales de la venta con cliente y vendedor
+        venta_info = conn_db.ejecutar_personalizado('''
+            SELECT v.id, v.fecha, v.total_venta, c.nombre AS cliente, u.nombre AS vendedor
+            FROM ventas v
+            JOIN clientes c ON v.cliente_id = c.id
+            JOIN usuarios u ON v.vendedor_id = u.id
+            WHERE v.id = ?
+        ''', (id_venta,))
+
+        if not venta_info:
+            return jsonify({"error": "Venta no encontrada"}), 404
+
+        id_venta, fecha, total, cliente, vendedor = venta_info[0]
+
+        # Productos de la venta
+        detalles = conn_db.ejecutar_personalizado('''
+            SELECT dv.cantidad, p.id, p.nombre, dv.precio_unitario
+            FROM detalles_ventas dv
+            JOIN productos p ON dv.producto_id = p.id
+            WHERE dv.venta_id = ?
+        ''', (id_venta,))
+
+        productos = [
+            {
+                "cantidad": cant,
+                "id_producto": id_prod,
+                "nombre": nombre,
+                "precio_unitario": float(precio_u),
+                "total": round(cant * precio_u, 2)
+            }
+            for cant, id_prod, nombre, precio_u in detalles
+        ]
+
+        # Desglose de pagos de la venta
+        desglose = conn_db.ejecutar_personalizado('''
+            SELECT metodo_pago, SUM(valor)
+            FROM pagos_venta
+            WHERE venta_id = ?
+            GROUP BY metodo_pago
+        ''', (id_venta,))
+
+        desglose_pagos = {m: float(v) for m, v in desglose}
+
+        return jsonify({
+            "id": id_venta,
+            "fecha": fecha,
+            "cliente": cliente,
+            "vendedor": vendedor,
+            "total": float(total),
+            "productos": productos,
+            "desglose_pagos": desglose_pagos
+        })
+
+    except Exception as e:
+        print(f"Error al obtener detalle de venta {id_venta}: {e}")
+        return jsonify({"error": "Error al obtener detalle de venta."}), 500
+
 
 @app.route('/api/ventas/cargar', methods=['GET'])
-def cargar_ventas_dia():
+def cargar_ventas():
     try:
         # Obtener la fecha actual
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
+        fecha_hoy = date.today().isoformat()
 
         # Consulta para obtener las ventas del día y sus métodos de pago
         consulta = '''
-            SELECT 
-                v.id AS id_venta,
-                v.fecha,
-                v.total_venta,
-                GROUP_CONCAT(tp.nombre, ', ') AS metodos_pago
-            FROM ventas v
-            LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
-            LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = ?
-            GROUP BY v.id
-        '''
+                SELECT 
+                    v.id AS id_venta,
+                    v.fecha,
+                    v.total_venta,
+                    GROUP_CONCAT(tp.nombre, ', ') AS metodos_pago
+                FROM ventas v
+                LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
+                LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+                WHERE DATE(v.fecha) = ?
+                GROUP BY v.id
+            '''
+
 
         # Ejecutar la consulta
-        ventas = conn_db.ejecutar_personalizado(consulta, ("1",))
-        
-
+        ventas = conn_db.ejecutar_personalizado(consulta, (fecha_hoy,))
         # Formatear los datos en una lista de diccionarios
         resultado = [
             {
@@ -275,6 +513,7 @@ def cargar_ventas_dia():
         print(f"Error al cargar las ventas del día: {e}")
         return jsonify({"error": "Ocurrió un error al cargar las ventas del día."}), 500
     
+
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
     try:
@@ -373,6 +612,97 @@ def eliminar_producto(codigo):
             'error': str(e)
         }), 500
 
+
+@app.route('/api/productos', methods=['POST'])
+def crear_producto():
+    try:
+        
+        data = request.get_json()
+
+        # Validar campos obligatorios
+        campos_obligatorios = ['codigo', 'nombre', 'categoria', 'unidad', 'stock', 'precio_compra', 'precio_venta']
+        for campo in campos_obligatorios:
+            if campo not in data or not str(data[campo]).strip():
+                return jsonify({"ok": False, "error": f"El campo '{campo}' es obligatorio."}), 400
+
+        codigo = data['codigo'].strip()
+        nombre = data['nombre'].strip()
+        descripcion = data.get('descripcion', '').strip()
+        categoria = data['categoria'].strip()
+        unidad = data['unidad'].strip()
+        unidad_simbolo = data.get('unidad_simbolo', '').strip() or None
+        stock = int(data['stock'])
+        precio_compra = float(data['precio_compra'])
+        precio_venta = float(data['precio_venta'])
+
+        # Validar valores numéricos
+        if stock < 0 or precio_compra < 0 or precio_venta < 0:
+            return jsonify({"ok": False, "error": "Valores numéricos no pueden ser negativos."}), 400
+
+        # 1️⃣ Verificar/crear categoría
+        cat_resultado = conn_db.seleccionar(
+            "categorias", columnas="id, categoria", condicion="categoria = ?", parametros=(categoria,)
+        )
+        if not cat_resultado:
+            conn_db.insertar("categorias", {"categoria": categoria})
+
+        # 2️⃣ Verificar/crear unidad
+        unidad_resultado = conn_db.seleccionar(
+            "unidades", columnas="id, unidad", condicion="unidad = ?", parametros=(unidad,)
+        )
+        if not unidad_resultado:
+            conn_db.insertar("unidades", {
+                "unidad": unidad,
+                "simbolo": unidad_simbolo
+            })
+
+        # 3️⃣ Insertar producto
+        id_producto = conn_db.insertar("productos", {
+            "codigo": codigo,
+            "nombre": nombre,
+            "descripcion": descripcion,
+            "categoria": categoria,
+            "unidad": unidad,
+            "stock": stock,
+            "precio_compra": precio_compra,
+            "precio_venta": precio_venta,
+            "activo": 1
+        })
+
+        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente.", "id":id_producto})
+
+    except Exception as e:
+        print("Error en /api/productos:", e)
+        return jsonify({"ok": False, "error": "Ocurrió un error al crear el producto."}), 500
+
+@app.route('/api/productos/<int:id_producto>/imagen', methods=['POST'])
+def subir_imagen_producto(id_producto):
+    if 'imagen' not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
+    file = request.files['imagen']
+    if file.filename == '':
+        return jsonify({"ok": False, "error": "Nombre de archivo vacío"}), 400
+    # Verificar extensión (opcional)
+    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+        return jsonify({"ok": False, "error": "Formato no permitido"}), 400
+    # Guardar con nombre consistente
+    filename = f"{id_producto}.png"
+    filepath = os.path.join(IMAGES_FOLDER, filename)
+    file.save(filepath)
+
+    return jsonify({"ok": True, "mensaje": "Imagen guardada exitosamente"})
+
+@app.route('/api/opciones_producto', methods=['GET'])
+def obtener_opciones_producto():
+    categorias = conn_db.seleccionar("categorias", columnas="id, categoria")
+    unidades = conn_db.seleccionar("unidades", columnas="id, unidad")
+
+    return jsonify({
+        "ok": True,
+        "categorias": {c[0]:c[1] for c in categorias},
+        "unidades": {u[0]:u[1] for u in unidades}
+    })
+
 @app.route('/api/crear_proveedor', methods=['POST'])
 def crear_proveedor():
     try:
@@ -419,7 +749,155 @@ def crear_proveedor():
         print(f"Error al crear proveedor: {e}")
         return jsonify({"error": "Error al crear proveedor"}), 500
     
-    
+@app.route('/api/proveedores/buscar')
+def buscar_proveedor():
+    termino = request.args.get('termino', '').strip()
+
+    if not termino:
+        return jsonify({'ok': False, 'error': 'Debe proporcionar un término de búsqueda'}), 400
+
+    # Buscar por documento EXACTO primero
+    resultado = conn_db.seleccionar(
+        "proveedores",
+        columnas="id, nombre, rut",
+        condicion="rut = ?",
+        parametros=(termino,)
+    )
+    print(resultado)
+    if resultado:
+        proveedor = resultado[0]
+        return jsonify({
+            'id': proveedor[0],
+            'nombre': proveedor[1],
+            'documento': proveedor[2]
+        }), 200
+    print(resultado)
+    # Si no encontró por documento, buscar por nombre (LIKE)
+    like_term = f"%{termino}%"
+    resultado_nombre = conn_db.seleccionar(
+        "proveedores",
+        columnas="id, nombre, rut",
+        condicion="nombre LIKE ?",
+        parametros=(like_term,)
+    )
+
+    if resultado_nombre:
+        proveedor = resultado_nombre[0]
+        return jsonify({
+            'id': proveedor[0],
+            'nombre': proveedor[1],
+            'documento': proveedor[2]
+        }), 200
+
+    return jsonify({'ok': False, 'error': 'Proveedor no encontrado'}), 404
+
+@app.route('/api/entradas', methods=['POST'])
+def registrar_entrada():
+    data = request.get_json()
+    try:
+        # ✅ 1️⃣ Validar campos principales
+        proveedor_id = data.get('proveedor')
+        numero_factura = data.get('numero_factura')
+        fecha_emision = data.get('fecha_emision')
+        fecha_vencimiento = data.get('fecha_vencimiento')
+        usuario_id = data.get('usuario_id')
+        monto_total = data.get('monto_total', 0)
+        monto_pagado = data.get('monto_pagado', 0)
+
+        productos = data.get('productos', [])
+        pagos = data.get('pagos', [])
+        for key, valor in data.items():
+            print(f"{key}: {valor}")
+
+        if not proveedor_id or not numero_factura or not fecha_emision or not productos:            
+            return jsonify({'ok': False, 'error': 'Datos incompletos'}), 400
+
+        # ✅ 2️⃣ Determinar estado de pago
+        if monto_pagado <= 0:
+            estado_pago_id = 1  # Pendiente
+        elif monto_pagado >= monto_total:
+            estado_pago_id = 3  # Pagado
+        else:
+            estado_pago_id = 2  # Parcial
+
+            
+        # ✅ 3️⃣ Insertar en facturas_proveedor
+        factura_data = {
+            "numero_factura": numero_factura,
+            "proveedor_id": proveedor_id,
+            "fecha_emision": fecha_emision,
+            "fecha_vencimiento": fecha_vencimiento,
+            "monto_total": monto_total,
+            "estado_pago_id": estado_pago_id,
+            "usuario_id": usuario_id
+        }
+        print(factura_data, "\nhola\n")
+        factura_id, error = conn_db.insertar("facturas_proveedor", factura_data)
+        print("Vamos bien 2", factura_id, "\nerror")
+        if error:
+            return jsonify({'ok': False, 'error': f'Error insertando factura: {error}'}), 500
+
+        # ✅ 4️⃣ Insertar cada producto en detalle_factura y actualizar stock
+        for item in productos:
+            # Obtener producto_id real
+            producto_result = conn_db.seleccionar(
+                "productos", 
+                columnas="id", 
+                condicion="codigo = ?", 
+                parametros=(item["codigo_producto"],)
+            )
+            if not producto_result:
+                return jsonify({'ok': False, 'error': f"Producto no encontrado: {item['codigo_producto']}"}), 400
+            producto_id = producto_result[0][0]
+
+            detalle_data = {
+                "factura_id": factura_id,
+                "producto_id": producto_id,
+                "cantidad": item["cantidad"],
+                "precio_compra": item["precio_compra"],
+                "precio_venta": item["precio_venta"],
+                "fecha_entrada": item["fecha_vencimiento"]
+            }
+            conn_db.insertar("detalle_factura", detalle_data)
+
+            conn_db.actualizar(
+                "productos",
+                {
+                    "stock": f"stock + {item['cantidad']}",
+                    "precio_compra": item["precio_compra"],
+                    "precio_venta": item["precio_venta"]
+                },
+                "id = ?",
+                (producto_id,),
+                expresion_sql=True
+            )
+
+
+            # Registrar lote
+            conn_db.insertar("lotes_productos", {
+                "id_producto": producto_id,
+                "cantidad": item["cantidad"],
+                "precio_compra": item["precio_compra"],
+                "fecha_ingreso": fecha_emision
+            })
+
+        # ✅ 5️⃣ Insertar pagos
+        for pago in pagos:
+            pago_data = {
+                "factura_id": factura_id,
+                "tipo_pago_id": pago["tipo_pago_id"],
+                "fecha_pago": pago["fecha_pago"],
+                "monto": pago["monto"],
+                "observaciones": pago.get("observaciones", "")
+            }
+            conn_db.insertar("pagos_factura", pago_data)
+
+        return jsonify({'ok': True, 'factura_id': factura_id}), 201
+
+    except Exception as e:
+        print(f"❌ Error al registrar entrada: {e}")
+        return jsonify({'ok': False, 'error': str(e)}), 500
+
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
     try:
@@ -520,7 +998,7 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_compra, categoria, descripcion, codigo, stock")
+    productos = conn_db.seleccionar('productos', "id, nombre, precio_venta, categoria, descripcion, codigo, stock")
     productos_list = []
 
     for prod in productos:
@@ -555,7 +1033,7 @@ def obtener_metodos_pago():
         metodos_formateados = [{
             "id": metodo[0],
             "nombre": metodo[1]
-        } for metodo in metodos[0:3]]
+        } for metodo in metodos]
         
         return jsonify({
             'metodos': metodos_formateados,
@@ -574,6 +1052,10 @@ def obtener_metodos_pago():
 @app.route('/informes')
 def entregas_diarias():
     return render_template('informes.html')
+
+@app.route('/datos_empresa')
+def datos_empresa():
+    return render_template('datos_empresa.html')
 
 @app.route('/api/entregas', methods=['GET'])
 def obtener_entregas():
@@ -706,84 +1188,6 @@ def crear_entrega():
         print(f"Error al crear entrega: {e}")
         return jsonify({"error": "Error al crear entrega", "mensaje": str(e)}), 500
 
-@app.route('/api/estadisticas', methods=['GET'])
-def obtener_estadisticas():
-    try:
-        # Obtener el período solicitado (semana, mes, año)
-        periodo = request.args.get('periodo', 'semana')
-        
-        # Definir la consulta SQL según el período
-        if periodo == 'semana':
-            # Agrupar por semana
-            consulta = '''
-                SELECT 
-                    strftime('%Y-%W', e.fecha) as periodo,
-                    tp.nombre,
-                    SUM(ev.valor) as total
-                FROM entregas e
-                JOIN entrega_valores ev ON e.id = ev.id_entrega
-                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
-                GROUP BY periodo, tp.nombre
-                ORDER BY periodo DESC
-                LIMIT 12
-            '''
-        elif periodo == 'mes':
-            # Agrupar por mes
-            consulta = '''
-                SELECT 
-                    strftime('%Y-%m', e.fecha) as periodo,
-                    tp.nombre,
-                    SUM(ev.valor) as total
-                FROM entregas e
-                JOIN entrega_valores ev ON e.id = ev.id_entrega
-                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
-                GROUP BY periodo, tp.nombre
-                ORDER BY periodo DESC
-                LIMIT 12
-            '''
-        else:  # año
-            # Agrupar por año
-            consulta = '''
-                SELECT 
-                    strftime('%Y', e.fecha) as periodo,
-                    tp.nombre,
-                    SUM(ev.valor) as total
-                FROM entregas e
-                JOIN entrega_valores ev ON e.id = ev.id_entrega
-                JOIN tipos_pago tp ON ev.id_tipo_pago = tp.id
-                GROUP BY periodo, tp.nombre
-                ORDER BY periodo DESC
-                LIMIT 5
-            '''
-        
-        # Ejecutar la consulta
-        datos = conn_db.ejecutar_personalizado(consulta)
-        
-        # Procesar los resultados para agruparlos por período
-        periodos = {}
-        for fila in datos:
-            periodo_str = fila[0]
-            tipo_pago = fila[1]
-            valor = float(fila[2])
-            
-            if periodo_str not in periodos:
-                periodos[periodo_str] = {
-                    "periodo": periodo_str,
-                    "valores": {}
-                }
-            
-            periodos[periodo_str]["valores"][tipo_pago] = valor
-        
-        # Convertir a lista y ordenar por período
-        resultado = list(periodos.values())
-        resultado.sort(key=lambda x: x["periodo"], reverse=False)
-        
-        return jsonify(resultado)
-    
-    except Exception as e:
-        print(f"Error al obtener estadísticas: {e}")
-        return jsonify({"error": "Error al obtener estadísticas", "mensaje": str(e)}), 500
-
 @app.route('/api/clientes', methods=['GET'])
 def obtener_clientes():
     try:
@@ -808,7 +1212,65 @@ def obtener_clientes():
     except Exception as e:
         print(f"Error al cargar proveedores: {e}")
         return jsonify({"error": "Error al cargar proveedores"}), 500
- 
+
+@app.route('/api/clientes', methods=['POST'])
+def crear_o_actualizar_cliente():
+    try:
+        data = request.get_json()
+        nombre = data.get("nombre")
+        tipo_documento = data.get("tipo_document")
+        numero = data.get("numero")
+        telefono = data.get("telefono")
+        email = data.get("email")
+
+        if not nombre or not numero:
+            return jsonify({"error": "Nombre y número de documento son obligatorios"}), 400
+
+        # Verificar si el cliente ya existe
+        cliente_existente = conn_db.seleccionar(
+            tabla="clientes",
+            columnas="numero",
+            condicion="numero = ?",
+            parametros=(numero,)
+        )
+
+        if cliente_existente:
+            # Actualizar cliente existente
+            conn_db.actualizar(
+                tabla="clientes",
+                datos={
+                    "nombre": nombre,
+                    "tipo_documento": tipo_documento,
+                    "telefono": telefono,
+                    "email": email
+                },
+                condicion="numero = ?",
+                parametros_condicion=(numero,)
+            )
+        else:
+            # Insertar nuevo cliente
+            _, error = conn_db.insertar(
+                tabla="clientes",
+                datos={
+                    "numero": numero,
+                    "nombre": nombre,
+                    "tipo_documento": tipo_documento,
+                    "telefono": telefono,
+                    "email": email
+                }
+            )
+            if error:
+                return jsonify(error), 400
+
+        return jsonify({
+            "numero": numero,
+            "nombre": nombre
+        }), 200
+
+    except Exception as e:
+        print(f"❌ Error en /api/clientes: {e}")
+        return jsonify({"error": "Error interno al guardar cliente"}), 500
+
 @app.route('/api/login-segunda', methods=['POST'])
 def login():
     try:
@@ -854,404 +1316,238 @@ def login():
 @app.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
     data = request.get_json()
-    # Validación inicial
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
-    
-    new_venta = {'vendedor_id': data['vendedor_id'],
-                "cliente_id": data["cliente_id"],
-                "total_venta": data["total_venta"],
-                "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                }
-    print(data)
+
+    new_venta = {
+        'vendedor_id': data['vendedor_id'],
+        "cliente_id": data["cliente_id"],
+        "total_venta": data["total_venta"],
+        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "total_compra": 0,
+        "total_utilidad": 0
+    }
+
     id, error = conn_db.insertar("ventas", new_venta)
-    
-    # Limpiar datos sensibles en la respuesta
-    if id:
-        
-        for producto in data["productos"]:
-            detalles_ventas = {"venta_id": id,
-                               "producto_id":producto["codigo"],
-                               "cantidad":producto["cantidad"],
-                               "precio_unitario":producto["precio_unitario"]}
-            conn_db.insertar("detalles_ventas", detalles_ventas)
-            can_sum = conn_db.seleccionar("productos","stock","id= ?",(producto["codigo"],))[0][0]
-            print(can_sum)
-            actulizar = {"stock":float(can_sum) - float(producto["cantidad"])}
-            conn_db.actualizar("productos",actulizar, "id = ?", (producto["codigo"],))
-            
-            # can_sum = conn_db.seleccionar("lotes_productos","id, cantidad","id_producto= ? ORDER BY fecha_ingreso DESC",(producto["codigo"],))            
-            # print(can_sum)
-            
-        for pago in data["metodos_pago"]:
-            detalles_pagos ={"venta_id": id,
-                               "metodo":pago["metodo"],
-                               "valor":pago["valor"]}
-            conn_db.insertar("pagos_venta", detalles_pagos)
-            
-            can_sum = conn_db.seleccionar("tipos_pago","actual","nombre= ?",(pago["metodo"],))[0][0]
-            
-            actulizar = {"actual":float(pago["valor"])+float(can_sum)}
-            conn_db.actualizar("tipos_pago",actulizar, "nombre = ?", (pago["metodo"],))
-            
-        respuesta = {
-            "valido": True,
-            "mensaje": f"Venta exitosa {id}"
+    if not id:
+        return jsonify({"valido": False, "mensaje": "Venta no registrada"}), 401
+
+    total_precio_compra = 0
+
+    for producto in data["productos"]:
+        detalles_ventas = {
+            "venta_id": id,
+            "producto_id": producto["codigo"],
+            "cantidad": producto["cantidad"],
+            "precio_unitario": producto["precio_unitario"]
         }
-        return jsonify(respuesta), 200
+        conn_db.insertar("detalles_ventas", detalles_ventas)
+
+        # Actualizar stock
+        can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
+        nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
+        conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
+
+        # Obtener precio_compra directamente desde productos
+        resultado = conn_db.seleccionar("productos", "precio_compra", "id= ?", (producto["codigo"],))
+        if resultado:
+            precio_compra = float(resultado[0][0])
+        else:
+            precio_compra = 0
+
+        total_precio_compra += precio_compra * float(producto["cantidad"])
+
+    total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
+    total_utilidad = total_precio_venta - total_precio_compra
+
+    for pago in data["metodos_pago"]:
+        detalles_pagos = {
+            "venta_id": id,
+            "metodo_pago": pago["metodo"],
+            "valor": pago["valor"]
+        }
+        conn_db.insertar("pagos_venta", detalles_pagos)
+        conn_db.actualizar(
+            "tipos_pago",
+            {"actual": f"actual + {pago['valor']}"},
+            "nombre = ?",
+            (pago["metodo"],),
+            expresion_sql=True
+        )
+
+    conn_db.actualizar("ventas", {
+        "total_compra": total_precio_compra,
+        "total_utilidad": total_utilidad
+    }, "id = ?", (id,))
+
+    print("vamos bien")
+    return jsonify({
+        "valido": True,
+        "mensaje": f"Venta exitosa {id}"
+    }), 200
+
+# API cargar usuarios
+@app.route("/api/cargar/usuarios", methods=["GET"])
+def cargar_usuarios():
+    usuarios = conn_db.seleccionar(
+        tabla="usuarios",
+        columnas="id, nombre, rol, email, telefono",
+        condicion="estado = 1"
+    )
+    if usuarios:
+        lista_usuarios = [
+            {
+                "id": id_,
+                "nombre": nombre,
+                "rol": rol,
+                "email": email,
+                "telefono": telefono
+            }
+            for id_, nombre, rol, email, telefono in usuarios
+        ]
+        return jsonify(lista_usuarios), 200
+    else:
+        return jsonify([]), 200
+
+#API Editar usuario
+@app.route("/api/usuarios/<int:id_usuario>", methods=["PUT"])
+def editar_usuario(id_usuario):
+    datos = request.get_json()
+    if not datos:
+        return jsonify({"error": "No se enviaron datos"}), 400
+
+    campos_validos = ['nombre', 'email', 'telefono', 'rol', 'contrasena']
+    datos_actualizar = {}
+
+    for campo in campos_validos:
+        valor = datos.get(campo)
+        if campo == 'contrasena' and valor:
+            import bcrypt
+            hashed = bcrypt.hashpw(valor.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+            datos_actualizar['contrasena'] = hashed
+        elif campo != 'contrasena' and valor is not None:
+            datos_actualizar[campo] = valor
+
+    if not datos_actualizar:
+        return jsonify({"error": "No se proporcionaron campos válidos"}), 400
+
+    try:
+        conn_db.actualizar(
+            tabla="usuarios",
+            datos=datos_actualizar,
+            condicion="id = ?",
+            parametros_condicion=(id_usuario,)
+        )
+        return jsonify({"mensaje": "Usuario actualizado correctamente"}), 200
+    except Exception as e:
+        print(f"Error al actualizar usuario: {e}")
+        return jsonify({"error": "Error al actualizar usuario"}), 500
+
+#API Eliminar usuario
+@app.route("/api/usuarios/<int:id_usuario>", methods=["DELETE"])
+def eliminar_usuario(id_usuario):
+    try:
+        conn_db.actualizar(
+            tabla="usuarios",
+            datos={"estado": 0},
+            condicion="id = ?",
+            parametros_condicion=(id_usuario,)
+        )
+        return jsonify({"mensaje": "Usuario desactivado correctamente"}), 200
+    except Exception as e:
+        print(f"Error al eliminar usuario: {e}")
+        return jsonify({"error": "Error al eliminar usuario"}), 500
+
+# API guardar usuario
+@app.route("/api/new_usuario", methods = ["POST"])
+def new_usuario():
+    datos = request.get_json()
+
+    datos["contrasena"] = bcrypt.hashpw(datos["contrasena"].encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+    
+    id_usuario, error = conn_db.insertar(tabla="usuarios", datos=datos)
+    print(id_usuario, error)
+    if id_usuario:        
+        usuario = {"id":id_usuario, "nombre":datos["nombre"], "rol":datos["rol"]}
+        return jsonify(usuario), 200
     else:
         return jsonify({
             "valido": False,
-            "mensaje": "Venta no registrada"
-        }), 401
+            "mensaje": "Usuario no registrado",
+            "error": error
+        }), 401      
 
-@app.route('/api/empresa', methods=['GET'])
-def obtener_datos_empresa():
+#
+@app.route("/api/monedero_dia_actual", methods = ["GET"])
+def cargar_monedero():
+    fecha =  datetime.now().strftime("%Y-%m-%d")
+    
+    
+# Api guardar monederos
+@app.route('/api/tipos_pago', methods=['POST'])
+def insertar_tipo_pago():
+    data = request.get_json()
+
+    nombre = data.get('nombre')
+    descripcion = data.get('descripcion', '')
+
+    if not nombre:
+        return jsonify({'ok': False, 'error': 'El nombre es obligatorio'}), 400
+
     try:
-        empresa = conn_db.seleccionar("empresa", "*", "id = 1")
-        if empresa:
-            columnas = [desc[0] for desc in conn_db.cursor.description]
-            datos = dict(zip(columnas, empresa[0]))
-            return jsonify(datos), 200
-        else:
-            return jsonify({"mensaje": "No se encontraron datos de la empresa"}), 404
+        id_pagos = conn_db.insertar("tipos_pago", {"nombre":nombre, "descripcion":descripcion});
+        conn_db.insertar("caja_mayor", {"nombre":nombre, "descripcion":descripcion});
+        return jsonify({'ok': True, 'id': id_pagos}), 201
     except Exception as e:
-        print(f"Error al obtener empresa: {e}")
-        return jsonify({"error": "Error al obtener los datos de la empresa"}), 500
+        return jsonify({'ok': False, 'error': str(e)}), 500
 
-@app.route('/api/empresa', methods=['POST'])
-def guardar_datos_empresa():
+@app.route('/api/turno/cerrar_dia', methods=['POST'])
+def cerrar_turno():
+    data = request.get_json()
+    print(data)
+    if not data:
+        return jsonify({'ok': False, 'error': 'Datos vacios'}), 400
     try:
-        datos = request.get_json()
-
-        # Siempre se guarda en ID=1 (solo 1 empresa)
-        if conn_db.existe_registro("empresa", "id", 1):
-            conn_db.actualizar("empresa", datos, "id = ?", (1,))
-        else:
-            datos["id"] = 1
-            conn_db.insertar("empresa", datos)
-
-        return jsonify({"mensaje": "Datos de la empresa guardados correctamente"}), 200
+        return jsonify({'ok': True, 'mensaje': "Regisstro exitoso"}), 201
     except Exception as e:
-        print(f"Error al guardar empresa: {e}")
-        return jsonify({"error": "Error al guardar los datos de la empresa"}), 500
-
-@app.route('/api/empresa/logo', methods=['POST'])
-def subir_logo_empresa():
+        return jsonify({'ok': False, 'error': str(e)}), 500
+    
+@app.route('/api/lista/servicios', methods=['GET'])
+def obtener_servicios():
     try:
-        if 'logo' not in request.files:
-            return jsonify({'error': 'No se envió ningún archivo'}), 400
+        servicios = conn_db.ejecutar_personalizado('''
+            SELECT o.id, o.estado_entrada, o.fecha, es.estado
+            FROM ordenes o
+            LEFT JOIN estados_servicios es ON o.estado = es.id
+        ''')
 
-        archivo = request.files['logo']
+        resultado = []
+        conteo_estados = {}
 
-        if archivo.filename == '':
-            return jsonify({'error': 'Nombre de archivo vacío'}), 400
-
-        # Validar que sea imagen
-        if archivo and archivo.mimetype.startswith('image'):
-            filename = secure_filename("logo_empresa.png")
-            ruta_completa = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            archivo.save(ruta_completa)
-
-            logo_url = f"/{app.config['UPLOAD_FOLDER']}/{filename}"
-
-            # Actualizar en la base de datos
-            if conn_db.existe_registro("empresa", "id", 1):
-                conn_db.actualizar("empresa", {"logo_url": logo_url}, "id = ?", (1,))
-            else:
-                conn_db.insertar("empresa", {"id": 1, "logo_url": logo_url})
-
-            return jsonify({"mensaje": "Logo subido exitosamente", "logo_url": logo_url}), 200
-
-        return jsonify({'error': 'Archivo no válido'}), 400
-
-    except Exception as e:
-        print(f"Error al subir logo: {e}")
-        return jsonify({"error": "Error interno al subir el logo"}), 500
-
-@app.route('/datos_empresa')
-def datos_empresa():
-    return render_template('datos_empresa.html')
-
-@app.route('/api/empresa', methods=['GET', 'POST'])
-def api_empresa():
-    if request.method == 'GET':
-        # Obtener datos de la empresa desde la base
-        datos = conn_db.seleccionar("datos", "dato, descripcion")
-        resultado = {dato: descripcion for dato, descripcion in datos}
-        return jsonify(resultado)
-
-    elif request.method == 'POST':
-        # Guardar datos recibidos en la base
-        datos_recibidos = request.json  # Se espera JSON con claves y valores
-        
-        for clave, valor in datos_recibidos.items():
-            # Actualizar o insertar dato en la tabla 'datos'
-            # Intentamos actualizar primero
-            conn = conn_db.conectar()
-            cursor = conn.cursor()
-            cursor.execute("UPDATE datos SET descripcion = ? WHERE dato = ?", (valor, clave))
-            if cursor.rowcount == 0:
-                # No existía, insertamos
-                cursor.execute("INSERT INTO datos (dato, descripcion) VALUES (?, ?)", (clave, valor))
-            conn.commit()
-            cursor.close()
-            conn.close()
-
-        return jsonify({"mensaje": "Datos de empresa actualizados correctamente"})
-
-# Ejemplo para obtener ventas del día (desglose por método de pago y listado)
-@app.route('/api/informes/ventas', methods=['GET'])
-def api_informes_ventas():
-    try:
-        # Obtener ventas activas del día
-        fecha_hoy = datetime.now().strftime('%Y-%m-%d')
-        
-        # Total ventas por método de pago
-        desglose_pagos = conn_db.ejecutar_personalizado('''
-            SELECT tp.nombre, SUM(pv.valor)
-            FROM pagos_venta pv
-            JOIN ventas v ON pv.venta_id = v.id
-            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = 1 AND DATE(v.fecha) = ?
-            GROUP BY tp.nombre
-        ''', (fecha_hoy,))
-        
-        desglose = {item[0]: item[1] for item in desglose_pagos} if desglose_pagos else {}
-
-        # Listado de ventas del día
-        ventas = conn_db.ejecutar_personalizado('''
-            SELECT v.id, v.fecha, v.total_venta,
-            GROUP_CONCAT(tp.nombre, ', ') as metodos_pago
-            FROM ventas v
-            LEFT JOIN pagos_venta pv ON v.id = pv.venta_id
-            LEFT JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE v.estado = 1 AND DATE(v.fecha) = ?
-            GROUP BY v.id
-            ORDER BY v.fecha DESC
-        ''', (fecha_hoy,))
-        
-        lista_ventas = []
-        for v in ventas:
-            lista_ventas.append({
-                'id': v[0],
-                'fecha': v[1],
-                'total': v[2],
-                'metodos_pago': v[3] if v[3] else ""
+        for id_orden, descripcion, fecha, estado in servicios:
+            estado = estado or "Desconocido"
+            conteo_estados[estado] = conteo_estados.get(estado, 0) + 1
+            resultado.append({
+                "id": id_orden,
+                "descripcion": descripcion,
+                "fecha": fecha,
+                "estado": estado
             })
 
         return jsonify({
-            'desglose_pagos': desglose,
-            'ventas': lista_ventas
-        }), 200
+            "servicios": resultado,
+            "conteo_estados": conteo_estados
+        })
 
     except Exception as e:
-        print(f"Error API ventas: {e}")
-        return jsonify({'error': 'Error al obtener ventas'}), 500
-
-# API para servicios (conteo y listado)
-@app.route('/api/informes/servicios', methods=['GET'])
-def api_informes_servicios():
-    try:
-        # Contar servicios por estado
-        estados = ['Pendiente', 'En Proceso', 'Listo', 'Entregado']
-        conteos = {}
-        for estado in estados:
-            count = conn_db.contar('servicios', 'estado = ?', (estado,))
-            conteos[estado] = count or 0
-
-        # Listado servicios recientes (limit 10)
-        servicios = conn_db.ejecutar_personalizado('''
-            SELECT id, cliente, descripcion, fecha, estado
-            FROM servicios
-            ORDER BY fecha DESC
-            LIMIT 10
-        ''')
-
-        lista_servicios = []
-        if servicios:
-            for s in servicios:
-                lista_servicios.append({
-                    'id': s[0],
-                    'cliente': s[1],
-                    'descripcion': s[2],
-                    'fecha': s[3],
-                    'estado': s[4]
-                })
-
-        return jsonify({
-            'conteo_estados': conteos,
-            'servicios': lista_servicios
-        }), 200
-
-    except Exception as e:
-        print(f"Error API servicios: {e}")
-        return jsonify({'error': 'Error al obtener servicios'}), 500
-
-# API resumen general (totales y gráficos)
-@app.route('/api/informes/resumen', methods=['GET'])
-def api_informes_resumen():
-    try:
-        # Totales
-        total_ventas = conn_db.ejecutar_personalizado('SELECT SUM(total_venta) FROM ventas WHERE estado = 1')[0][0] or 0
-        total_servicios = conn_db.contar('servicios')
-        total_productos = conn_db.contar('productos')
-        total_clientes = conn_db.contar('clientes')
-
-        # Ventas por categoría
-        ventas_categoria = conn_db.ejecutar_personalizado('''
-            SELECT categoria, SUM(total_venta)
-            FROM ventas v
-            JOIN detalles_ventas dv ON v.id = dv.venta_id
-            JOIN productos p ON dv.producto_id = p.id
-            WHERE v.estado = 1
-            GROUP BY categoria
-        ''')
-
-        categorias = []
-        datos_ventas = []
-        if ventas_categoria:
-            for cat, total in ventas_categoria:
-                categorias.append(cat)
-                datos_ventas.append(total)
-
-        # Servicios por tipo
-        servicios_tipo = conn_db.ejecutar_personalizado('''
-            SELECT tipo, COUNT(*)
-            FROM servicios
-            GROUP BY tipo
-        ''')
-        tipos = []
-        datos_servicios = []
-        if servicios_tipo:
-            for tipo, count in servicios_tipo:
-                tipos.append(tipo)
-                datos_servicios.append(count)
-
-        return jsonify({
-            'totales': {
-                'ventas': total_ventas,
-                'servicios': total_servicios,
-                'productos': total_productos,
-                'clientes': total_clientes
-            },
-            'ventas_categoria': {
-                'categorias': categorias,
-                'datos': datos_ventas
-            },
-            'servicios_tipo': {
-                'tipos': tipos,
-                'datos': datos_servicios
-            }
-        }), 200
-
-    except Exception as e:
-        print(f"Error API resumen: {e}")
-        return jsonify({'error': 'Error al obtener resumen'}), 500
-
-# API historial (filtrado)
-@app.route('/api/informes/historial', methods=['GET'])
-def api_informes_historial():
-    try:
-        tipo = request.args.get('tipo', 'todos')
-        fecha_inicio = request.args.get('fecha_inicio')
-        fecha_fin = request.args.get('fecha_fin')
-
-        if not fecha_inicio or not fecha_fin:
-            return jsonify({'error': 'Faltan fechas'}), 400
-
-        fecha_inicio_dt = datetime.strptime(fecha_inicio, '%Y-%m-%d')
-        fecha_fin_dt = datetime.strptime(fecha_fin, '%Y-%m-%d')
-        fecha_fin_dt = fecha_fin_dt.replace(hour=23, minute=59, second=59)
-
-        registros = []
-
-        # Consultas ejemplo para ventas y servicios
-        if tipo in ['todos', 'ventas']:
-            ventas = conn_db.ejecutar_personalizado('''
-                SELECT id, fecha, 'Venta' as tipo, total_venta as total, 'Venta de productos' as descripcion
-                FROM ventas
-                WHERE estado = 1 AND fecha BETWEEN ? AND ?
-            ''', (fecha_inicio, fecha_fin))
-            for v in ventas:
-                registros.append({
-                    'id': v[0],
-                    'tipo': v[2],
-                    'fecha': v[1],
-                    'descripcion': v[4],
-                    'total': v[3]
-                })
-
-        if tipo in ['todos', 'servicios']:
-            servicios = conn_db.ejecutar_personalizado('''
-                SELECT id, fecha, 'Servicio' as tipo, costo as total, descripcion
-                FROM servicios
-                WHERE fecha BETWEEN ? AND ?
-            ''', (fecha_inicio, fecha_fin))
-            for s in servicios:
-                registros.append({
-                    'id': s[0],
-                    'tipo': s[2],
-                    'fecha': s[1],
-                    'descripcion': s[4],
-                    'total': s[3]
-                })
-
-        # Ordenar por fecha descendente
-        registros.sort(key=lambda x: x['fecha'], reverse=True)
-
-        return jsonify({'registros': registros}), 200
-
-    except Exception as e:
-        print(f"Error API historial: {e}")
-        return jsonify({'error': 'Error al obtener historial'}), 500
-
-# API estadísticas (ejemplo para ventas por período)
-@app.route('/api/informes/estadisticas', methods=['GET'])
-def api_informes_estadisticas():
-    try:
-        periodo = request.args.get('periodo', 'semana')  # semana, mes, año
-
-        ahora = datetime.now()
-
-        if periodo == 'semana':
-            inicio = ahora - timedelta(days=7)
-            formato_fecha = '%Y-%m-%d'
-        elif periodo == 'mes':
-            inicio = ahora - timedelta(days=30)
-            formato_fecha = '%Y-%m-%d'
-        elif periodo == 'año':
-            inicio = ahora - timedelta(days=365)
-            formato_fecha = '%Y-%m'
-        else:
-            inicio = ahora - timedelta(days=7)
-            formato_fecha = '%Y-%m-%d'
-
-        # Ejemplo: Ventas por día en el período
-        ventas_periodo = conn_db.ejecutar_personalizado('''
-            SELECT DATE(fecha) as dia, SUM(total_venta)
-            FROM ventas
-            WHERE estado = 1 AND fecha BETWEEN ? AND ?
-            GROUP BY dia
-            ORDER BY dia ASC
-        ''', (inicio.strftime('%Y-%m-%d'), ahora.strftime('%Y-%m-%d')))
-
-        etiquetas = []
-        datos = []
-        if ventas_periodo:
-            for dia, total in ventas_periodo:
-                etiquetas.append(dia)
-                datos.append(total)
-
-        return jsonify({
-            'periodo': periodo,
-            'etiquetas': etiquetas,
-            'datos': datos
-        }), 200
-
-    except Exception as e:
-        print(f"Error API estadisticas: {e}")
-        return jsonify({'error': 'Error al obtener estadísticas'}), 500
+        print(f"Error al obtener resumen de servicios: {e}")
+        return jsonify({"error": "Error al obtener servicios"}), 500
 
 if __name__ == '__main__':
+<<<<<<< HEAD
     app.run(debug=True, host="0.0.0.0", port=5000)
+=======
+    host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
+    print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
+    app.run(host='0.0.0.0', port=5000, debug=True)
+>>>>>>> origin/dev

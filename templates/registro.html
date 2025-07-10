@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Negocio</title>
     <link rel="stylesheet" href="/static/css/registro.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/registro.css') }}">
+
 </head>
 <body>
 
@@ -38,7 +40,7 @@
             
             <div class="form-group">
                 <label for="telefono-contacto">Teléfono de Contacto</label>
-                <input type="number" id="telefono-contacto" name="telefono-contacto" required placeholder="Número de teléfono">
+                <input type="tel" id="telefono-contacto" name="telefono-contacto" required placeholder="Número de teléfono">
             </div>
 
             <div class="form-group planes" >

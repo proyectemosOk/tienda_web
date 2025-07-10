@@ -1,0 +1,63 @@
+#vista-inicial {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  padding: 2vw;
+  gap: 2vw;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8fafc;
+}
+.oculto{
+    display: none;
+}
+.tarjeta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 20vw;
+  height: 20vw;
+  background-color: white;
+  border-radius: 1vw;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  text-align: center;
+}
+
+.tarjeta:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.tarjeta img {
+  width: 8vw;
+  height: 8vw;
+  object-fit: contain;
+}
+
+.tarjeta .titulo {
+  margin-top: 1vw;
+  font-size: 1.5vw;
+  font-weight: bold;
+  color: #1e293b;
+}
+
+/* Móvil */
+@media (max-width: 768px) {
+  .tarjeta {
+    width: 40vw;
+    height: 40vw;
+  }
+
+  .tarjeta img {
+    width: 20vw;
+    height: 20vw;
+  }
+
+  .tarjeta .titulo {
+    font-size: 4vw;
+  }
+}

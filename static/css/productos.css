@@ -3,12 +3,11 @@ body {
     background-color: #f5f7fa;
     color: #1a1a1a;
     line-height: 1.6;
+    border: 0;
   }
   
   .container {
-    max-width: 100%;
-    margin: 0 auto;
-    padding: 1rem;
+    max-width: 94.15vw;
   }
   
   .product-list {
@@ -16,6 +15,8 @@ body {
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 1.25rem;
     margin-top: 1.5rem;
+    max-height: 71vh;
+    overflow-y: auto;
   }
   
   .product {
@@ -33,7 +34,9 @@ body {
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   }
-  
+  .product h2{
+    font-size: 1.2rem;
+  }
   .product:hover {
     transform: translateY(-6px);
     box-shadow: 0 8px 20px rgba(0,0,0,0.1);
@@ -57,12 +60,13 @@ body {
     color: #4f46e5;
     font-weight: 600;
     margin: 0.5rem 0;
-    font-size: 0.95rem;
+    margin-top: -1vw;
+    font-size: 1.2rem;
   }
   
   /* Botón Agregar mejorado */
   .product button {
-    background-color: #4f46e5;
+    background-color: rgb(20, 18, 18);
     color: white;
     border: none;
     padding: 0.5rem 1rem;

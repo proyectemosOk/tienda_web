@@ -3,6 +3,114 @@ import random
 from datetime import datetime, timedelta
 from firebase_config import ServicioFirebase
 # Función para conectar a la base de datos
+def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
+    conexion = sqlite3.connect(nombre_bd)
+    cursor = conexion.cursor()
+
+    try:
+        print("🔧 Iniciando modificación de la tabla 'usuarios'...")
+
+        # Desactivar claves foráneas
+        cursor.execute("PRAGMA foreign_keys = OFF;")
+
+        # Renombrar la tabla original (por si existe)
+        cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+
+        # Crear nueva tabla con la columna 'estado'
+        cursor.execute('''
+            CREATE TABLE usuarios (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                nombre TEXT NOT NULL UNIQUE,
+                contrasena TEXT NOT NULL,
+                rol TEXT NOT NULL,
+                email TEXT,
+                telefono TEXT,
+                estado INTEGER DEFAULT 1
+            );
+        ''')
+
+        # Copiar los datos de la tabla vieja
+        cursor.execute('''
+            INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+            SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+        ''')
+
+        # Borrar la tabla vieja
+        cursor.execute("DROP TABLE usuarios_old;")
+
+        # Reactivar claves foráneas
+        cursor.execute("PRAGMA foreign_keys = ON;")
+
+        conexion.commit()
+        print("✅ Tabla 'usuarios' modificada con la columna 'estado' incluida.")
+    except Exception as e:
+        conexion.rollback()
+        print("❌ Error:", e)
+    finally:
+        conexion.close()
+    # try:
+    #     print("🔧 Iniciando modificación de la tabla 'usuarios'...")
+
+    #     # 1. Desactivar validación de claves foráneas temporalmente
+    #     cursor.execute("PRAGMA foreign_keys = OFF;")
+        
+    #     # 1.1. Borrar la tabla original
+    #     cursor.execute("DROP TABLE usuarios_old;")
+
+    #     # 2. Renombrar la tabla original
+    #     # cursor.execute("ALTER TABLE usuarios RENAME TO usuarios_old;")
+        
+
+    #     # 3. Crear nueva tabla sin CHECK en 'rol'
+    #     cursor.execute('''
+    #         CREATE TABLE usuarios (
+    #             id INTEGER PRIMARY KEY AUTOINCREMENT,
+    #             nombre TEXT NOT NULL UNIQUE,
+    #             contrasena TEXT NOT NULL,
+    #             rol TEXT NOT NULL,
+    #             email TEXT,
+    #             telefono TEXT,
+    #             estado INTEGER DEFAULT 1
+    #         );
+    #     ''')
+
+    #     # Copiar los datos de la tabla vieja
+    #     cursor.execute('''
+    #         INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+    #         SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+    #     ''')
+    #     # # 4. Copiar los datos (asegurarse que columnas email/telefono existan en la original)
+    #     # cursor.execute('''
+    #     #     INSERT INTO usuarios (id, nombre, contrasena, rol, email, telefono)
+    #     #     SELECT id, nombre, contrasena, rol, email, telefono FROM usuarios_old;
+    #     # ''')
+
+    #     # # 5. Borrar la tabla original
+    #     # cursor.execute("DROP TABLE usuarios_old;")
+
+    #     # 6. Volver a activar claves foráneas
+    #     cursor.execute("PRAGMA foreign_keys = ON;")
+
+    #     # 7. Comprobar integridad referencial
+    #     cursor.execute("PRAGMA foreign_key_check;")
+    #     errores_fk = cursor.fetchall()
+
+    #     conexion.commit()
+
+    #     if errores_fk:
+    #         print("⚠️ ¡Alerta! Se encontraron errores de claves foráneas:")
+    #         for err in errores_fk:
+    #             print("➡️", err)
+    #     else:
+    #         print("✅ Tabla 'usuarios' modificada correctamente. Integridad referencial OK.")
+
+    # except Exception as e:
+    #     conexion.rollback()
+    #     print("❌ Error durante la modificación:", e)
+
+    # finally:
+    #     conexion.close()
+
 def conectar_bd(nombre_bd):
     return sqlite3.connect(nombre_bd)
 
@@ -37,11 +145,14 @@ def crear_tablas(base):
     cursor.execute('''
     CREATE TABLE IF NOT EXISTS usuarios (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        usuario TEXT NOT NULL UNIQUE,  -- UNIQUE para evitar duplicados
+        nombre TEXT NOT NULL UNIQUE,  -- UNIQUE para evitar duplicados
         contrasena TEXT NOT NULL,
-        rol TEXT NOT NULL CHECK(rol IN ('admin', 'usuario'))
+        email TEXT NOT NULL,
+        telefono TEXT NO NULL,
+        rol TEXT NOT NULL
     )
     ''')
+    
 
     # Crear tabla de productos
     cursor.execute('''
@@ -54,9 +165,12 @@ def crear_tablas(base):
         precio_venta REAL,
         stock INTEGER,
         categoria TEXT NOT NULL,
-        unidad TEXT NOT NULL
+        unidad TEXT NOT NULL,
+        FOREIGN KEY (categoria) REFERENCES categorias (id),
+        FOREIGN KEY (unidad) REFERENCES unidades (id)
     )
     ''')
+    
     productos = [
     (1,1,"Laptop", "Laptop básica para oficina",1200000, 1500000, 10, "Tecnología", "Unidad"),
     (2,2,"Mouse", "Mouse inalámbrico",20000, 25000, 50, "Tecnología", "Unidad"),
@@ -97,7 +211,7 @@ def crear_tablas(base):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         vendedor_id TEXT NOT NULL,
         cliente_id INTEGER NOT NULL,
-        fecha TEXT NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_DATE,
         total_venta REAL NOT NULL,
         total_compra REAL,
         total_utilidad REAL,
@@ -168,7 +282,7 @@ def crear_tablas(base):
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 producto_id INTEGER,
                 cantidad INTEGER,
-                fecha DATETIME,
+                fecha DATETIME DEFAULT CURRENT_DATE,
                 precio_compra REAL NOT NULL,
                 precio_venta REAL NOT NULL,
                 usuario TEXT NOT NULL,
@@ -183,7 +297,7 @@ def crear_tablas(base):
             id INTEGER PRIMARY KEY AUTOINCREMENT, 
             id_producto INTEGER NOT NULL,         
             id_usuario INTEGER NOT NULL,          
-            fecha_hora TEXT NOT NULL,             
+            fecha_hora DATETIME NOT NULL,             
             detalle TEXT                         
         )
     ''')
@@ -247,19 +361,31 @@ def crear_tablas(base):
 
     # Tabla de Facturas de Proveedor
     cursor.execute('''CREATE TABLE IF NOT EXISTS facturas_proveedor (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    numero_factura TEXT NOT NULL,
+    proveedor_id INTEGER,
+    fecha_emision DATE NOT NULL,
+    fecha_vencimiento DATE,
+    monto_total INTEGER NOT NULL,
+    estado_pago_id INTEGER DEFAULT 1,
+    usuario_id INTEGER,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
+    FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
+    FOREIGN KEY (estado_pago_id) REFERENCES estado_pago(id)
+    )''')
+    print("hola")
+    # Tabla de Estados de pagos
+    cursor.execute('''CREATE TABLE IF NOT EXISTS estado_pago (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numero_factura TEXT NOT NULL,
-        proveedor_id INTEGER,
-        fecha_emision DATE NOT NULL,
-        fecha_vencimiento DATE,
-        "tipo_pago" TEXT,
-        monto_total INTEGER NOT NULL,
-        monto_pagado INTEGER DEFAULT 0,
-        estado_pago TEXT DEFAULT 'PENDIENTE', -- PENDIENTE, PARCIAL, PAGADO
-        usuario_id TEXT,
-        FOREIGN KEY (proveedor_id) REFERENCES proveedores(id)
+        estado TEXT NOT NULL
         )
     ''')
+    # Corregir la sentencia INSERT
+    cursor.executemany(
+    "INSERT OR IGNORE INTO estado_pago (id, estado) VALUES (?, ?)", 
+    [(1, "Pendiente"),(2, "Parcial"),(3, "Pagado")]
+    )
+    
     # Tabla de Pagos de Factura
     cursor.execute('''CREATE TABLE IF NOT EXISTS pagos_factura (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -290,7 +416,16 @@ def crear_tablas(base):
     cursor.execute('''CREATE TABLE IF NOT EXISTS tipos_pago (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nombre TEXT NOT NULL,
-            descripcion TEXT
+            descripcion TEXT,
+            actual REAL DEFAULT 0
+        )
+    ''')
+    # Tabla de Tipos de Pago
+    cursor.execute('''CREATE TABLE IF NOT EXISTS caja_mayor (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            monto INTEGER DEFAULT 0
         )
     ''')
     cursor.executemany("INSERT OR IGNORE INTO tipos_pago (id, nombre, descripcion) VALUES (?, ?, ?)", 
@@ -306,19 +441,79 @@ def crear_tablas(base):
             fecha_entrada DATE DEFAULT CURRENT_DATE,
             monto REAL NOT NULL,
             descripcion TEXT NOT NULL,
-            metodo_pago TEXT NOT NULL
+            categoria INTEGER NOT NULL,
+            metodo_pago INTEGER NOT NULL,
+            FOREIGN KEY (categoria) REFERENCES categoria_gastos(id),
+            FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id)
         )
     ''')
-    # Confirmar los cambios y cerrar la conexión
-    # Crear tabla si no existe
     cursor.execute('''
-        CREATE TABLE IF NOT EXISTS cierre_dia (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            fecha_entrada DATE DEFAULT CURRENT_DATE,
-            ids_ventas NOT NULL,
-            monto REAL NOT NULL
-        )
+        CREATE TABLE IF NOT EXISTS categoria_gastos (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                descripcion TEXT NOT NULL UNIQUE
+                )
     ''')
+    cursor.executemany("INSERT OR IGNORE INTO categoria_gastos (id, descripcion) VALUES (?, ?)",
+                   ((0, "Otros"),
+                    (1,	"Operativos"),
+                    (2,	"Compras e insumos"),
+                    (3,	"Administrativos"),
+                    (4,	"Impuestos")
+                    ))
+
+    # Confirmar los cambios y cerrar la conexión
+    # Crear tabla si no existe    
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cierres_dia (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fecha DATE NOT NULL UNIQUE,
+            total_ingresos REAL DEFAULT 0,
+            total_egresos REAL DEFAULT 0,
+            total_neto REAL DEFAULT 0,
+            observaciones TEXT,
+            creado_por TEXT,
+            creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
+        );
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cierres_dia_detalle_pagos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cierre_id INTEGER NOT NULL,
+            tipo_pago TEXT NOT NULL,
+            monto REAL NOT NULL,
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+            FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
+        );
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cierres_dia_detalle_categorias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cierre_id INTEGER NOT NULL,
+            descripcion TEXT NOT NULL, 
+            monto REAL NOT NULL,
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+        );
+    ''')
+
+    cursor.execute('''
+    CREATE TABLE IF NOT EXISTS cierres_dia_movimientos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cierre_id INTEGER NOT NULL,
+    tipo_pago TEXT,
+    categoria TEXT,
+    referencia_id TEXT,
+    monto REAL,
+    FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+    FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
+    FOREIGN KEY (referencias_id) REFERENCES ordenes(id) ON DELETE CASCADE
+    FOREIGN KEY (referencias_id) REFERENCES ventas(id) ON DELETE CASCADE
+);
+''')
+
+    
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS entregas_diarias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -337,29 +532,60 @@ def crear_tablas(base):
             total_venta INTEGER DEFAULT 0,
             total_entregado INTEGER DEFAULT 0,
             faltante INTEGER DEFAULT 0
-        )
-    """)
-    
-    
+        )""")
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS ordenes (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nombre TEXT,
-        telefono TEXT,
-        correo TEXT,
-        tipo TEXT,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        cliente INTEGER,
+        tipo INTEGER,
         marca TEXT,
         modelo TEXT,
         estado_entrada TEXT,
-        servicio INTEGER,
         perifericos TEXT,
         observaciones TEXT,
-        fecha TEXT,
-        tipo_pago TEXT,
-        pago REAL,
-        estado INTEGER,
-        FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(nombre),
+        total_servicio REAL,
+        estado INTEGER DEFAULT 0,
+        FOREIGN KEY (cliente) REFERENCES clientes(id),
+        FOREIGN KEY (tipo) REFERENCES tipos(id),
+        FOREIGN KEY (estado) REFERENCES estados_servicios(id)
+
     )""")
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS orden_servicios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_orden INTEGER NOT NULL,
+        servicio INTEGER NOT NULL,
+        FOREIGN KEY(id_orden) REFERENCES ordenes(id),
+        FOREIGN KEY (servicio) REFERENCES servicios(id)
+    )""")
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS img_ordenes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id_orden INTEGER,
+        imagen BLOB,
+        FOREIGN KEY(id_orden) REFERENCES ordenes(id)
+    )""")
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS estados_servicios (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        estado TEXT NOT NULL
+    )""")
+     # Servicios por defecto
+    estados = [
+        (1, "Pendiente"),
+        (2, "En Proceso"),
+        (3, "Listo"),
+        (4, "Entregado")
+    ]
+    # Insertar los servicios si no existen
+    cursor.executemany(
+        "INSERT OR IGNORE INTO estados_servicios (id, estado) VALUES (?, ?)",
+        estados
+    )
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS servicios (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -387,6 +613,17 @@ def crear_tablas(base):
             nombre TEXT UNIQUE NOT NULL
         )
     """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS pagos_servicios (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id_orden INTEGER NOT NULL,
+            tipo_pago INTEGER,
+            monto REAL NOT NULL,
+            FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id),
+            FOREIGN KEY(id_orden) REFERENCES ordenes(id)
+        )
+    """)
     tipos_default = [
     (1, 'PC'),
     (2, 'Portátil'),
@@ -402,26 +639,10 @@ def crear_tablas(base):
     conexion.commit()
     conexion.close()
 
-# Conexión a la base de datos (cambia el nombre si es diferente)
-conexion = sqlite3.connect("tienda_jfleong6_1.db")
-cursor = conexion.cursor()
 
-# Intentar agregar la columna 'activo'
-try:
-    cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
-except sqlite3.OperationalError as e:
-    if "duplicate column name" in str(e):
-        pass
-    else:
-        raise
-# Intentar agregar la columna 'actual'
-try:
-    cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
-except sqlite3.OperationalError as e:
-    if "duplicate column name" in str(e):
-        pass
-    else:
-        raise
+
+
+
 # Ruta a tu archivo de credenciales Firebase
 # firebase = ServicioFirebase("../proyectemosok-31150-firebase-adminsdk-fbsvc-fdae62578b.json")
 
@@ -463,6 +684,29 @@ except sqlite3.OperationalError as e:
 
 if __name__ == "__main__":
     crear_tablas("tienda_jfleong6_1.db")
+    # modificar_tabla_usuarios_sin_check()
+    
+    
+    # Conexión a la base de datos (cambia el nombre si es diferente)
+    # conexion = sqlite3.connect("tienda_jfleong6_1.db")
+    # cursor = conexion.cursor()
+
+    # # Intentar agregar la columna 'activo'
+    # try:
+    #     cursor.execute("ALTER TABLE productos ADD COLUMN activo INTEGER DEFAULT 1;")
+    # except sqlite3.OperationalError as e:
+    #     if "duplicate column name" in str(e):
+    #         pass
+    #     else:
+    #         raise
+    # # Intentar agregar la columna 'actual'
+    # try:
+    #     cursor.execute("ALTER TABLE tipos_pago ADD COLUMN actual INTEGER DEFAULT 0;")
+    # except sqlite3.OperationalError as e:
+    #     if "duplicate column name" in str(e):
+    #         pass
+    #     else:
+    #         raise
     print("Tablas creadas exitosamente.")
 
     

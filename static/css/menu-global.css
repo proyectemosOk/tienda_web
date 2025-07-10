@@ -1,20 +1,159 @@
-.boton-menu{
+
+#iframe-contenido {
+    background-color: transparent;
+    width: 93vw;
+    border: none;
+    margin-left: 5vw;
+    /* mismo ancho que .boton-menu inicial */
+    transition: all 0.4s ease;
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
+    transition: width margin-left ease-in 500ms;
 }
-#monederos, #ventas, #inventario, #cuentas, #personal, #configuraciones, #empresa, #informes, #casa{
+.alto{
+    height: 97vh;
+}
+#cont_menu.expandido+#iframe-contenido {
+    margin-left: 13vw;
+    width: 85vw;
+    /* se adapta al nuevo ancho cuando se expande */
+}
+/* Estilo general del contenedor */
+#cont_menu {
+    /* background-color: #f8fafc; */
+    /* height: 100vh; */
+    width: 5vw;
+    transition: all 0.4s ease;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
+    overflow-x: hidden;
+    position: fixed;
+    /* background-color: #f8fafc; */
+    top: 0;
+    left: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 2vw;
+}
+.oculto{
+    display: none;
+}
+
+/* MODO INICIAL: tarjetas en grilla */
+body.modo-inicial #cont_menu {
+    position: static;
+    width: 95vw;
+    /* height: 100vh; */
+    box-shadow: none;
+    overflow: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2vw;
+    padding: 1vw;
+    align-content: start;
+    justify-items: center;
+    background-color: #f8fafc;
+}
+
+
+
+/* En modo-inicial, los items son tarjetas */
+body.modo-inicial .menu-item {
+    width: 14vw;
+    height: 14vw;
+    background-color: white;
+    border-radius: 1vw;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    margin: 0.9vw;
+    /* flex-direction: column; */
+    justify-content: center;
+    align-items: self-start;
     text-align: center;
-    border: 1px solid gray;
-    align-content: center;
-    width: 10.5vw;
-    height: 6vw;
-    font-size: 1.3vw;
-    border-radius: 50px;
-    background-color: #4361ee;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-#monederos:hover, #ventas:hover, #inventario:hover, #cuentas:hover, #personal:hover, #configuraciones:hover, #empresa:hover, #informes:hover, #casa:hover{
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
-    animation: wave 0.6s ease;
-    background: #5b25da;
+
+body.modo-inicial .menu-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+body.modo-inicial .menu-item img {
+    width: 7vw;
+    height: 7vw;
+    object-fit: contain;
+}
+
+body.modo-inicial .texto {
+    opacity: 1 !important;
+    margin-top: 1vw;
+    font-size: 1.5vw;
+}
+
+/* Sidebar normal (tu diseño original) */
+body.modo-menu #cont_menu {
+    position: fixed;
+    width: 5vw;
+    height: 100vh;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: start;
+    padding-top: 2vw;
+}
+
+/* Sidebar expandido al hover */
+body.modo-menu #cont_menu:hover {
+    width: 13vw;
+}
+
+body.modo-menu .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 0.8vw;
+    margin: 0.3vw 0.5vw;
+    border-radius: 0.5vw;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+    overflow: hidden;
+}
+
+body.modo-menu .menu-item:hover {
+    background-color: #e0f2ff;
+    transform: scale(1.02);
+    box-shadow: 0 2px 6px rgba(0, 0, 255, 0.2);
+}
+
+body.modo-menu .menu-item img {
+    width: 2.8vw;
+    min-width: 2.5vw;
+    transition: transform 0.3s ease;
+}
+
+body.modo-menu .texto {
+    margin-left: 0.8vw;
+    font-size: 1.1vw;
+    font-weight: 600;
+    color: #1e293b;
+    opacity: 0;
+    white-space: nowrap;
+    transition: opacity 0.3s ease;
+}
+
+body.modo-menu #cont_menu:hover .texto {
+    opacity: 1;
+}
+
+.hamburger-btn {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 9999;
+  background: #fff;
+  border: 1px solid #ccc;
+  padding: 0.5rem 1rem;
+  font-size: 2rem;
+  cursor: pointer;
+  border-radius: 4px;
 }

@@ -1,21 +1,16 @@
 class Orden:
-    def __init__(self, nombre, telefono, correo, tipo, marca, modelo,
-             estado_entrada, servicios, perifericos, observaciones,
-             fecha, tipo_pago, pago, estado):
-        self.nombre = nombre
-        self.telefono = telefono
-        self.correo = correo
+    def __init__(self, cliente, tipo, marca, modelo,
+             estado_entrada, perifericos, observaciones,
+             total_servicio):
+        self.cliente = cliente
         self.tipo = tipo
         self.marca = marca
         self.modelo = modelo
         self.estado_entrada = estado_entrada
-        self.servicios = servicios
         self.perifericos = perifericos
-        self.observaciones = observaciones
-        self.fecha = fecha
-        self.tipo_pago = tipo_pago
-        self.pago = pago
-        self.estado = estado
+        self.observaciones = observaciones 
+        self.total_servicio = total_servicio
+
 
 
     def a_dict(self):

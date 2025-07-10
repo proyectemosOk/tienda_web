@@ -1,0 +1,15 @@
+/* Estilo general para las acciones rápidas */
+.accion-rapida {
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Pestaña activa resaltada de forma profesional */
+.accion-rapida.activa {
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); /* Sombra elegante */
+  transform: translateY(-2px); /* Ligera elevación */
+  transition: all 0.2s ease-in-out;
+}

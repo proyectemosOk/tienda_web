@@ -25,7 +25,7 @@
 
 /* Reset y base */
 body {
-  background-color: var(--bg-light);
+  background-color: #f4f7fa;
   font-family: var(--font-family);
   margin: 0;
   padding: 0;
@@ -109,11 +109,13 @@ body {
 .info-card {
   display: flex;
   align-items: center;
-  background-color: #fff;
+  background-color: white;
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   height: 100%;
+  min-width: 250px;
+
 }
 
 .info-icon {
@@ -271,7 +273,7 @@ body {
 }
 
 #servicios .table-responsive {
-  padding: 0 0 0 15px;
+  padding: 0 15px 0 15px;
   margin: 15px 0 15px 0;
   max-height: 440px;
 }
@@ -411,3 +413,7 @@ body {
   }
 }
 
+#center_res_general {
+  display: flex;
+  justify-content: center;
+}

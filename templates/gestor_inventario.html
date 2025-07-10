@@ -7,23 +7,36 @@
     <title>Sistema de Gestión de Inventario</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos_globales/al_min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/estilos_globales/bustra_mind.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="/static/css/menu-global.css" />
+    <!-- Scripts -->
+    <script>
+        const iconoVer = "{{ url_for('static', filename='svg/eye-solid.svg') }}";
+        const iconoEditar = "{{ url_for('static', filename='svg/edit.svg') }}";
+        const iconoEliminar = "{{ url_for('static', filename='svg/eliminar.svg') }}";
+    </script>
+    <script type="module" src="{{ url_for('static', filename='js/inventario/proveedores.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/inventario/gestor_inventario.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/inventario/gestor_inventario_1.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/inventario/gestos_inventarios_cargar_productos.js') }}"
+        defer></script>
+    <script src="{{ url_for('static', filename='js/inventario/guardar_proveedor.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/inventario/gestor_entradas.js') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/swall.js') }}" defer></script>
+    <script src="/static/js/home.js" defer></script>
+
 </head>
 
 <body>
+
     <div class="container-fluid">
         <header class="row bg-primary text-white py-3">
-            <!-- Icono Home a la izquierda -->
-            <div class="col-2 d-flex align-items-center">
-                <a class="nav-link active" href="/home">
-                    <img src="{{ url_for('static', filename='svg/house.svg') }}" alt="" width="32">
-                </a>
-            </div>
             <!-- Título centrado -->
             <div class="col-8 d-flex align-items-center justify-content-center">
                 <h1 class="mb-0">Sistema de Gestión de Inventario</h1>
             </div>
-            <!-- Columna vacía para equilibrar -->
-            <div class="col-2"></div>
         </header>
 
 
@@ -32,22 +45,19 @@
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
                         <a class="nav-link active" href="#entrada-productos" data-bs-toggle="tab">
-                            <i class="fas"></i>  Entrada de Productos
+                            <i class="fas fa-box"></i> Entrada de Productos
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="#proveedores" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/truck-fast.svg') }}" alt="" width="24"> Proveedores
+                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/truck-fast.svg') }}" alt=""
+                                width="24"> Proveedores
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#inventario" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/warehouse.svg') }}" alt="" width="24"> Inventario
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#reportes" data-bs-toggle="tab">
-                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/chart-bar.svg') }}" alt="" width="24"> Reportes
+                        <a class="nav-link" href="#inventarios" data-bs-toggle="tab">
+                            <i class="fas"></i> <img src="{{ url_for('static', filename='svg/warehouse.svg') }}" alt=""
+                                width="24"> Inventario
                         </a>
                     </li>
                 </ul>
@@ -55,6 +65,7 @@
         </nav>
 
         <div class="tab-content mt-3">
+
             <!-- Entrada de Productos -->
             <div class="tab-pane fade show active" id="entrada-productos">
                 <div class="row">
@@ -69,21 +80,41 @@
                                         <label for="proveedor" class="form-label">Proveedor</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="proveedor"
-                                                placeholder="Código o nombre">
+                                                placeholder="Código o nombre del proveedor">
                                             <button class="btn btn-secondary" type="button" id="buscar-proveedor">
                                                 <i class="fas fa-search"></i>
                                             </button>
                                         </div>
+                                        <div class="row">
+                                            <div class="col-md-6 mb-3 mt-2">
+                                                <label class="form-label">Nombre del Proveedor</label>
+                                                <input type="text" class="form-control" id="nombre-proveedor" disabled>
+                                            </div>
+                                            <div class="col-md-6 mb-3 mt-2">
+                                                <label class="form-label">Documento / RUT</label>
+                                                <input type="text" class="form-control" id="rut-proveedor" disabled>
+                                            </div>
+                                        </div>
+
                                     </div>
 
-                                    <div class="mb-3">
-                                        <label for="numero-factura" class="form-label">Número de Factura</label>
-                                        <input type="text" class="form-control" id="numero-factura">
-                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="numero-factura" class="form-label">Número de Factura</label>
+                                            <input type="text" class="form-control" id="numero-factura"
+                                                placeholder="N° factura o soporte">
+                                        </div>
 
+                                        <div class="col-md-6 mb-3">
+                                            <label for="fecha-emision" class="form-label">Fecha Emisión</label>
+                                            <input type="date" class="form-control" id="fecha-emision"
+                                                placeholder="Fecha de emisión">
+                                        </div>
+                                    </div>
                                     <div class="mb-3">
-                                        <label for="fecha-emision" class="form-label">Fecha Emisión</label>
-                                        <input type="date" class="form-control" id="fecha-emision">
+                                        <label for="fecha-vencimiento-factura" class="form-label">Fecha de Vencimiento
+                                            de la Factura</label>
+                                        <input type="date" class="form-control" id="fecha-vencimiento-factura">
                                     </div>
 
                                     <hr>
@@ -93,7 +124,7 @@
                                         <label for="codigo-producto" class="form-label">Código de Producto</label>
                                         <div class="input-group">
                                             <input type="text" class="form-control" id="codigo-producto"
-                                                placeholder="Código">
+                                                placeholder="Código interno o de barras">
                                             <button class="btn btn-secondary" type="button" id="buscar-producto">
                                                 <i class="fas fa-search"></i>
                                             </button>
@@ -102,29 +133,32 @@
 
                                     <div class="mb-3">
                                         <label for="nombre-producto" class="form-label">Nombre del Producto</label>
-                                        <input type="text" class="form-control" id="nombre-producto" readonly>
+                                        <input type="text" class="form-control" id="nombre-producto"
+                                            placeholder="Nombre del producto" readonly>
                                     </div>
 
                                     <div class="row">
                                         <div class="col-md-4 mb-3">
                                             <label for="cantidad" class="form-label">Cantidad</label>
-                                            <input type="number" class="form-control" id="cantidad" min="1">
+                                            <input type="number" class="form-control" id="cantidad" min="1"
+                                                placeholder="Unidades">
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="precio-compra" class="form-label">Precio Compra</label>
                                             <input type="number" class="form-control" id="precio-compra" step="0.01"
-                                                min="0">
+                                                min="0" placeholder="Precio unitario de compra">
                                         </div>
                                         <div class="col-md-4 mb-3">
                                             <label for="precio-venta" class="form-label">Precio Venta</label>
                                             <input type="number" class="form-control" id="precio-venta" step="0.01"
-                                                min="0">
+                                                min="0" placeholder="Precio sugerido de venta">
                                         </div>
                                     </div>
 
                                     <div class="mb-3">
                                         <label for="fecha-vencimiento" class="form-label">Fecha de Vencimiento</label>
-                                        <input type="date" class="form-control" id="fecha-vencimiento">
+                                        <input type="date" class="form-control" id="fecha-vencimiento"
+                                            placeholder="Fecha de vencimiento del lote">
                                     </div>
 
                                     <button type="button" class="btn btn-primary" id="agregar-producto">
@@ -172,10 +206,40 @@
                                     </button>
                                 </div>
                             </div>
+                            <hr>
+                            <h4>Pagos de la Factura</h4>
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="factura-pagada">
+                                <label class="form-check-label" for="factura-pagada">
+                                    ¿Factura ya está pagada?
+                                </label>
+                            </div>
+
+                            <div id="seccion-pagos" style="display: none;">
+                                <table class="table table-sm" id="tabla-pagos">
+                                    <thead>
+                                        <tr>
+                                            <th>Fecha Pago</th>
+                                            <th>Método de Pago</th>
+                                            <th>Monto</th>
+                                            <th>Acciones</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="lista-pagos">
+                                    </tbody>
+                                </table>
+
+                                <button type="button" class="btn btn-secondary mb-3" id="agregar-pago">
+                                    <i class="fas fa-plus"></i> Agregar Pago
+                                </button>
+                            </div>
+
                         </div>
                     </div>
                 </div>
             </div>
+
+
             <!-- Proveedores -->
             <div class="tab-pane fade" id="proveedores">
                 <!-- Contenido de Proveedores -->
@@ -189,26 +253,37 @@
                                 <form id="proveedor-form">
                                     <div class="mb-3">
                                         <label for="nombre-proveedor" class="form-label">Nombre</label>
-                                        <input type="text" class="form-control" id="nombre-proveedor" required>
+                                        <input type="text" class="form-control" id="nombre-proveedor"
+                                            placeholder="Ejemplo: Distribuidora ABC Ltda." required>
                                     </div>
+
                                     <div class="mb-3">
-                                        <label for="rut-proveedor" class="form-label">RUT</label>
-                                        <input type="text" class="form-control" id="rut-proveedor" required>
+                                        <label for="rut-proveedor" class="form-label">Documento: CC/RUT</label>
+                                        <input type="text" class="form-control" id="rut-proveedor"
+                                            placeholder="NIT o Cédula (ej: 900123456-7)" required>
                                     </div>
+
                                     <div class="mb-3">
                                         <label for="direccion-proveedor" class="form-label">Dirección</label>
-                                        <input type="text" class="form-control" id="direccion-proveedor" required>
+                                        <input type="text" class="form-control" id="direccion-proveedor"
+                                            placeholder="Ejemplo: Calle 123 #45-67, Bogotá" required>
                                     </div>
+
                                     <div class="mb-3">
                                         <label for="telefono-proveedor" class="form-label">Teléfono</label>
-                                        <input type="tel" class="form-control" id="telefono-proveedor" required>
+                                        <input type="tel" class="form-control" id="telefono-proveedor"
+                                            placeholder="Ejemplo: +57 300 1234567" required>
                                     </div>
+
                                     <div class="mb-3">
                                         <label for="email-proveedor" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="email-proveedor" required>
+                                        <input type="email" class="form-control" id="email-proveedor"
+                                            placeholder="correo@proveedor.com" required>
                                     </div>
+
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas"></i><img src="{{ url_for('static', filename='svg/save.svg') }}" alt="" width="16"> Guardar Proveedor
+                                        <i class="fas"></i><img src="{{ url_for('static', filename='svg/save.svg') }}"
+                                            alt="" width="16"> Guardar Proveedor
                                     </button>
                                 </form>
                             </div>
@@ -241,77 +316,70 @@
             </div>
 
             <!-- Inventario -->
-            <div class="tab-pane fade" id="inventario">
+            <div class="tab-pane fade" id="inventarios">
                 <!-- Contenido de Inventario -->
                 <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="card-title">Listado de Productos en Inventario</h3>
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h3 class="card-title mb-0">Listado de Productos en Inventario</h3>
+                        <!-- Botón para nuevo producto (aún sin funcionalidad) -->
+                        <button class="btn btn-success btn-sm" id="btn-nuevo-producto">
+                            <i class="fas fa-plus"></i> Nuevo Producto
+                        </button>
                     </div>
                     <div class="card-body">
-                        <table class="table table-striped" id="tabla-inventario">
-                            <thead>
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Nombre</th>
-                                    <th>Categoría</th>
-                                    <th>Stock</th>
-                                    <th>Precio Compra</th>
-                                    <th>Precio Venta</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Productos del inventario se agregarán dinámicamente -->
-                            </tbody>
-                        </table>
+
+                        <!-- Barra de búsqueda -->
+                        <div class="mb-3">
+                            <label for="buscar-producto" class="form-label">Buscar producto</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="buscar-producto-inventario"
+                                    placeholder="Código, Nombre, Descripción o Categoría">
+                                <button class="btn btn-outline-primary" type="button" id="btn-buscar-producto">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Tabla de productos -->
+                        <div class="table-responsive">
+                            <table class="table table-striped" id="tabla-inventario">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Nombre</th>
+                                        <th>Categoría</th>
+                                        <th>Stock</th>
+                                        <th>Precio Compra</th>
+                                        <th>Precio Venta</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Productos del inventario se agregarán dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Controles de paginación -->
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <button class="btn btn-outline-secondary btn-sm" id="btn-pagina-anterior">
+                                &laquo; Anterior
+                            </button>
+                            <span id="info-paginacion" class="text-muted">
+                                Página 1 de N
+                            </span>
+                            <button class="btn btn-outline-secondary btn-sm" id="btn-pagina-siguiente">
+                                Siguiente &raquo;
+                            </button>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
-            <!-- Reportes -->
-            <div class="tab-pane fade" id="reportes">
-                <!-- Contenido de Reportes -->
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title">Reporte de Entradas</h3>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="grafico-entradas"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-6">
-                        <div class="card">
-                            <div class="card-header bg-primary text-white">
-                                <h3 class="card-title">Reporte de Stock</h3>
-                            </div>
-                            <div class="card-body">
-                                <canvas id="grafico-stock"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- Scripts -->
-    <script>
-        const iconoVer = "{{ url_for('static', filename='svg/eye-solid.svg') }}";
-        const iconoEditar = "{{ url_for('static', filename='svg/edit.svg') }}";
-        const iconoEliminar = "{{ url_for('static', filename='svg/eliminar.svg') }}";
-    </script>
-    <script type="module" src="{{ url_for('static', filename='js/inventario/proveedores.js') }}"></script>
 
-    <script src="{{ url_for('static', filename='js/inventario/gestor_inventario.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/inventario/gestor_inventario_1.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/inventario/gestos_inventarios_cargar_productos.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/inventario/guardar_proveedor.js') }}"></script>
-    
-    <script src="{{ url_for('static', filename='js/inventario/gestor_entradas.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/swall.js') }}"></script>
 </body>
 
 </html>

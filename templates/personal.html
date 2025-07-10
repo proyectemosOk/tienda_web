@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Usuarios</title>
+  <link rel="stylesheet" href="/static/css/personal.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/personal.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="/static/css/menu-global.css" />
+</head>
+<body>
+  
+  <div class="navbar">
+    <h2>Sistema de Gestión de Usuarios</h2>
+  </div>
+
+  <div class="container">
+    <div class="form-panel">
+      <h3>Nuevo Usuario</h3>
+      <form id="formUsuario">
+        <input type="text" id="nombre" placeholder="Nombre" required>
+        <input type="password" id="pass" placeholder="Contraseña" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="tel" id="telefono" placeholder="Teléfono" required maxlength="10">
+        <select id="rol" required>
+          <option value="">Selecciona un Rol</option>
+          <option>Administrador</option>
+          <option>Empleado</option>
+          <option>Supervisor</option>
+        </select>
+        <button type="submit">Guardar Usuario</button>
+      </form>
+    </div>
+
+    <div class="list-panel">
+      <h3>Lista de Usuarios</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>id</th>
+            <th>Nombre</th>
+            <th>Rol</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaUsuarios">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="modalEditarUsuario" class="modal" style="display:none;">
+
+    <div class="modal-content">
+
+      <span id="cerrarModal" class="close">&times;</span>
+      <h3>Editar Usuario</h3>
+
+      <form id="formEditarUsuario">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-nombre" placeholder="Nombre" required>
+        <input type="email" id="edit-email" placeholder="Email" required>
+        <input type="tel" id="edit-telefono" placeholder="Teléfono" required>
+
+        <select id="edit-rol" required>
+          <option>Administrador</option>
+          <option>Empleado</option>
+          <option>Supervisor</option>
+        </select>
+
+        <input type="password" id="edit-pass" placeholder="Nueva contraseña (opcional)">
+        <button type="submit">Guardar cambios</button>
+        
+      </form>
+
+    </div>
+
+  </div>
+
+  <style>
+
+  </style>
+
+  <!-- <script src="/static/js/personal.js"></script> -->
+  <script src="{{ url_for('static', filename='js/personal.js') }}"></script>
+  <script src="/static/js/home.js"></script>
+
+</body>
+</html>

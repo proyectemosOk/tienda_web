@@ -32,10 +32,55 @@
   display: flex;
   gap: 2rem;
   align-items: flex-start;
-  padding: 1.5rem;
   background-color: #f5f7fa;
+  margin: 0;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
 }
 
+::-webkit-scrollbar-track {
+  background: #121212;
+  border-radius: 10px;
+  box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.5);
+  border: 1px solid #1e1e1e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #2a2a2a, #3f3f3f);
+  border-radius: 10px;
+  border: 1px solid #444;
+  box-shadow:
+    inset 0 0 4px rgba(255, 255, 255, 0.05),
+    0 0 6px rgba(80, 80, 80, 0.4);
+  transition: all 0.3s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #444, #555);
+  box-shadow:
+    inset 0 0 6px rgba(255, 255, 255, 0.08),
+    0 0 10px rgba(130, 130, 130, 0.5);
+  border-color: #666;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg, #666, #444);
+  box-shadow:
+    0 0 12px rgba(200, 200, 200, 0.4);
+  animation: scroll-glow 1.5s infinite;
+}
+
+::-webkit-scrollbar-corner {
+  background: #121212;
+}
+
+@keyframes scroll-glow {
+  0%   { box-shadow: 0 0 4px rgba(160, 160, 160, 0); }
+  50%  { box-shadow: 0 0 8px rgba(160, 160, 160, 0.3); }
+  100% { box-shadow: 0 0 4px rgba(160, 160, 160, 0); }
+}
 .product-list-container {
   flex: 1;
   min-width: 0;
@@ -46,10 +91,12 @@
 }
 
 .ticket-section {
-   width: var(--ticket-width);
-  min-height: 58vh;
-  position: sticky;
+  display: flex;
+  overflow: visible;
+  width: 27vw;
+  min-height: 83vh;
   top: 0;
+  margin-left: -1.5vw;
   padding: 1.5rem;
   background-color: white;
   border-radius: var(--radius-md);
@@ -62,19 +109,23 @@
   flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 2rem;
-  height: 1vw;
+  height: 2vw;
+  width: 22vw;
   background: white;
   padding: 1.5rem;
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   border: 1px solid #e2e8f0;
 }
-
-#clienteSearch, .cliente-combo {
+.cliente-combo{
+  opacity: 0;
+  display: none;
+}
+#clienteSearch{
   position: relative;
-  top: -70%;
+  margin-top: -2vw;
+  width: 5vw;
   flex: 1;
-  min-width: 250px;
   padding: 0.8rem 1.5rem;
   border: 2px solid #e2e8f0;
   border-radius: var(--radius-xl);
@@ -82,7 +133,6 @@
   transition: var(--transition);
   background-color: white;
 }
-
 #clienteSearch:focus, .cliente-combo:focus {
   outline: none;
   border-color: var(--primary-color);
@@ -91,26 +141,32 @@
 
 /* Items del ticket - Diseño mejorado */
 .items-container {
-  background-color: white;
-  border-radius: var(--radius-md);
+  position: absolute;
+  margin-top: 4vw;
   padding: 1rem;
   margin-bottom: 1.5rem;
-  max-height: 48vh;
+  max-height: 45vh;
+  margin-left: -3.35vw;
   overflow-y: auto;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.03);
 }
-
+.pagos-section {
+  bottom: 5vh;
+  width: 25vw;
+  height: 8vw;
+  margin-top: -13vw;
+  padding: 1.5rem;
+}
 .item-card {
   background: white;
   border-radius: var(--radius-md);
   padding: 1rem;
   margin-bottom: 1rem;
-  height: 4.8vw;
   box-shadow: var(--shadow-sm);
   border-left: 4px solid var(--primary-color);
   transition: var(--transition);
   position: relative;
-  width: 33vw;
+  width: 25vw;
+  height: 3vw;
 }
 
 .item-card:hover {
@@ -119,7 +175,7 @@
 }
 
 .item-name {
-  font-size: 1.1rem;
+  font-size: 0.9rem;
   display: flex;
   justify-content: space-between;
   font-weight: 600;
@@ -131,7 +187,6 @@
 }
 
 .item-name::before {
-  content: "•";
   color: var(--primary-color);
   font-size: 1.5rem;
   margin-right: 0.5rem;
@@ -148,10 +203,10 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: rgba(90, 179, 190, 0.1);
   padding: 0.5rem 1rem;
   border-radius: 50px;
   font-size: 0.95rem;
+  width: 10vw;
 }
 .item-price{
   position: relative;
@@ -159,33 +214,51 @@
   height: 1.5vw;
 }
 .item-quantity-input{
-  display: flex;
-  justify-content: center;
+  font-size: 1rem;
+  border: none;
+  border-bottom: 1px solid black;
+  outline: none;
+  transition: border-bottom 0.3s ease;
+  margin-top: -1.5vw;
   text-align: center;
-  position: relative;
-  left: 10%;
+  margin-left: 1vw;
+}
+.item-quantity-input:focus,
+.item-quantity-input:hover {
+  border-radius: 0;
+  height: 0.5vw;
+  border-bottom: 1px solid black;
 }
 .btn-delete{
   z-index: 9999;
   border-radius: 50px;
   cursor: pointer;
+  margin-top: -1vw;
 }
 .item-price-input{
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: white;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  all: unset; /* Reinicia todos los estilos por defecto del input */
   padding: 0.5rem 1.25rem;
-  border-radius: var(--radius-xl);
-  display: flex;
-  width: 7vw;
-  align-items: center;
+  height: 0.5vw;
+  display: inline-block;
+  width: 5vw;
+  margin-left: -2vw;
+  margin-top: -1.5vw;
+}
+.item-price-input:focus,
+.item-price-input:hover {
+  border-radius: 0;
+  border-bottom: 1px solid black;
+}
+
+.precio-texto{
+  margin-left: -1vw;
+  color: black;
 }
 .item-quantity-input{
   left: 3%;
   font-size: 1.2rem;
   font-weight: 700;
-  width: 1.5vw;
+  width: 2.2vw;
   border: 0px;
   background-color: transparent;
   padding: 0.5rem 1.25rem;
@@ -214,18 +287,21 @@
 }
 
 .item-total {
-  margin-left: auto;
+  position: absolute;
+  height: 1vw;
   font-size: 1.2rem;
   font-weight: 700;
-  color: white;
-  width: 8vw;
-  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  margin-left: 13vw;
+  width: 9vw;
   padding: 0.5rem 1.25rem;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
-  display: flex;
   align-items: center;
+  justify-content: center;
+  align-content: center;
+  display: flex;
   gap: 0.3rem;
+  margin-top: -0.5vw;
+  text-align: center;
 }
 
 .item-total::before {
@@ -242,16 +318,19 @@
   margin-top: 1rem;
 }
 .btn-quantity-plus{
-  font-size: 1.5vw;
-  position: relative;
-  left: 3%;
+  font-size: 2vw;
+  position: absolute;
+  margin-left: -0.5vw;
   cursor: pointer;
+  top: -3.1vw;
+  margin-left: 12.5vw;
   color: rgb(57, 238, 57);
 }
 .btn-quantity-minus{
-  font-size: 1.5vw;
-  position: relative;
-  left: 3%;
+  font-size: 2vw;
+  position: absolute;
+  margin-top: -0.1px;
+  margin-left: 8.5vw;
   cursor: pointer;
   color: #dc2626;
 }
@@ -340,7 +419,6 @@
   width: 100%;
   padding: 1rem;
   background: linear-gradient(135deg, var(--success-color), var(--success-hover));
-  color: white;
   border: none;
   border-radius: var(--radius-md);
   font-size: 1.1rem;
@@ -380,7 +458,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
+  overflow-y: auto;
   margin-bottom: 1.5rem;
+  height: 5vw;
 }
 
 .payment-method-group {
@@ -389,13 +469,15 @@
 }
 
 .btn-payment {
-  background-color: var(--primary-color);
+  background-color: rgb(20, 18, 18);
+  display: flex;
+  flex-direction: row;
   color: white;
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  width: 100%;
+  width: 10vw;
   font-weight: 500;
   transition: var(--transition);
   display: flex;
@@ -409,32 +491,55 @@
   transform: translateY(-2px);
   box-shadow: var(--shadow-sm);
 }
-
 .payment-input {
-  width: 100%;
+  width: 17vw;
   padding: 0.75rem 1.25rem;
   margin-top: 0.75rem;
-  border: 2px solid var(--primary-color);
-  border-radius: var(--radius-xl);
+  border: 2px solid transparent;
+  border-radius: var(--radius-xl, 1rem);
   font-size: 1rem;
   text-align: center;
-  display: none;
-  transition: var(--transition);
+  background-color: #f1f1f1;
+  color: #333;
+  box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+  transform: scale(0.95);
+  opacity: 0;
+  animation: fadeInScale 0.6s ease forwards;
+  transition: all 0.3s ease;
 }
 
 .payment-input:focus {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+  border-color: var(--primary-color, #4361ee);
+  box-shadow: 0 0 12px rgba(67, 97, 238, 0.6);
+  background-color: #fff;
+  transform: scale(1.05);
+  color: #000;
 }
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 .btn-btn-success{
-  background-color: var(--primary-color);
+  position: fixed;
+  background-color: rgb(20, 18, 18);
   color: white;
   padding: 0.75rem 1.25rem;
   border: none;
   border-radius: var(--radius-xl);
   cursor: pointer;
-  width: 100%;
+  width: 27vw;
+  margin-left: -1vw;
   font-weight: 500;
+  font-size: 1.15vw;
   transition: var(--transition);
   display: flex;
   align-items: center;
@@ -459,7 +564,7 @@
   }
 
   .ticket-section {
-    width: 100%;
+    width: 20vw;
     position: static;
     max-height: none;
   }
@@ -500,13 +605,139 @@
   flex-direction: column;
   justify-content: space-between;
 }
-.pagos-section {
-  position: fixed;
-  bottom: 5vh;
-  width: 40%;
-  width: var(--ticket-width);
-  padding: 1.5rem;
+@media (min-width: 1800px){
+  .item-card {
+    background: white;
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+    border-left: 4px solid var(--primary-color);
+    transition: var(--transition);
+    position: relative;
+    width: 25vw;
+  }
+  .item-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+  }
+  .item-quantity-input{
+    all: unset;
+    font-size: 1.3rem;
+    font-weight: 700;
+    transition: border-bottom 0.3s ease;
+    margin-top: -1.5vw;
+    text-align: center;
+    width: 3vw;;
+    margin-left: 2vw;
+  }
+  .item-price-input{
+    all: unset; /* Reinicia todos los estilos por defecto del input */
+    font-weight: 700;
+    font-size: 20px;
+    font-size: clamp(12px, 1.3, 20px);
+    height: 1.5vw;
+    display: inline-block;
+    border: 0;
+    text-align: center;
+    width: 7.5vw;
+    margin-left: -0.5vw;
+    margin-top: -1.5vw;
+  }
+  .item-quantity-input:focus,
+  .item-quantity-input:hover {
+  border-radius: 0;
+  height: 1vw;
+  border-bottom: 1px solid black;
+}
+.item-total {
+  position: absolute;
+  height: 1vw;
+  font-size: 1.2rem;
+  font-weight: 700;
+  width: 9vw;
+  padding: 0.5rem 1.25rem;
+  border-radius: var(--radius-xl);
+  align-items: center;
+  justify-content: center;
+  align-content: center;
+  display: flex;
+  gap: 0.3rem;
+  margin-top: -0.1vw;
+  margin-left: 13vw;
+  text-align: center;
+}
+.btn-quantity-plus{
+  font-size: 1.7vw;
+  position: absolute;
+  margin-left: -1vw;
+  cursor: pointer;
+  top: -2.6vw;
+  margin-left: 12.5vw;
+  color: rgb(57, 238, 57);
+}
+.btn-quantity-minus{
+  font-size: 2vw;
+  position: absolute;
+  margin-top: -0.1px;
+  margin-left: 8.5vw;
+  cursor: pointer;
+  color: #dc2626;
+}
+.items-container {
+  position: absolute;
+  margin-top: 4vw;
+  width: 28vw;
+  margin-bottom: 1.5rem;
+  max-height: 65vh;
+  margin-left: -1.5vw;
+  overflow-y: auto;
+}
+#clienteSearch{
+  position: relative;
+  top: -50%;
+  margin-top: -0.2vw;
+  width: 5vw;
+  flex: 1;
+  padding: 0.8rem 1.5rem;
+  border: 2px solid #e2e8f0;
+  border-radius: var(--radius-xl);
+  font-size: 1rem;
+  transition: var(--transition);
   background-color: white;
+}
+.ticket-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  margin-left: -0.3vw;
+  height: 1vw;
+  width: 25vw;
+  background: white;
+  padding-top: 1vw;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid #e2e8f0;
+}
+.pagos-section{
+  margin-top: -7.5vw;
+  padding: 0;
+}
+.ticket-section{
+  min-height: 91vh;
+}
+.payment-methods{
+  height: 3vw;
+  width: 28vw;
+}
+.payment-input{
+  width: 24vw;
+}
+.btn-btn-success{
+  margin-left: -0.1vw;
+}
+.product-list-container{
+  height: 91vh;
+}
 }

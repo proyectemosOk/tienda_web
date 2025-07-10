@@ -1,12 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
     const botones = {
-        'monederos': 'monederos.html',
+        'monederos': '/monederos',
         'ventas': '/ventas',
         'inventario': '/inventarios',
         'cuentas': '/cierre_dia',
-        'personal': 'personal.html',
+        'personal': '/personal',
         'configuraciones': 'configuraciones.html',
-        'empresa': 'empresa.html',
+        'empresa': '/empresa',
         'informes': '/informes',
         'casa': '/home',
     };

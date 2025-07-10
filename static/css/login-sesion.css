@@ -10,7 +10,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-image: url('/static/img/home/fondo-inicio-sesion.jpeg'); /* Reemplazar con tu imagen de paisaje */
+    background-image: url('/static/img/home/fondo-inicio-sesion.png'); /* Reemplazar con tu imagen de paisaje */
     background-size: cover;
     background-position: center;
 }

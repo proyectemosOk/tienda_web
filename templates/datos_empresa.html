@@ -8,9 +8,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/datos_empresa.css">
     <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="/static/css/menu-global.css" />
 </head>
 
 <body>
+ 
     <form id="formDatosEmpresa" novalidate>
         <!-- Logo en esquina superior derecha -->
         <label for="logoInput" class="logo-container" title="Haz clic para cambiar logo">
@@ -20,24 +22,40 @@
 
         <!-- Datos generales -->
         <h2>Información General</h2>
-        <div class="form-grid">
-            <div>
-                <label for="nombreEmpresa">Nombre Legal</label>
-                <input type="text" id="nombreEmpresa" name="nombreEmpresa" required placeholder="Ej: Constructora Andina S.A." />
-            </div>
-            <div>
-                <label for="razonSocial">Razón Social</label>
-                <input type="text" id="razonSocial" name="razonSocial" required placeholder="Ej: Constructora Andina Sociedad Anónima" />
-            </div>
-            <div>
-                <label for="nombreFantasia">Nombre de Fantasía</label>
-                <input type="text" id="nombreFantasia" name="nombreFantasia" placeholder="Ej: Andina Proyectos" />
-            </div>
-            <div>
-                <label for="giro">Giro Comercial</label>
-                <input type="text" id="giro" name="giro" required placeholder="Ej: Construcción de edificios" />
-            </div>
-        </div>
+        <!-- Modificación en la sección de Información General -->
+<div class="form-grid">
+    <div>
+        <label for="nombreEmpresa">Nombre Legal</label>
+        <input type="text" id="nombreEmpresa" name="nombreEmpresa" required placeholder="Ej: Constructora Andina S.A." />
+    </div>
+    <div>
+        <label for="razonSocial">Razón Social</label>
+        <input type="text" id="razonSocial" name="razonSocial" required placeholder="Ej: Constructora Andina Sociedad Anónima" />
+    </div>
+    <div>
+        <label for="nit">NIT</label>
+        <input type="text" id="nit" name="nit" required placeholder="Ej: 900.123.456-1" pattern="^\d{3}\.\d{3}\.\d{3}-\d$" />
+    </div>
+    <div>
+        <label for="giro">Giro Comercial</label>
+        <input type="text" id="giro" name="giro" required placeholder="Ej: Construcción de edificios" />
+    </div>
+    <div>
+        <label for="añoFundacion">Año de Fundación</label>
+        <input type="number" id="añoFundacion" name="añoFundacion" min="1900" max="2025" placeholder="Ej: 2005" />
+    </div>
+    <div>
+        <label for="tamañoEmpresa">Tamaño de Empresa</label>
+        <select id="tamañoEmpresa" name="tamañoEmpresa">
+            <option value="">Seleccione</option>
+            <option value="micro">Microempresa</option>
+            <option value="pequeña">Pequeña</option>
+            <option value="mediana">Mediana</option>
+            <option value="grande">Grande</option>
+        </select>
+    </div>
+</div>
+
 
         <!-- Contacto -->
         <h2>Contacto</h2>
@@ -45,10 +63,6 @@
             <div>
                 <label for="direccion">Dirección Principal</label>
                 <input type="text" id="direccion" name="direccion" required placeholder="Ej: Av. Providencia 1234" />
-            </div>
-            <div>
-                <label for="comuna">Comuna</label>
-                <input type="text" id="comuna" name="comuna" required placeholder="Ej: Providencia" />
             </div>
             <div>
                 <label for="region">Región</label>
@@ -66,7 +80,6 @@
                 <label for="ciudad">Ciudad</label>
                 <select id="ciudad" name="ciudad" required>
                     <option value="">Seleccione una ciudad</option>
-                    <!-- Las ciudades se llenarán dinámicamente -->
                 </select>
             </div>
             <div>
@@ -89,7 +102,7 @@
 
         <!-- Redes Sociales -->
         <div class="social-media-section">
-            <h3>Redes Sociales</h3>
+            <h2>Redes Sociales</h2>
             <div class="social-grid">
                 <div>
                     <label for="facebook" class="social-label"><i class="fab fa-facebook"></i> Facebook</label>
@@ -122,6 +135,7 @@
     </form>
 
     <script src="/static/js/datos_empresa.js"></script>
+    <script src="/static/js/home.js"></script>
 </body>
 
 </html>
