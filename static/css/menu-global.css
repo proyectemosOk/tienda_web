@@ -9,10 +9,10 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    /* transition: width margin-left ease-in 500ms; */
+    transition: width margin-left ease-in 500ms;
 }
 .alto{
-    height: 98vh;
+    height: 97vh;
 }
 #cont_menu.expandido+#iframe-contenido {
     margin-left: 13vw;
@@ -40,10 +40,11 @@
 .oculto{
     display: none;
 }
+
 /* MODO INICIAL: tarjetas en grilla */
 body.modo-inicial #cont_menu {
     position: static;
-    width: 97vw;
+    width: 95vw;
     /* height: 100vh; */
     box-shadow: none;
     overflow: auto;
@@ -53,7 +54,7 @@ body.modo-inicial #cont_menu {
     padding: 1vw;
     align-content: start;
     justify-items: center;
-    /* background-color: #f8fafc; */
+    background-color: #f8fafc;
 }
 
 
@@ -155,94 +156,4 @@ body.modo-menu #cont_menu:hover .texto {
   font-size: 2rem;
   cursor: pointer;
   border-radius: 4px;
-}
-
-/* @media (max-width: 768px) {
-  .hamburger-btn {
-    display: block;
-  }
-
-  body.modo-menu #cont_menu {
-    transition: transform 0.3s ease;
-    width: 60vw;
-    max-width: 300px;
-    height: 100vh;
-    position: fixed;
-    top: 0;
-    left: 0;
-    background-color: #fff;
-    transform: translateX(-100%);
-    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.3);
-  }
-
-  body.menu-open #cont_menu {
-    transform: translateX(0);
-  }
-
-  body.modo-menu .menu-item {
-    padding: 4vw;
-    margin: 2vw;
-    flex-direction: row;
-    align-items: center;
-  }
-
-  body.modo-menu .menu-item img {
-    width: 8vw;
-    height: 8vw;
-    min-width: 8vw;
-  }
-
-  body.modo-menu .texto {
-    margin-left: 3vw;
-    font-size: 4vw;
-    opacity: 1;
-  }
-} */
-
-@media (max-width: 768px) {
-  .hamburger-btn {
-    display: block;
-  }
-
-  #cont_menu {
-    position: fixed;
-    top: 0;
-    left: -100%;   /* Oculto fuera de pantalla */
-    width: 80%;
-    max-width: 300px;
-    height: 100%;
-    background: #f8fafc;
-    box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-    overflow-y: auto;
-    transition: left 0.3s ease;
-    z-index: 9998;
-    padding: 2rem 1rem;
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 4vw;
-  }
-
-  #cont_menu.abierto {
-    left: 0;
-  }
-  
-  body.modo-inicial #cont_menu {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 4vw;
-    padding: 4vw;
-  }
-
-  body.modo-inicial .menu-item {
-    width: 40vw;
-    height: 40vw;
-  }
-
-  body.modo-inicial .menu-item img {
-    width: 20vw;
-    height: 20vw;
-  }
-
-  body.modo-inicial .texto {
-    font-size: 4vw;
-  }
 }

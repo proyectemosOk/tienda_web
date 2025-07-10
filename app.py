@@ -657,7 +657,7 @@ def crear_producto():
             })
 
         # 3️⃣ Insertar producto
-        conn_db.insertar("productos", {
+        id_producto = conn_db.insertar("productos", {
             "codigo": codigo,
             "nombre": nombre,
             "descripcion": descripcion,
@@ -669,11 +669,28 @@ def crear_producto():
             "activo": 1
         })
 
-        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente."})
+        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente.", "id":id_producto})
 
     except Exception as e:
         print("Error en /api/productos:", e)
         return jsonify({"ok": False, "error": "Ocurrió un error al crear el producto."}), 500
+
+@app.route('/api/productos/<int:id_producto>/imagen', methods=['POST'])
+def subir_imagen_producto(id_producto):
+    if 'imagen' not in request.files:
+        return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
+    file = request.files['imagen']
+    if file.filename == '':
+        return jsonify({"ok": False, "error": "Nombre de archivo vacío"}), 400
+    # Verificar extensión (opcional)
+    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+        return jsonify({"ok": False, "error": "Formato no permitido"}), 400
+    # Guardar con nombre consistente
+    filename = f"{id_producto}.png"
+    filepath = os.path.join(IMAGES_FOLDER, filename)
+    file.save(filepath)
+
+    return jsonify({"ok": True, "mensaje": "Imagen guardada exitosamente"})
 
 @app.route('/api/opciones_producto', methods=['GET'])
 def obtener_opciones_producto():
