@@ -219,7 +219,6 @@ def submit():
         print("❌ Error interno:", e)
         return jsonify({"error": "Error interno del servidor"}), 500
 
-
 @app.route('/api/tipos')
 def api_tipos():
     tipos = conn_db.seleccionar("tipos","*")
@@ -411,6 +410,7 @@ def obtener_resumen_ventas():
 @app.route('/api/ventas/<int:id_venta>/detalle', methods=['GET'])
 def obtener_detalle_venta(id_venta):
     try:
+        print(id_venta, type(id_venta))
         # Datos generales de la venta con cliente y vendedor
         venta_info = conn_db.ejecutar_personalizado('''
             SELECT v.id, v.fecha, v.total_venta, c.nombre AS cliente, u.nombre AS vendedor
@@ -1383,7 +1383,8 @@ def crear_venta():
     print("vamos bien")
     return jsonify({
         "valido": True,
-        "mensaje": f"Venta exitosa {id}"
+        "mensaje": f"Venta exitosa {id}",
+        "id": id
     }), 200
 
 # API cargar usuarios

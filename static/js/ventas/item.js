@@ -71,7 +71,7 @@ class Item {
     this.eliminarItemCallback(this.id);
   }
 }
-
+const puntos = new Intl.NumberFormat('es-CO').format;
 class TicketDeVenta {
   constructor() {
     this.items = {};
@@ -212,8 +212,10 @@ class TicketDeVenta {
           throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
         }
 
-        const data = JSON.parse(responseText);
+        const data = JSON.parse( );
         alert('✅ Venta registrada correctamente');
+        
+
         this.items = {};
         this.total = 0;
         this.totalLabel.textContent = '$0.00';
@@ -226,6 +228,7 @@ class TicketDeVenta {
         })
         // Actualizar visual del total (ajusta según cómo lo estés mostrando)
         console.log(data);
+        await imprimirTicket(data.id);
       })
       .catch(err => {
         console.error("❌ Fallo al registrar venta:", err.message);
@@ -370,3 +373,120 @@ document.addEventListener('DOMContentLoaded', () => {
   cargarClientes();
 });
 
+// Funciones para imprimir ticket e historial
+async function imprimirTicket(id) {
+    const venta = await obtenerDatosJSONVentasPorID(id);
+    
+    if (!venta || !venta.productos) {
+        alert('❌ Venta no encontrada o sin productos');
+        return;
+    }
+
+    const fecha = venta.fecha;
+    const cliente = venta.cliente || 'Consumidor Final';
+    const vendedor = venta.vendedor || 'N/D';
+    const productos = venta.productos;
+    const desglose = venta.desglose_pagos || {};
+
+    let productosTexto = productos.map(p => {
+        const total = p.cantidad * p.precio_unitario;
+        return `${p.nombre}\n  ${p.cantidad} x $${puntos(p.precio_unitario.toFixed(2))}  =  $${puntos(total.toFixed(2))}`;
+
+    }).join('\n');
+
+    let pagoTexto = Object.entries(desglose).map(
+        ([metodo, monto]) => `${metodo}: $${puntos(monto.toFixed(2))}`
+    ).join('\n');
+
+    const totalVenta = productos.reduce((sum, p) => sum + p.precio_unitario * p.cantidad, 0);
+    const impuestos = venta.impuestos || 0;
+    const descuento = venta.descuento || 0;
+    const totalFinal = totalVenta + impuestos - descuento;
+
+    const ticket = `
+<html>
+<head>
+  <title>Ticket ${venta.id}</title>
+  <style>
+    @media print {
+      @page {
+        size: 80mm auto;
+        margin: 0;
+      }
+
+      body {
+        margin: 0;
+        font-family: monospace;
+        font-size: 11px;
+        white-space: pre;
+      }
+
+      pre {
+        margin: 0;
+        padding: 5px 10px;
+      }
+    }
+
+    body {
+      font-family: monospace;
+      font-size: 11px;
+      white-space: pre;
+    }
+
+    pre {
+      margin: 0;
+      padding: 5px 10px;
+    }
+  </style>
+</head>
+<body>
+<pre>
+    *** TICKET DE VENTA ***
+-------------------------------
+Venta ID: ${venta.id}
+Fecha: ${fecha}
+Cliente: ${cliente}
+Vendedor: ${vendedor}
+-------------------------------
+Productos:
+${productosTexto}
+-------------------------------
+Subtotal:       $${puntos(totalVenta.toFixed(2))}
+Descuento:      $${puntos(descuento.toFixed(2))}
+IVA:            $${puntos(impuestos.toFixed(2))}
+-------------------------------
+TOTAL:          $${puntos(totalFinal.toFixed(2))}
+
+Métodos de Pago:
+${pagoTexto}
+-------------------------------
+Gracias por su compra
+</pre>
+</body>
+</html>
+`;
+
+    const ventana = window.open('', ''); // ancho aproximado de 80mm en píxeles
+    ventana.document.write(ticket);
+    ventana.document.close();
+    ventana.focus();
+    ventana.print();
+    ventana.close();
+}
+
+async function obtenerDatosJSONVentasPorID(id) {
+    try {
+        const response = await fetch(`/api/ventas/${id}/detalle`);
+        if (!response.ok) {
+            throw new Error(`Error HTTP: ${response.status}`);
+        }
+        const data = await response.json();
+        return data;  // Usa objeto JS normal
+    } catch (error) {
+        console.error("Error al obtener datos de ventas:", error);
+        return {
+            desglose_pagos: {},
+            productos: []
+        };
+    }
+}
