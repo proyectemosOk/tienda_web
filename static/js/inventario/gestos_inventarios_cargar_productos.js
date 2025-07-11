@@ -387,17 +387,25 @@ function nuevo_producto_1() {
                 cancelButtonText: 'Cancelar',
                 width: '800px',
                 didOpen: () => {
+                    // Manejo de imagen
                     document.getElementById('new-imagen').addEventListener('change', (e) => {
                         imagenFileSeleccionada = e.target.files[0];
                     });
 
+                    // Mostrar input si seleccionan "nueva unidad"
                     document.getElementById('new-unidad-select').addEventListener('change', (e) => {
                         const esNueva = e.target.value === 'nueva';
                         document.getElementById('new-unidad-text').style.display = esNueva ? 'block' : 'none';
                         document.getElementById('new-unidad-simbolo').style.display = esNueva ? 'block' : 'none';
                     });
 
-                    // Imagen: manejo de preview y quitar
+                    // Mostrar input si seleccionan "nueva categoría"
+                    document.getElementById('new-categoria-select').addEventListener('change', (e) => {
+                        const esNueva = e.target.value === 'nueva';
+                        document.getElementById('new-categoria-text').style.display = esNueva ? 'block' : 'none';
+                    });
+
+                    // Imagen: vista previa y quitar
                     const imagenInput = document.getElementById('new-imagen');
                     const imagenVista = document.getElementById('imagen-vista');
                     const btnQuitarImagen = document.getElementById('btn-quitar-imagen');
@@ -410,7 +418,6 @@ function nuevo_producto_1() {
                                 imagenVista.src = e.target.result;
                                 imagenVista.style.display = 'block';
                                 btnQuitarImagen.style.display = 'inline-block';
-
                             };
                             reader.readAsDataURL(file);
                         }
@@ -422,7 +429,6 @@ function nuevo_producto_1() {
                         imagenVista.style.display = 'none';
                         btnQuitarImagen.style.display = 'none';
                         imagenFileSeleccionada = null;
-
                     });
                 },
                 preConfirm: () => {

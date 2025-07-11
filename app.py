@@ -1544,10 +1544,4 @@ def obtener_servicios():
         return jsonify({"error": "Error al obtener servicios"}), 500
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-    app.run(debug=True, host="0.0.0.0", port=5000)
-=======
-    host_ip = socket.gethostbyname(socket.gethostname())  # Obtiene IP automáticamente
-    print(f"Servidor corriendo en http://{host_ip}:5000")  # ✅ Se mostrará antes de iniciar
-    app.run(host='0.0.0.0', port=5000, debug=True)
->>>>>>> origin/dev
+    app.run(host="0.0.0.0", port=5000,  debug=True)
