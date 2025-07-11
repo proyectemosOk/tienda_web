@@ -28,3 +28,5 @@ Para instalar las dependencias del proyecto, ejecuta el siguiente comando:
 
 ```bash
 pip install -r requirements.txt
+
+int
