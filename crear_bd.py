@@ -273,6 +273,7 @@ def crear_tablas(base):
         venta_id INTEGER NOT NULL,
         metodo_pago TEXT NOT NULL,
         valor REAL NOT NULL,
+        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         FOREIGN KEY (venta_id) REFERENCES ventas (id)
     )
     ''')
@@ -364,11 +365,13 @@ def crear_tablas(base):
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     numero_factura TEXT NOT NULL,
     proveedor_id INTEGER,
+    fecha DATETIME NOT NULL,
     fecha_emision DATE NOT NULL,
     fecha_vencimiento DATE,
     monto_total INTEGER NOT NULL,
     estado_pago_id INTEGER DEFAULT 1,
     usuario_id INTEGER,
+    
     FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY (estado_pago_id) REFERENCES estado_pago(id)
@@ -394,6 +397,7 @@ def crear_tablas(base):
         fecha_pago DATE NOT NULL,
         monto DECIMAL(10,2) NOT NULL,
         observaciones TEXT,
+        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         FOREIGN KEY (factura_id) REFERENCES facturas_proveedor(id),
         FOREIGN KEY (tipo_pago_id) REFERENCES tipos_pago(id)
         )
@@ -415,7 +419,7 @@ def crear_tablas(base):
     # Tabla de Tipos de Pago
     cursor.execute('''CREATE TABLE IF NOT EXISTS tipos_pago (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nombre TEXT NOT NULL,
+            nombre TEXT NOT NULL UNIQUE,
             descripcion TEXT,
             actual REAL DEFAULT 0
         )
@@ -441,9 +445,11 @@ def crear_tablas(base):
             fecha_entrada DATE DEFAULT CURRENT_DATE,
             monto REAL NOT NULL,
             descripcion TEXT NOT NULL,
+            id_usuario INTEGER NOT NULL,
             categoria INTEGER NOT NULL,
             metodo_pago INTEGER NOT NULL,
             FOREIGN KEY (categoria) REFERENCES categoria_gastos(id),
+            FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
             FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id)
         )
     ''')
@@ -539,6 +545,7 @@ def crear_tablas(base):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         fecha DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
         cliente INTEGER,
+        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         tipo INTEGER,
         marca TEXT,
         modelo TEXT,
@@ -620,6 +627,7 @@ def crear_tablas(base):
             id_orden INTEGER NOT NULL,
             tipo_pago INTEGER,
             monto REAL NOT NULL,
+            usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
             FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id),
             FOREIGN KEY(id_orden) REFERENCES ordenes(id)
         )

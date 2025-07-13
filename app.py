@@ -15,8 +15,11 @@ from PIL import Image
 from io import BytesIO
 from flask import request, jsonify
 import math
+from apis_factura import *
+
 app = Flask(__name__)
-app.register_blueprint(extras)  # lo registramos
+app.register_blueprint(extras)  
+app.register_blueprint(facturas_bp) 
 UPLOAD_FOLDER = 'uploads'
 
 IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
@@ -44,7 +47,7 @@ def redimensionar_imagen(archivo, max_ancho=800, max_alto=800):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('login-sesion.html')
 
 @app.route('/home')
 def home():
@@ -163,6 +166,7 @@ def submit():
         # --- Crear objeto Orden ---
         orden = Orden(
             cliente=cliente_id,
+            usuario_id=form["usuario"],
             tipo=tipo,
             marca=form['marca'].strip(),
             modelo=form['modelo'].strip(),
@@ -241,7 +245,6 @@ def api_productos():
         pagina = request.args.get('pagina', default=1, type=int)
         limite = request.args.get('limite', default=10, type=int)
         search = request.args.get('search', default='', type=str).strip()
-        print(pagina, limite, search)
         offset = (pagina - 1) * limite
 
         # 2️⃣ Construir filtro de búsqueda dinámico
@@ -468,7 +471,6 @@ def obtener_detalle_venta(id_venta):
         print(f"Error al obtener detalle de venta {id_venta}: {e}")
         return jsonify({"error": "Error al obtener detalle de venta."}), 500
 
-
 @app.route('/api/ventas/cargar', methods=['GET'])
 def cargar_ventas():
     try:
@@ -512,7 +514,6 @@ def cargar_ventas():
     except Exception as e:
         print(f"Error al cargar las ventas del día: {e}")
         return jsonify({"error": "Ocurrió un error al cargar las ventas del día."}), 500
-    
 
 @app.route('/api/productos/<codigo>', methods=['PUT'])
 def actualizar_producto(codigo):
@@ -611,7 +612,6 @@ def eliminar_producto(codigo):
             'mensaje': 'Error interno del servidor',
             'error': str(e)
         }), 500
-
 
 @app.route('/api/productos', methods=['POST'])
 def crear_producto():
@@ -791,112 +791,6 @@ def buscar_proveedor():
 
     return jsonify({'ok': False, 'error': 'Proveedor no encontrado'}), 404
 
-@app.route('/api/entradas', methods=['POST'])
-def registrar_entrada():
-    data = request.get_json()
-    try:
-        # ✅ 1️⃣ Validar campos principales
-        proveedor_id = data.get('proveedor')
-        numero_factura = data.get('numero_factura')
-        fecha_emision = data.get('fecha_emision')
-        fecha_vencimiento = data.get('fecha_vencimiento')
-        usuario_id = data.get('usuario_id')
-        monto_total = data.get('monto_total', 0)
-        monto_pagado = data.get('monto_pagado', 0)
-
-        productos = data.get('productos', [])
-        pagos = data.get('pagos', [])
-        for key, valor in data.items():
-            print(f"{key}: {valor}")
-
-        if not proveedor_id or not numero_factura or not fecha_emision or not productos:            
-            return jsonify({'ok': False, 'error': 'Datos incompletos'}), 400
-
-        # ✅ 2️⃣ Determinar estado de pago
-        if monto_pagado <= 0:
-            estado_pago_id = 1  # Pendiente
-        elif monto_pagado >= monto_total:
-            estado_pago_id = 3  # Pagado
-        else:
-            estado_pago_id = 2  # Parcial
-
-            
-        # ✅ 3️⃣ Insertar en facturas_proveedor
-        factura_data = {
-            "numero_factura": numero_factura,
-            "proveedor_id": proveedor_id,
-            "fecha_emision": fecha_emision,
-            "fecha_vencimiento": fecha_vencimiento,
-            "monto_total": monto_total,
-            "estado_pago_id": estado_pago_id,
-            "usuario_id": usuario_id
-        }
-        print(factura_data, "\nhola\n")
-        factura_id, error = conn_db.insertar("facturas_proveedor", factura_data)
-        print("Vamos bien 2", factura_id, "\nerror")
-        if error:
-            return jsonify({'ok': False, 'error': f'Error insertando factura: {error}'}), 500
-
-        # ✅ 4️⃣ Insertar cada producto en detalle_factura y actualizar stock
-        for item in productos:
-            # Obtener producto_id real
-            producto_result = conn_db.seleccionar(
-                "productos", 
-                columnas="id", 
-                condicion="codigo = ?", 
-                parametros=(item["codigo_producto"],)
-            )
-            if not producto_result:
-                return jsonify({'ok': False, 'error': f"Producto no encontrado: {item['codigo_producto']}"}), 400
-            producto_id = producto_result[0][0]
-
-            detalle_data = {
-                "factura_id": factura_id,
-                "producto_id": producto_id,
-                "cantidad": item["cantidad"],
-                "precio_compra": item["precio_compra"],
-                "precio_venta": item["precio_venta"],
-                "fecha_entrada": item["fecha_vencimiento"]
-            }
-            conn_db.insertar("detalle_factura", detalle_data)
-
-            conn_db.actualizar(
-                "productos",
-                {
-                    "stock": f"stock + {item['cantidad']}",
-                    "precio_compra": item["precio_compra"],
-                    "precio_venta": item["precio_venta"]
-                },
-                "id = ?",
-                (producto_id,),
-                expresion_sql=True
-            )
-
-
-            # Registrar lote
-            conn_db.insertar("lotes_productos", {
-                "id_producto": producto_id,
-                "cantidad": item["cantidad"],
-                "precio_compra": item["precio_compra"],
-                "fecha_ingreso": fecha_emision
-            })
-
-        # ✅ 5️⃣ Insertar pagos
-        for pago in pagos:
-            pago_data = {
-                "factura_id": factura_id,
-                "tipo_pago_id": pago["tipo_pago_id"],
-                "fecha_pago": pago["fecha_pago"],
-                "monto": pago["monto"],
-                "observaciones": pago.get("observaciones", "")
-            }
-            conn_db.insertar("pagos_factura", pago_data)
-
-        return jsonify({'ok': True, 'factura_id': factura_id}), 201
-
-    except Exception as e:
-        print(f"❌ Error al registrar entrada: {e}")
-        return jsonify({'ok': False, 'error': str(e)}), 500
 
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
@@ -1364,7 +1258,8 @@ def crear_venta():
         detalles_pagos = {
             "venta_id": id,
             "metodo_pago": pago["metodo"],
-            "valor": pago["valor"]
+            "valor": pago["valor"],
+            "usuario_id":data['vendedor_id']
         }
         conn_db.insertar("pagos_venta", detalles_pagos)
         conn_db.actualizar(
@@ -1380,7 +1275,7 @@ def crear_venta():
         "total_utilidad": total_utilidad
     }, "id = ?", (id,))
 
-    print("vamos bien")
+
     return jsonify({
         "valido": True,
         "mensaje": f"Venta exitosa {id}",

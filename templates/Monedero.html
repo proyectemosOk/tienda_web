@@ -6,10 +6,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cierre de Caja
   </title>
+  <script src="/static/js/cargarDeafaul/cargar.js"></script>
+
   <link rel="stylesheet" href="/static/css/monederos/Monedero.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <link rel="stylesheet" href="/static/css/monederos/tarjetas.css">
+
+
 </head>
 
 <body>
@@ -34,15 +38,15 @@
           <p>Agregar nuevo gasto</p>
         </div>
 
-        <div class="accion-rapida" data-target="cuentas-por-cobrar">
+        <!-- <div class="accion-rapida" data-target="cuentas-por-cobrar">
           <i class="fas fa-file-invoice"></i>
           <h3>Cuentas por Cobrar</h3>
           <p>Administrar tickets pendientes</p>
-        </div>
+        </div> -->
 
         <div class="accion-rapida" data-target="cuentas-por-pagar">
           <i class="fas fa-file-invoice"></i>
-          <h3>Cuentas por pagar</h3>
+          <h3>Facturas por pagar</h3>
           <p>Administrar facturas pendientes</p>
         </div>
       </div>
@@ -119,14 +123,14 @@
       </section>
 
       <!-- Sección de cuentas por cobrar -->
-      <section class="seccion" id="cuentas-por-cobrar">
+      <!-- <section class="seccion" id="cuentas-por-cobrar">
         <h2><i class="fas fa-file-invoice-dollar"></i> Cuentas por Cobrar</h2>
         <div id="lista-cuentas"></div>
-      </section>
+      </section> -->
 
       <!-- Sección de cuentas por pagar -->
       <section class="seccion" id="cuentas-por-pagar">
-        <h2><i class="fas fa-file-invoice-dollar"></i> Cuentas por Pagar</h2>
+        <h2><i class="fas fa-file-invoice-dollar"></i> Facturas por Pagar</h2>
         <div id="lista-cuentas-cxp"></div>
       </section>
 
@@ -193,8 +197,9 @@
     </div>
   </div>
 </body>
-<script type="module" src="/static/js/Monedero/Monedero.js" defer></script>
-<script type="module" src="/static/js/Monedero/pestañas.js" defer></script>
-<script type="module" src="/static/js/Monedero/cargarDatosMonedero.js" defer></script>
+
+<script src="/static/js/Monedero/Monedero.js"></script>
+<script src="/static/js/Monedero/pestañas.js"></script>
+<script src="/static/js/Monedero/cargarDatosMonedero.js"></script>
 
 </html>

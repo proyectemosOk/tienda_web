@@ -158,7 +158,16 @@ class ConexionBase:
             conexion.commit()
             conexion.close()
 
-
+    def ejecutar_personalizado_1(self, consulta, parametros=None):
+        with self.conectar() as conn:
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            if parametros:
+                cursor.execute(consulta, parametros)
+            else:
+                cursor.execute(consulta)
+            resultados = cursor.fetchall()
+            return [dict(row) for row in resultados]
 
     def validar_credenciales(self, tabla: str, usuario: str, contrasena: str) -> Dict[str, Union[bool, str, int]]:
         """

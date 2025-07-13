@@ -205,9 +205,11 @@ function mostrarToast(mensaje, tipo = "info") {
 
 async function enviarOrden(e) {
     e.preventDefault();
-
+    let usuarioId = datos.id; // Ajusta o remueve si aún no usas login
+    alert(usuarioId)
     const form = e.target;
-    const formData = new FormData(form);
+    let formData = new FormData(form);
+    formData.usuario = datos.id;
     console.log(formData)
     const submitButton = form.querySelector("button[type='submit']");
     submitButton.disabled = true;

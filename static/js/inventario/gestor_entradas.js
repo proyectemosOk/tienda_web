@@ -2,6 +2,8 @@
 
 document.addEventListener("DOMContentLoaded", () => {
     let pagosAgregados = [];
+    let usuarioId = datos.id; // Ajusta o remueve si aún no usas login
+    alert(usuarioId)
     // Variables globales
     const proveedorInput = document.getElementById("proveedor");
     const buscarProveedorBtn = document.getElementById("buscar-proveedor");
@@ -249,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const montoPagado = pagosAgregados.reduce((sum, pago) => sum + pago.monto, 0);
 
         // Simular usuario logueado (o toma de sesión)
-        const usuarioId = 1; // Ajusta o remueve si aún no usas login
+        usuarioId = datos.id; // Ajusta o remueve si aún no usas login
 
         // Construir el objeto para enviar
         const factura = {
@@ -277,7 +279,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
 
         // Enviar al backend
-        fetch('/api/entradas', {
+        fetch('/api/entradas_facturas', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(factura)

@@ -206,13 +206,14 @@ class TicketDeVenta {
     })
       .then(async res => {
         const responseText = await res.text();
-
+        
         if (!res.ok) {
           console.error("❌ ERROR:", responseText);
           throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
         }
+        
+        const data = JSON.parse(responseText);
 
-        const data = JSON.parse( );
         alert('✅ Venta registrada correctamente');
         
 
@@ -227,7 +228,7 @@ class TicketDeVenta {
           input.value = '';
         })
         // Actualizar visual del total (ajusta según cómo lo estés mostrando)
-        console.log(data);
+        console.log(data, +"hola");
         await imprimirTicket(data.id);
       })
       .catch(err => {

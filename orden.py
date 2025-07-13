@@ -1,8 +1,9 @@
 class Orden:
-    def __init__(self, cliente, tipo, marca, modelo,
+    def __init__(self, cliente,usuario_id, tipo, marca, modelo,
              estado_entrada, perifericos, observaciones,
              total_servicio):
         self.cliente = cliente
+        self.usuario_id = usuario_id
         self.tipo = tipo
         self.marca = marca
         self.modelo = modelo

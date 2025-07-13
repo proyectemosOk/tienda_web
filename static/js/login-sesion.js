@@ -1,3 +1,12 @@
+function guardarEnLocalStorage(clave, valor) {
+    try {
+        valor = JSON.stringify(valor);
+        localStorage.setItem(clave, valor);
+    } catch (e) {
+        console.error("Error al guardar en localStorage:", e);
+    }
+}
+
 document.getElementById('Login-sesion').addEventListener('click', async function(e) {
     e.preventDefault();
     
@@ -33,7 +42,8 @@ document.getElementById('Login-sesion').addEventListener('click', async function
             sessionStorage.setItem('userRole', data.rol);
             
             // 6. Redirección segura
-            window.location.href = '/home';
+            guardarEnLocalStorage("usuario", {rol: data.rol, id:data.id_usuario})
+            window.location.href = '/principal';
         } else {
             mostrarError(data.mensaje || 'Error de autenticación');
         }
@@ -43,6 +53,10 @@ document.getElementById('Login-sesion').addEventListener('click', async function
         mostrarError('Error de conexión con el servidor');
     }
 });
+
+document.addEventListener("DOMContentLoaded", ()=>{
+    guardarEnLocalStorage("usuario","0")
+})
 
 function mostrarError(mensaje) {
     const errorDiv = document.getElementById('error-login');

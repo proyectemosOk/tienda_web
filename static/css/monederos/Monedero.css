@@ -9,6 +9,7 @@
      --blanco: #ffffff;
      --verde: #10b981;
      --rojo: #ef4444;
+     --parcial: orange;
      --sombra: 0 4px 12px rgba(0, 0, 0, 0.08);
      --radio-borde: 10px;
    }
@@ -295,7 +296,37 @@
 
    .gasto-item p,
    .cuenta-item p {
-     margin: 0;
+     text-transform: capitalize;
+     font-size: 1.5rem;
+     margin: 0.5rem;
+   }
+   .cuenta-item.estado-pendiente {
+    
+    border-left: 4px solid var(--rojo);
+
+   }
+
+   .cuenta-item.estado-parcial {
+    
+     border-left: 4px solid var(--parcial);
+   }
+
+   .cuenta-item.estado-pagado {
+     border-left: 4px solid green;
+   }
+   .estado-pendiente .estado-label {
+    color: var(--rojo);
+    
+
+   }
+
+   .estado-parcial .estado-label {
+    color: var(--parcial);
+     
+   }
+
+   .estado-pagado .estado-label {
+     color: green;
    }
 
    .gasto-item .monto,
