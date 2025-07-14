@@ -4,11 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Menu</title>
+
+    <title>Proyectemos OK</title> <!-- Cambia esto por el nombre que quieras -->
+    <link rel="icon" type="image/png" href="/static/Iconos/logo2.png">
+    <script src="/static/js/cargarDeafaul/cargar.js" defer></script>
+
     <link rel="stylesheet" href="/static/css/menu-global.css">
-    <script type="module" src="/static/js/cargarDeafaul/cargar.js" defer></script>
-    <script src="/static/js/menu-global.js" defer></script>
-    
+
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/Iconos/logo2.png">
+    <link rel="apple-touch-icon" href="/static/Iconos/logo2.png">
+
 </head>
 
 <body class="modo-inicial">
@@ -74,11 +80,17 @@
             <br>
             <div class="texto"><span><b>Informes</b></span></div>
         </div>
+        <div id="salir" class="menu-item tarjeta " data-page="informes">
+            <img src="/static/Iconos/salir.png" alt="SALIR">
+            <br>
+            <div class="texto"><span><b>Salir</b></span></div>
+        </div>
 
     </div>
 
     <iframe id="iframe-contenido" class="oculto"></iframe>
 
 </body>
+<script src="/static/js/menu-global.js" defer></script>
 
 </html>

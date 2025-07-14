@@ -1,175 +1,132 @@
-// Función para obtener datos predeterminados
-function obtenerDatosJSONEmpresa() {
-    return {
-        logo_url: "/uploads/logo_empresa.png",
-        nombreEmpresa: "Constructora Andina S.A.",
-        razonSocial: "Constructora Andina Sociedad Anónima",
-        nombreFantasia: "Andina Proyectos",
-        giro: "Construcción de edificios",
-        direccion: "Av. Providencia 1234",
-        comuna: "Providencia",
-        region: "andina",
-        ciudad: "Bogotá",
-        telefono: "+57 300 123 4567",
-        telefonoSecundario: "+57 301 234 5678",
-        email: "contacto@andina.co",
-        sitioWeb: "https://www.andina.co",
-        facebook: "https://www.facebook.com/andina",
-        instagram: "https://www.instagram.com/andina",
-        linkedin: "https://www.linkedin.com/company/andina",
-        twitter: "https://www.twitter.com/andina",
-        nit: "900.123.456-1",
-        añoFundacion: "2005",
-        tamañoEmpresa: "mediana",
-    };
-}
+document.addEventListener("DOMContentLoaded", () => {
+    cargarDatosEmpresa();
 
-// Función para previsualizar el logo
-function previewLogo(event) {
-    const file = event.target.files[0];
-    const reader = new FileReader();
-
-    reader.onload = function (e) {
-        const logoPreview = document.getElementById('logoPreview');
-        logoPreview.src = e.target.result; // Cambia la fuente de la imagen al logo seleccionado
-    }
-
-    if (file) {
-        reader.readAsDataURL(file); // Lee el archivo como URL de datos
-    }
-}
-
-// Validación en tiempo real de inputs
-document.addEventListener("DOMContentLoaded", function () {
     const form = document.getElementById("formDatosEmpresa");
-    const inputs = form.querySelectorAll("input, select");
-
-    inputs.forEach((input) => {
-        input.addEventListener("input", () => validarCampo(input));
-        input.addEventListener("blur", () => validarCampo(input));
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        guardarDatosEmpresa();
     });
 
-    function validarCampo(input) {
-        const errorMsg = input.nextElementSibling;
-        const esValido = input.checkValidity();
-
-        if (!esValido) {
-            input.classList.add("input-error");
-            input.classList.remove("input-ok");
-
-            if (!errorMsg || !errorMsg.classList.contains("error-text")) {
-                const mensaje = document.createElement("small");
-                mensaje.classList.add("error-text");
-                mensaje.textContent = obtenerMensajeError(input);
-                input.insertAdjacentElement("afterend", mensaje);
-            } else {
-                errorMsg.textContent = obtenerMensajeError(input);
-            }
-        } else {
-            input.classList.remove("input-error");
-            input.classList.add("input-ok");
-
-            if (errorMsg && errorMsg.classList.contains("error-text")) {
-                errorMsg.remove();
-            }
+    const btnCancelar = document.getElementById("btnCancelar");
+    btnCancelar.addEventListener("click", () => {
+        if (confirm("¿Seguro que quieres cancelar los cambios?")) {
+            location.reload();
         }
-    }
-
-    function obtenerMensajeError(input) {
-        if (input.validity.valueMissing) return "Este campo es obligatorio.";
-        if (input.validity.patternMismatch) return "Formato inválido.";
-        if (input.validity.typeMismatch) return "Tipo de dato incorrecto.";
-        return "Campo inválido.";
-    }
-
-    // Cargar datos predeterminados al cargar la página
-    const datos = obtenerDatosJSONEmpresa();
-    for (const key in datos) {
-        const input = document.querySelector(`[name="${key}"]`);
-        if (input) input.value = datos[key];
-    }
+    });
 });
 
-// Datos de las ciudades por región
-const citiesByRegion = {
-    "caribe": [
-        "Barranquilla", "Cartagena", "Santa Marta", "Ciénaga", "Valledupar", "Sincelejo", "Montería", "Riohacha", "Santa Cruz de Lorica",
-        "Maicao", "Soledad", "Turbaco", "Puerto Colombia", "Santo Tomás", "Fundación", "Chiriguaná", "El Banco", "Aguachica", "La Paz",
-        "Bosconia", "Aracataca", "Gamarra", "La Jagua de Ibirico", "Barrancas", "San Juan del Cesar", "La Gloria", "Dibulla",
-        "Tolu", "San Onofre", "Sabanalarga", "Arjona", "Montelíbano", "Carmen de Bolívar", "San Estanislao de Kostka", "El Retén",
-        "Magangué", "Margarita", "Tiquisio", "Morales", "Zapatoca", "Simití", "San Zenón", "San Andrés", "Providencia"
-    ],
-    "andina": [
-        "Bogotá", "Medellín", "Cali", "Bucaramanga", "Pereira", "Manizales", "Cúcuta", "Armenia", "Tunja", "Popayán", "Neiva", "Ibagué",
-        "Pasto", "Villavicencio", "Bello", "Envigado", "Rionegro", "Chinchiná", "Palmira", "Tuluá", "Calarcá", "Sogamoso",
-        "La Dorada", "Pitalito", "Yumbo", "El Tambo", "Fusagasugá", "Tocaima", "Quibdó", "Montelíbano", "Yacuanquer",
-        "Cajamarca", "La Vega", "Sibaté", "Cajicá", "Girardot", "Alto de los Andes", "Ubaté", "Chía", "Cota", "Tocaima"
-    ],
-    "pacifico": [
-        "Buenaventura", "Quibdó", "Tumaco", "Pasto", "Cali", "Bojayá", "Guapi", "Cértegui", "Lloró", "Rio Sucio",
-        "Vaupés", "Puerto Tejada", "Valle del Cauca", "San Juan de Pasto", "Pueblo Nuevo", "Guapi", "Pijao", "Tuluá", "Calima",
-        "Bahía Solano", "Magüí Payán", "Nariño", "La Tola"
-    ],
-    "llanos": [
-        "Villavicencio", "Casanare", "Yopal", "Aguazul", "Hato Corozal", "Tauramena", "Villanueva", "La Macarena", "San José del Guaviare",
-        "San Martín", "Cumaral", "Acacías", "Puerto López", "Puerto Gaitán", "Granada", "La Primavera", "Restrepo", "Cabuyaro", "Bajo Uribe",
-        "Inírida", "Puerto Inírida", "San José de Guaviare", "Vaupés"
-    ],
-    "amazonas": [
-        "Leticia", "Mocoa", "Puerto Nariño", "La Chorrera", "Tarapacá", "San José del Guaviare", "El Encanto", "Papuya",
-        "Santa Rosalía", "La Libertad", "Puerto Caicedo", "Puerto Arica", "Bajo Guaviare", "Yaguará", "Los Reyes", "Garzón", "Neiva",
-        "Villagarzón", "La Guainía", "Solano"
-    ],
-    "orinoquia": [
-        "San José del Guaviare", "Arauca", "Saravena", "Tame", "Puerto Rondón", "Fortul", "Hato Corozal", "Arauquita",
-        "Cumaribo", "La Primavera", "Tame", "Arauquita", "San Martín", "Boca de Guaviare"
-    ]
-};
+async function cargarDatosEmpresa() {
+    try {
+        const response = await fetch("/api/empresa");
+        if (!response.ok) throw new Error("Error al cargar datos");
 
-// Actualiza las ciudades según la región seleccionada
-function updateCities() {
-    const regionSelect = document.getElementById("region");
-    const citySelect = document.getElementById("ciudad");
-    const selectedRegion = regionSelect.value;
-
-    // Limpiar las ciudades
-    citySelect.innerHTML = '<option value="">Seleccione una ciudad</option>';
-
-    if (selectedRegion) {
-        const cities = citiesByRegion[selectedRegion];
-        cities.forEach(city => {
-            const option = document.createElement("option");
-            option.value = city.toLowerCase().replace(/\s+/g, '_'); // Reemplazar espacios por guiones bajos
-            option.textContent = city;
-            citySelect.appendChild(option);
-        });
+        const datos = await response.json();
+        cargarEnFormulario(datos);
+    } catch (error) {
+        console.error(error);
+        alert("No se pudieron cargar los datos de la empresa.");
     }
 }
 
-// Manejo del envío del formulario
-document.getElementById("formDatosEmpresa").addEventListener("submit", function (e) {
-    e.preventDefault();
+function cargarEnFormulario(datos) {
+    if (!datos) return;
 
-    const formData = new FormData(this);
-    const jsonData = {};
+    // Cargar texto de campos
+    const campos = [
+        "nombreEmpresa",
+        "nit",
+        "direccion",
+        "region",
+        "ciudad",
+        "telefono",
+        "email",
+        "sitioWeb"
+    ];
 
-    formData.forEach((value, key) => {
-        jsonData[key] = value;
+    campos.forEach(campo => {
+        // Mostrar el valor correspondiente en la consola
+
+        // (opcional) Rellenar un input cuyo id coincida con el campo
+        const input = document.querySelector(`#${campo}`);
+        if (input) {
+            input.value = datos.datos[campo];  // o datos[campo]
+        }
     });
 
-    // Aquí podrías manejar los datos como desees, por ejemplo, imprimir en consola
-    console.log("Datos enviados:", jsonData);
-    alert("Datos guardados (simulación).");
-});
 
-// Cargar los datos iniciales y actualizar las ciudades al cargar la página
-window.addEventListener("DOMContentLoaded", () => {
-    const datos = obtenerDatosJSONEmpresa();
-    for (const key in datos) {
-        const input = document.querySelector(`[name="${key}"]`);
-        if (input) input.value = datos[key];
+}
+
+function previewLogo(event) {
+    const reader = new FileReader();
+    reader.onload = function () {
+        const img = document.getElementById("logoPreview");
+        img.onload = function () {
+            const maxAlto = 150;
+
+            // Si la imagen es más alta que 150px, se escala
+            if (img.naturalHeight > maxAlto) {
+                const escala = maxAlto / img.naturalHeight;
+                img.style.height = maxAlto + "px";
+                img.style.width = (img.naturalWidth * escala) + "px";
+            } else {
+                // Si es más pequeña, se muestra con su tamaño real
+                img.style.height = img.naturalHeight + "px";
+                img.style.width = img.naturalWidth + "px";
+            }
+        };
+        img.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+
+async function guardarDatosEmpresa() {
+    const form = document.getElementById("formDatosEmpresa");
+    const formData = new FormData(form);
+    const boton = document.querySelector("#btnGuardarEmpresa");
+
+    boton.disabled = true;
+    boton.textContent = "Guardando...";
+
+    try {
+        const response = await fetch("/api/empresa", {
+            method: "POST",
+            body: formData
+        });
+
+        if (!response.ok) throw new Error("Error al guardar");
+
+        alert("Datos guardados correctamente.");
+
+        // Actualizar logo si fue subido
+        const archivoLogo = formData.get("logoInput");
+        if (archivoLogo && archivoLogo.name) {
+            const reader = new FileReader();
+            reader.onload = function () {
+                const img = document.getElementById("logoPreview");
+                img.onload = function () {
+                    const maxAlto = 150;
+                    if (img.naturalHeight > maxAlto) {
+                        const escala = maxAlto / img.naturalHeight;
+                        img.style.height = maxAlto + "px";
+                        img.style.width = (img.naturalWidth * escala) + "px";
+                    } else {
+                        img.style.height = img.naturalHeight + "px";
+                        img.style.width = img.naturalWidth + "px";
+                    }
+                };
+                img.src = reader.result;
+            };
+            reader.readAsDataURL(archivoLogo);
+        }
+
+        // form.reset();
+    } catch (error) {
+        console.error(error);
+        alert("No se pudieron guardar los datos de la empresa.");
+    } finally {
+        boton.disabled = false;
+        boton.textContent = "Guardar";
     }
-    
-    // Actualizar las ciudades según la región predeterminada
-    updateCities();
-});
+}
+

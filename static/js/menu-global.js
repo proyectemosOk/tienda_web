@@ -1,11 +1,21 @@
 function cargarPagina(ruta) {
   if (ruta === "bienvenida") return;
+  if(ruta === "salir") return window.location.href = '/';
   document.getElementById("iframe-contenido").src = ruta;
   document.getElementById("iframe-contenido").classList.add("alto")
 
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  const rol = datos.rol;
+
+    if (rol !== "admin" && rol !== "superAdmin") {
+        const personal = document.getElementById("personal");
+        const empresa = document.getElementById("empresa");
+
+        if (personal) personal.style.display = "none";
+        if (empresa) empresa.style.display = "none";
+    }
   const contMenu = document.getElementById("cont_menu");
   const iframe = document.getElementById("iframe-contenido");
 
@@ -20,7 +30,8 @@ document.addEventListener("DOMContentLoaded", () => {
     configuraciones: "/configuraciones",
     empresa: "/empresa",
     informes: "/informes",
-    casa: "bienvenida"
+    casa: "bienvenida",
+    salir:"salir"
   };
 
   // Hover expandido SOLO en modo-menu

@@ -16,10 +16,12 @@ from io import BytesIO
 from flask import request, jsonify
 import math
 from apis_factura import *
+from api_empresa import *
 
 app = Flask(__name__)
 app.register_blueprint(extras)  
-app.register_blueprint(facturas_bp) 
+app.register_blueprint(facturas_bp)
+app.register_blueprint(empresa_bp)
 UPLOAD_FOLDER = 'uploads'
 
 IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
@@ -719,17 +721,20 @@ def crear_proveedor():
         nuevo_codigo = int(ultimo_codigo) + 1
         # Insertar el proveedor en la base de datos
         resultado, error_info = conn_db.insertar(
-            tabla="proveedores",
-            datos={
+            "proveedores",
+            {
                 "codigo": nuevo_codigo,
                 "nombre": datos["nombre"],
                 "rut": datos["rut"],
                 "direccion": datos.get("direccion"),
                 "telefono": datos["telefono"],
                 "email": datos.get("email"),
+                "fechar_registro": "date('now', 'localtime')",
                 "estado": 1
-            }
+            },
+            expresion_sql=True
         )
+
 
         print(resultado, error_info)
 
@@ -1288,7 +1293,9 @@ def cargar_usuarios():
     usuarios = conn_db.seleccionar(
         tabla="usuarios",
         columnas="id, nombre, rol, email, telefono",
-        condicion="estado = 1"
+        condicion = "estado = 1 AND rol != 'superAdmin'"
+
+
     )
     if usuarios:
         lista_usuarios = [

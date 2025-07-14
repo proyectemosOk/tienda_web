@@ -55,15 +55,35 @@ class ConexionBase:
             conexion.close()
 
 
-    def insertar(self, tabla, datos):
+    def insertar(self, tabla, datos, expresion_sql=False):
+        columnas = []
+        placeholders = []
+        valores = []
 
-        columnas = ", ".join(datos.keys())
-        valores = tuple(datos.values())
-        placeholders = ", ".join("?" for _ in datos)
-        consulta = f"INSERT INTO {tabla} ({columnas}) VALUES ({placeholders})"
-        resultado = self.ejecutar_consulta(consulta, valores)
+        if expresion_sql:
+            for col, val in datos.items():
+                columnas.append(col)
+                if isinstance(val, str) and val.strip().lower().endswith(')'):
+                    # Asumimos que es una función SQL
+                    placeholders.append(val)
+                else:
+                    placeholders.append("?")
+                    valores.append(val)
+        else:
+            columnas = list(datos.keys())
+            placeholders = ["?"] * len(datos)
+            valores = list(datos.values())
+
+        columnas_sql = ", ".join(columnas)
+        placeholders_sql = ", ".join(placeholders)
+
+        consulta = f"INSERT INTO {tabla} ({columnas_sql}) VALUES ({placeholders_sql})"
+
+        resultado = self.ejecutar_consulta(consulta, tuple(valores))
+        print(consulta, valores)
         print(resultado)
-        # Verificar si hubo error por restricción UNIQUE
+
+        # Verificar errores UNIQUE
         if isinstance(resultado, dict) and "error" in resultado:
             if "columna" in resultado:
                 return None, {"error": resultado["error"], "columna": resultado["columna"]}
@@ -82,6 +102,7 @@ class ConexionBase:
                 print(f"⚠️ Error subiendo a Firebase: {e}")
 
         return id_generado, None
+
 
 
     def seleccionar(self, tabla, columnas="*", condicion=None, parametros=()):

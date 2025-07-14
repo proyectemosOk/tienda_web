@@ -150,7 +150,7 @@ class TicketDeVenta {
 
   vender() {
     const clienteId = this.clienteCombo.value;
-    const vendedorId = "1";
+    const vendedorId = datos.id;
 
     if (!clienteId) {
       alert('Selecciona un cliente');
@@ -184,9 +184,12 @@ class TicketDeVenta {
     }
 
 
+
     // Total
     const totalVenta = this.total;
-
+    if (!validarYProcesarPago(metodosPago, totalVenta)) {
+      return; // ⚠️ no continuar si la validación falla
+    }
     const jsonVenta = {
       vendedor_id: vendedorId,
       cliente_id: clienteId,
@@ -206,16 +209,16 @@ class TicketDeVenta {
     })
       .then(async res => {
         const responseText = await res.text();
-        
+
         if (!res.ok) {
           console.error("❌ ERROR:", responseText);
           throw new Error(`Error del servidor: ${res.status} - ${responseText}`);
         }
-        
+
         const data = JSON.parse(responseText);
 
         alert('✅ Venta registrada correctamente');
-        
+
 
         this.items = {};
         this.total = 0;
@@ -343,6 +346,7 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 // });
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log(datos)
   const clienteCombo = document.getElementById('clientes');
 
   // Función para cargar los clientes desde la API
@@ -376,35 +380,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // Funciones para imprimir ticket e historial
 async function imprimirTicket(id) {
-    const venta = await obtenerDatosJSONVentasPorID(id);
-    
-    if (!venta || !venta.productos) {
-        alert('❌ Venta no encontrada o sin productos');
-        return;
-    }
+  const venta = await obtenerDatosJSONVentasPorID(id);
 
-    const fecha = venta.fecha;
-    const cliente = venta.cliente || 'Consumidor Final';
-    const vendedor = venta.vendedor || 'N/D';
-    const productos = venta.productos;
-    const desglose = venta.desglose_pagos || {};
+  if (!venta || !venta.productos) {
+    alert('❌ Venta no encontrada o sin productos');
+    return;
+  }
 
-    let productosTexto = productos.map(p => {
-        const total = p.cantidad * p.precio_unitario;
-        return `${p.nombre}\n  ${p.cantidad} x $${puntos(p.precio_unitario.toFixed(2))}  =  $${puntos(total.toFixed(2))}`;
+  const fecha = venta.fecha;
+  const cliente = venta.cliente || 'Consumidor Final';
+  const vendedor = venta.vendedor || 'N/D';
+  const productos = venta.productos;
+  const desglose = venta.desglose_pagos || {};
 
-    }).join('\n');
+  let productosTexto = productos.map(p => {
+    const total = p.cantidad * p.precio_unitario;
+    return `${p.nombre}\n  ${p.cantidad} x $${puntos(p.precio_unitario.toFixed(2))}  =  $${puntos(total.toFixed(2))}`;
 
-    let pagoTexto = Object.entries(desglose).map(
-        ([metodo, monto]) => `${metodo}: $${puntos(monto.toFixed(2))}`
-    ).join('\n');
+  }).join('\n');
 
-    const totalVenta = productos.reduce((sum, p) => sum + p.precio_unitario * p.cantidad, 0);
-    const impuestos = venta.impuestos || 0;
-    const descuento = venta.descuento || 0;
-    const totalFinal = totalVenta + impuestos - descuento;
+  let pagoTexto = Object.entries(desglose).map(
+    ([metodo, monto]) => `${metodo}: $${puntos(monto.toFixed(2))}`
+  ).join('\n');
 
-    const ticket = `
+  const totalVenta = productos.reduce((sum, p) => sum + p.precio_unitario * p.cantidad, 0);
+  const impuestos = venta.impuestos || 0;
+  const descuento = venta.descuento || 0;
+  const totalFinal = totalVenta + impuestos - descuento;
+
+  const ticket = `
 <html>
 <head>
   <title>Ticket ${venta.id}</title>
@@ -467,27 +471,42 @@ Gracias por su compra
 </html>
 `;
 
-    const ventana = window.open('', ''); // ancho aproximado de 80mm en píxeles
-    ventana.document.write(ticket);
-    ventana.document.close();
-    ventana.focus();
-    ventana.print();
-    ventana.close();
+  const ventana = window.open('', ''); // ancho aproximado de 80mm en píxeles
+  ventana.document.write(ticket);
+  ventana.document.close();
+  ventana.focus();
+  ventana.print();
+  ventana.close();
 }
 
 async function obtenerDatosJSONVentasPorID(id) {
-    try {
-        const response = await fetch(`/api/ventas/${id}/detalle`);
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
-        }
-        const data = await response.json();
-        return data;  // Usa objeto JS normal
-    } catch (error) {
-        console.error("Error al obtener datos de ventas:", error);
-        return {
-            desglose_pagos: {},
-            productos: []
-        };
+  try {
+    const response = await fetch(`/api/ventas/${id}/detalle`);
+    if (!response.ok) {
+      throw new Error(`Error HTTP: ${response.status}`);
     }
+    const data = await response.json();
+    return data;  // Usa objeto JS normal
+  } catch (error) {
+    console.error("Error al obtener datos de ventas:", error);
+    return {
+      desglose_pagos: {},
+      productos: []
+    };
+  }
+}
+
+function validarYProcesarPago(metodos_pago, totalVenta) {
+  const sumaPagos = metodos_pago.reduce((sum, item) => sum + item.valor, 0);
+
+  if (sumaPagos !== totalVenta) {
+    alert(`❌ Error: suma ${sumaPagos} no coincide con total ${totalVenta}`);
+    return false; // ✅ corta el flujo
+  }
+
+  // ✅ Si pasa la validación, sigue con el procesamiento
+  console.log('✅ Pagos correctos, procesando...');
+  // Aquí iría tu llamada a la API, por ejemplo:
+  // enviarPagosAPI(metodos_pago);
+  return true;
 }

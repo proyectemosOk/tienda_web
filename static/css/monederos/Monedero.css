@@ -29,6 +29,18 @@
      /* min-height: 100vh; */
    }
 
+   .contenedor-bolsillos {
+     display: flex;
+     flex-wrap: wrap;
+     gap: 1rem;
+   }
+
+   .contenedor-resumen {
+     margin-top: 2rem;
+     width: 100%;
+   }
+
+
    .contenedor-principal {
      display: flex;
      /* min-height: 100vh; */
@@ -300,29 +312,31 @@
      font-size: 1.5rem;
      margin: 0.5rem;
    }
+
    .cuenta-item.estado-pendiente {
-    
-    border-left: 4px solid var(--rojo);
+
+     border-left: 4px solid var(--rojo);
 
    }
 
    .cuenta-item.estado-parcial {
-    
+
      border-left: 4px solid var(--parcial);
    }
 
    .cuenta-item.estado-pagado {
      border-left: 4px solid green;
    }
+
    .estado-pendiente .estado-label {
-    color: var(--rojo);
-    
+     color: var(--rojo);
+
 
    }
 
    .estado-parcial .estado-label {
-    color: var(--parcial);
-     
+     color: var(--parcial);
+
    }
 
    .estado-pagado .estado-label {

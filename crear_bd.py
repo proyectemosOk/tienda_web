@@ -2,7 +2,10 @@ import sqlite3
 import random
 from datetime import datetime, timedelta
 from firebase_config import ServicioFirebase
+import bcrypt
 # Función para conectar a la base de datos
+def hashear(password):
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 def modificar_tabla_usuarios_sin_check(nombre_bd="tienda_jfleong6_1.db"):
     conexion = sqlite3.connect(nombre_bd)
     cursor = conexion.cursor()
@@ -119,27 +122,36 @@ def crear_tablas(base):
     conexion = conectar_bd(base)
     cursor = conexion.cursor()
 
-        # Crea la tabla de datos de la empresa
+    # Crea la tabla de datos de la empresa
+
+    # Crear tabla
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS datos (
-        dato TEXT UNIQUE,  -- UNIQUE para evitar duplicados
-        descripcion TEXT
-    )
+        CREATE TABLE IF NOT EXISTS datos (
+            dato TEXT UNIQUE,
+            descripcion TEXT
+        )
     ''')
 
-    # Inserta datos por defecto en la tabla 'datos' si no existen
-    datos = [
-        ("Empresa", "Grupo JJ"),
-        ("Celular", "3175414049"),
-        ("Dirección", "Calle 13 # 25 - 14"),
-        ("Correo", "grupojj@gmail.com"),
-        ("Pagina Web", "www.grupojj.com")
+    # Datos por defecto
+    datos_por_defecto = [
+        ("nombreEmpresa", "Proyectemos OK JJ"),
+        ("nit", ""),
+        ("direccion", "Calle 13 # 25 - 14"),
+        ("telefono", "3175414049"),
+        ("email", "soporteprotectemos@gmail.com"),
+        ("sitioWeb","htps:www.proyectemos.com"),
+        ("region", "Cundinamarca"),
+        ("ciudad", "Ubate"),
+        ("imagen", "logo.png")
     ]
 
-    for dato in datos:
+    # Insertar si no existe
+    for dato, descripcion in datos_por_defecto:
         cursor.execute('''
-        INSERT OR IGNORE INTO datos (dato, descripcion) VALUES (?, ?)
-        ''', dato)
+            INSERT OR IGNORE INTO datos (dato, descripcion) VALUES (?, ?)
+        ''', (dato, descripcion))
+
+
 
     # Crea la tabla de usuarios
     cursor.execute('''
@@ -149,9 +161,24 @@ def crear_tablas(base):
         contrasena TEXT NOT NULL,
         email TEXT NOT NULL,
         telefono TEXT NO NULL,
-        rol TEXT NOT NULL
+        rol TEXT NOT NULL,
+        estado INTEGER NOT NULL DEFAULT 1
     )
     ''')
+    cursor.execute("SELECT COUNT(*) FROM usuarios")
+
+    if total == 0:
+        usuarios_por_defecto = [
+            ("superAdministrador", hashear("@4dm1n321"), "superadmin@correo.com", "9999999999", "superAdmin"),
+            ("Administrador", hashear("4dm1n321"), "admin@correo.com", "1111111111", "admin"),
+            ("Ventas", hashear("v3nt4s"), "ventas@correo.com", "2222222222", "ventas"),
+            ("Ventas1", hashear("v3nt4s1"), "ventas1@correo.com", "3333333333", "ventas"),
+        ]
+
+        cursor.executemany('''
+            INSERT INTO usuarios (nombre, contrasena, email, telefono, rol)
+            VALUES (?, ?, ?, ?, ?)
+        ''', usuarios_por_defecto)
     
 
     # Crear tabla de productos

@@ -364,6 +364,7 @@ def guardar_gasto():
             }), 400
 
         nuevo_gasto = {
+            "fecha_entrada":datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "monto": float(datos["monto"]),
             "descripcion": datos["descripcion"].strip(),
             "id_usuario": int(datos["id_usuario"]),
@@ -407,12 +408,10 @@ def obtener_gastos():
             FROM gastos g
             JOIN categoria_gastos cg ON g.categoria = cg.id
             JOIN usuarios u ON g.id_usuario = u.id
-            WHERE DATE(g.fecha_entrada) = DATE('now')
+            WHERE DATE(g.fecha_entrada) = ?
             ORDER BY g.fecha_entrada DESC
-        '''
-
-        
-        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta)
+        '''        
+        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),))
         if filas is None:
             return jsonify({
                 "success": False,
@@ -431,11 +430,25 @@ def obtener_gastos():
             }
             for fila in filas
         ]
+        
+        consulta = '''
+            SELECT 
+                SUM(monto) AS TOTAL
+            FROM pagos_factura
+            WHERE DATE(fecha_pago) = ?
+        '''
+
+        filas = conn_db.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),))[0][0]
+
+        total_facruras = filas
+
 
         return jsonify({
             "success": True,
-            "gastos": gastos
+            "gastos": gastos,
+            "facturas": total_facruras,
         }), 200
+        
     except Exception as e:
         return jsonify({
             "success": False,
@@ -725,3 +738,32 @@ def demo_tarjetas():
     </html>
     '''
     return render_template_string(html_template)
+
+
+@extras.route('/api/eliminar_gasto/<int:gasto_id>', methods=['DELETE'])
+def eliminar_gasto(gasto_id):
+    try:
+        # Verificar que exista antes de borrar (opcional pero recomendado)
+        existe = conn_db.seleccionar(
+            tabla='gastos',
+            columnas='id',
+            condicion='id = ?',
+            parametros=(gasto_id,)
+        )
+
+        if not existe:
+            return jsonify(success=False, error='Gasto no encontrado'), 404
+
+        # Usar tu método eliminar
+        conn_db.eliminar(
+            tabla='gastos',
+            condicion='id = ?',
+            parametros=(gasto_id,)
+        )
+
+        return jsonify(success=True, message='Gasto eliminado correctamente')
+
+    except Exception as e:
+        print('❌ Error al eliminar gasto:', e)
+        return jsonify(success=False, error=str(e)), 500
+

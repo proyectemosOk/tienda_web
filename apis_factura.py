@@ -171,3 +171,69 @@ def registrar_entrada():
     except Exception as e:
         print(f"❌ Error al registrar entrada: {e}")
         return jsonify({'ok': False, 'error': str(e)}), 500
+
+@facturas_bp.route('/api/agregar_pagos_factura', methods=['POST'])
+def api_agregar_pagos_factura():
+    try:
+        data = request.get_json()
+
+        factura_id = data.get('factura_id')
+        pagos = data.get('pagos')
+        usuario_id = data.get('usuario_id') or 1  # 👈 Ajusta esto: tu sistema debe saber el usuario actual
+
+        if not factura_id or not pagos:
+            return jsonify(success=False, error="Datos incompletos.")
+
+        # 1️⃣ Validar factura existente
+        factura = conn_db.ejecutar_personalizado(
+            "SELECT monto_total, estado_pago_id FROM facturas_proveedor WHERE id = ?", (factura_id,)
+        )[0][0]
+        if not factura:
+            return jsonify(success=False, error="Factura no encontrada.")
+
+        monto_total = int(factura)
+
+        # 2️⃣ Calcular pagos ya registrados
+        pagos_registrados = conn_db.ejecutar_personalizado(
+            "SELECT SUM(monto) as total FROM pagos_factura WHERE factura_id = ?", (factura_id,)
+        )
+        total_pagado_previo = int(pagos_registrados[0][0]) or 0
+
+        # 3️⃣ Insertar nuevos pagos
+        total_nuevo = 0
+        for pago in pagos:
+            datos_pago = {
+                "factura_id": factura_id,
+                "tipo_pago_id": pago["tipo_pago_id"],
+                "fecha_pago": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                "monto": pago["monto"],
+                "observaciones": pago.get("observaciones", ""),
+                "usuario_id": usuario_id
+            }
+            conn_db.insertar("pagos_factura", datos_pago)
+            total_nuevo += pago["monto"]
+
+        # 4️⃣ Calcular suma total pagada
+        suma_total = total_pagado_previo + total_nuevo
+
+        # 5️⃣ Determinar estado de pago
+        if suma_total >= monto_total:
+            nuevo_estado = 3  # Pagado
+        elif suma_total > 0:
+            nuevo_estado = 2  # Parcial
+        else:
+            nuevo_estado = 1  # Pendiente
+
+        # 6️⃣ Actualizar estado de la factura
+        conn_db.actualizar(
+            "facturas_proveedor",
+            {"estado_pago_id": nuevo_estado},
+            "id = ?",
+            (factura_id,)
+        )
+
+        return jsonify(success=True, mensaje="Pagos registrados correctamente.")
+
+    except Exception as e:
+        print(f"❌ Error en /api/agregar_pagos_factura: {e}")
+        return jsonify(success=False, error=str(e))

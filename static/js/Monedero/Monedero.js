@@ -1,9 +1,11 @@
 
-
 let gastosData = [];
 let tiposPagos = {};
 let tiposGastos = {};
+let pagosTemporales = [];
 
+let htmlBolsillos = '';
+let htmlResumen = '';
 
 const modalEditar = document.getElementById('modal-editar');
 const gastosContainer = document.getElementById('gastos-container');
@@ -91,43 +93,48 @@ const btnGuardarEdicion = document.getElementById('btn-guardar-edicion');
 
 // Función para mostrar los bolsillos con filtros
 async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
-  const contenedor = document.getElementById('resumenTarjetas');
-  contenedor.innerHTML = '<div class="cargando">Cargando resumen...</div>';
+  // Mostrar mensaje de carga
+  const contenedorBolsillos = document.getElementById('contenedor-bolsillos');
+  const contenedorResumen = document.getElementById('contenedor-resumen');
+
+  contenedorBolsillos.innerHTML = '<div class="cargando">Cargando datos...</div>';
+  contenedorResumen.innerHTML = '';
 
   try {
-    // Cargar bolsillos desde la API
+    // 🔹 1️⃣ Obtener bolsillos desde tu API o función
     const datosBolsillos = await obtenerDatosJSONBolsillos();
 
-    // Cargar gastos desde la API
+    // 🔹 2️⃣ Obtener gastos (y facturas) desde la API
     const response = await fetch('/api/obtener_gastos');
     const data = await response.json();
 
     if (!data.success) {
-      contenedor.innerHTML = `<div class="error">Error al cargar gastos: ${data.error}</div>`;
+      contenedorBolsillos.innerHTML = `<div class="error">Error al cargar gastos: ${data.error}</div>`;
       return;
     }
 
     const gastos = data.gastos;
+    const totalFacturas = data.facturas ?? 0;
 
-    // Calcular totales
-    const totalGeneral = datosBolsillos.reduce((total, bolsillo) => total + bolsillo.total, 0);
-    const totalGastos = gastos.reduce((total, gasto) => total + gasto.monto, 0);
-    const utilidadNeta = totalGeneral - totalGastos;
+    // 🔹 3️⃣ Calcular totales
+    const totalGeneral = datosBolsillos.reduce((total, b) => total + b.total, 0);
+    const totalGastos = gastos.reduce((total, g) => total + g.monto, 0);
+    const utilidadNeta = totalGeneral - totalGastos - totalFacturas;
 
-    // Filtrar bolsillos
-    const bolsillosFiltrados = datosBolsillos.filter(bolsillo => {
+    // 🔹 4️⃣ Filtrar bolsillos
+    const bolsillosFiltrados = datosBolsillos.filter(b => {
       if (filtroBolsillo === "todos") return true;
-      return bolsillo.bolsillo.includes(filtroBolsillo);
+      return b.bolsillo.toLowerCase().includes(filtroBolsillo.toLowerCase());
     });
 
-    let html = '';
+    // 🔹 5️⃣ Construir HTML de tarjetas de bolsillos
+    let htmlBolsillos = '';
 
-    // Mostrar cada bolsillo filtrado
     bolsillosFiltrados.forEach(bolsillo => {
       const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
       const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
 
-      html += `
+      htmlBolsillos += `
         <div class="tarjeta-bolsillo">
           <div class="encabezado">
             <i class="fas fa-wallet"></i>
@@ -136,29 +143,12 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
           <div class="total ${colorTotal}">
             <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
             <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
-          </div>`;
-      html_1 = `
-          <div class="modulos">
-            <div class="modulo">
-              <div class="etiqueta">
-                <i class="fas fa-shopping-cart"></i>
-                <span>Ventas</span>
-              </div>
-              <div class="valor">${bolsillo.modulos.ventas.porcentaje}%</div>
-            </div>
-            <div class="modulo">
-              <div class="etiqueta">
-                <i class="fas fa-tools"></i>
-                <span>Servicios</span>
-              </div>
-              <div class="valor">${bolsillo.modulos.servicios.porcentaje}%</div>
-            </div>
-          </div>`
-      html += `</div>`;
+          </div>
+        </div>`;
     });
 
-    // Tarjeta de Resumen Financiero
-    html += `
+    // 🔹 6️⃣ Construir HTML de tarjeta resumen (siempre abajo)
+    let htmlResumen = `
       <div class="tarjeta-bolsillo tarjeta-resumen">
         <div class="encabezado">
           <i class="fas fa-chart-line"></i>
@@ -181,21 +171,32 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
           </div>
           <div class="modulo">
             <div class="etiqueta">
+              <i class="fas fa-money-bill-wave"></i>
+              <span>Facturas</span>
+            </div>
+            <div class="valor color-rojo">$${totalFacturas.toLocaleString('es-ES')}</div>
+          </div>
+          <div class="modulo">
+            <div class="etiqueta">
               <i class="fas fa-coins"></i>
               <span>Utilidad Neta</span>
             </div>
             <div class="valor color-verde">$${utilidadNeta.toLocaleString('es-ES')}</div>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
 
-    contenedor.innerHTML = html;
+    // 🔹 7️⃣ Renderizar por separado para que el resumen quede siempre abajo
+    contenedorBolsillos.innerHTML = htmlBolsillos;
+    contenedorResumen.innerHTML = htmlResumen;
+
   } catch (error) {
     console.error("❌ Error al mostrar bolsillos:", error);
-    contenedor.innerHTML = '<div class="error">Error al cargar el resumen financiero.</div>';
+    contenedorBolsillos.innerHTML = '<div class="error">Error al cargar el resumen financiero.</div>';
+    contenedorResumen.innerHTML = '';
   }
 }
+
 
 
 // Función para mostrar los gastos con filtros
@@ -329,7 +330,7 @@ function mostrarCuentasPorCobrar(filtroEstado = "todos", filtroCliente = "", fil
             </div>
             <div class="monto">$${cuenta.monto.toLocaleString('es-ES')}</div>
             <div class="acciones">
-              <button class="btn-pagar" onclick="pagarFactura(${cuenta.id})">
+              <button class="btn-pagar" onclick="pagarCuentasCXC(${cuenta.id})">
                 <i class="fas fa-check"></i> Pagar Factura
               </button>
             </div>
@@ -390,40 +391,45 @@ async function mostrarFacturasPorCobrar(filtroEstado = "todos", filtroProveedor 
       const div = document.createElement('div');
       div.className = `cuenta-item estado-${factura.estado_pago.toLowerCase()}`;
 
-      // Calcular saldo pendiente (opcional, si tu API ya lo manda mejor)
-      const saldoPendiente = factura.saldo_pendiente ?? (factura.estado_pago_id === 1 || factura.estado_pago_id === 2 ? factura.monto_total : 0);
+      // Calcular saldo pendiente (si tu API no lo manda)
+      const saldoPendiente = factura.saldo_pendiente ?? (
+        (factura.estado_pago_id === 1 || factura.estado_pago_id === 2) ? factura.monto_total : 0
+      );
+
+      // Serializar factura para usar en data-attribute
+      const facturaJson = JSON.stringify(factura).replace(/"/g, '&quot;');
 
       div.innerHTML = `
-    <div class="info">
-      <p class="proveedor">
-        <strong>${factura.proveedor_nombre}</strong> 
-        <span class="estado-label estado-${factura.estado_pago.toLowerCase()}">
-          (${factura.estado_pago})
-        </span>
-      </p>
-      <p class="usuario">
-        <i class="fas fa-user"></i> Registrada por: <strong>${factura.usuario_nombre}</strong>
-      </p>
-      <div class="detalles">
-        <span><strong>Número:</strong> ${factura.numero_factura}</span>
-        <span><i class="fas fa-calendar"></i> Emisión: ${factura.fecha_emision}</span>
-        <span><i class="fas fa-calendar-alt"></i> Vence: ${factura.fecha_vencimiento || 'N/A'}</span>
-      </div>
-    </div>
-    <div class="monto">
-      <i class="fas fa-money-bill"></i> Total: $${factura.monto_total.toLocaleString('es-ES')}
-    </div>
-    ${(factura.estado_pago_id === 1 || factura.estado_pago_id === 2) ? `
-      <div class="saldo-pendiente">
-        <i class="fas fa-exclamation-circle"></i> Pendiente: $${saldoPendiente.toLocaleString('es-ES')}
-      </div>
-      <div class="acciones">
-        <button class="btn-pagar" onclick="pagarFactura(${factura.id})">
-          <i class="fas fa-check"></i> Pagar Factura
-        </button>
-      </div>
-    ` : ''}
-  `;
+        <div class="info">
+          <p class="proveedor">
+            <strong>${factura.proveedor_nombre}</strong> 
+            <span class="estado-label estado-${factura.estado_pago.toLowerCase()}">
+              (${factura.estado_pago})
+            </span>
+          </p>
+          <p class="usuario">
+            <i class="fas fa-user"></i> Registrada por: <strong>${factura.usuario_nombre}</strong>
+          </p>
+          <div class="detalles">
+            <span><strong>Número:</strong> ${factura.numero_factura}</span>
+            <span><i class="fas fa-calendar"></i> Emisión: ${factura.fecha_emision}</span>
+            <span><i class="fas fa-calendar-alt"></i> Vence: ${factura.fecha_vencimiento || 'N/A'}</span>
+          </div>
+        </div>
+        <div class="monto">
+          <i class="fas fa-money-bill"></i> Total: $${factura.monto_total.toLocaleString('es-ES')}
+        </div>
+        ${(factura.estado_pago_id === 1 || factura.estado_pago_id === 2) ? `
+          <div class="saldo-pendiente">
+            <i class="fas fa-exclamation-circle"></i> Pendiente: $${saldoPendiente.toLocaleString('es-ES')}
+          </div>
+          <div class="acciones">
+            <button class="btn-pagar" data-factura="${facturaJson}">
+              <i class="fas fa-check"></i> Pagar Factura
+            </button>
+          </div>
+        ` : ''}
+      `;
 
       contenedor.appendChild(div);
     });
@@ -435,6 +441,7 @@ async function mostrarFacturasPorCobrar(filtroEstado = "todos", filtroProveedor 
 }
 
 
+// Funcion pagar
 // Funciones para aplicar filtros
 function filtrarBolsillos() {
   const filtroBolsillo = document.getElementById('filtro-bolsillo').value;
@@ -536,9 +543,8 @@ async function agregarGasto() {
     });
 
     const resultado = await response.json();
-    alert(usuario)
     if (resultado.success) {
-      alert("Gasto guardado con éxito.");
+      alert("✅ Gasto guardado con éxito.");
       document.getElementById('descripcion-gasto').value = '';
       document.getElementById('monto-gasto').value = '';
       // Opcional: recargar lista de gastos desde backend o agregarlo al frontend
@@ -675,16 +681,18 @@ async function eliminarGasto(gastoId) {
     const resultado = await response.json();
 
     if (response.ok && resultado.success) {
-      mostrarAlerta('✅ Gasto eliminado con éxito!', 'success');
+      alert('✅ Gasto eliminado con éxito!', 'success');
+      mostrarBolsillos()
+      mostrarGastos()
 
     } else {
       console.error("Error al eliminar:", resultado);
-      mostrarAlerta('❌ Error al eliminar el gasto: ' + (resultado.error || ''), 'danger');
+      alert('❌ Error al eliminar el gasto: ' + (resultado.error || ''), 'danger');
     }
 
   } catch (error) {
     console.error('Error al eliminar gasto:', error);
-    mostrarAlerta('❌ Error de conexión con el servidor. No se eliminó el gasto.', 'danger');
+    alert('❌ Error de conexión con el servidor. No se eliminó el gasto.', 'danger');
   } finally {
     // Restaurar botones
     const botones = document.querySelectorAll(`.btn-eliminar[data-id="${gastoId}"]`);
@@ -701,22 +709,280 @@ modalEditar.addEventListener('click', (e) => {
   }
 });
 
+// ✅ Función para iniciar el flujo de pago
+async function pagarFactura(factura) {
+  try {
+    const tiposPago = await fetch("/api/tipos_gastos_pagos").then(r => r.json());
+    if (!tiposPago || !tiposPago.data || !tiposPago.data.tipos_pagos || Object.keys(tiposPago.data.tipos_pagos).length === 0) {
+      Swal.fire("Advertencia", "No hay tipos de pago configurados.", "warning");
+      return;
+    }
 
-// Función para pagar una factura
-function pagarFactura(id) {
-  const cuenta = cuentasPorCobrar.find(c => c.id === id);
-  if (!cuenta) return;
+    pagosTemporales = [];
 
-  cuenta.pagada = true;
-  cuenta.fecha = new Date().toISOString().split('T')[0];
+    await abrirSwalPagos(factura, tiposPago.data.tipos_pagos);
 
-  mostrarCuentasPorCobrar();
-  mostrarBolsillos(); // Actualizar el resumen financiero
-  alert(`Factura de ${cuenta.cliente} pagada correctamente.`);
+  } catch (error) {
+    console.error(error);
+    Swal.fire("Error", "No se pudo cargar el formulario de pago.", "error");
+  }
 }
+
+// ✅ Abrir el Swal con formulario y tabla
+async function abrirSwalPagos(factura, tiposPago) {
+  await Swal.fire({
+    title: `Agregar Pagos - Factura #${factura.numero_factura}`,
+    html: generarHTMLSwalPagos(factura, tiposPago),
+    showDenyButton: true,
+    confirmButtonText: 'Confirmar Pago',
+    denyButtonText: 'Cancelar',
+    width: '1000px',
+    didOpen: () => {
+      document.getElementById('btn-agregar-pago-interno').addEventListener('click', () => {
+        agregarPagoInterno(tiposPago, factura);
+      });
+    },
+    preConfirm: async () => {
+      if (pagosTemporales.length === 0) {
+        Swal.showValidationMessage('Debes agregar al menos un pago antes de confirmar.');
+        return false;
+      }
+
+      try {
+        const response = await fetch('/api/agregar_pagos_factura', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            factura_id: factura.id,
+            pagos: pagosTemporales,
+            usuario_id: datos.id
+          })
+        });
+        if (!response.ok) throw new Error('Error al enviar los pagos');
+        const data = await response.json();
+        if (!data.success) throw new Error(data.error || 'Error al registrar pagos');
+        return data;
+      } catch (err) {
+        Swal.showValidationMessage(`Error: ${err.message}`);
+        return false;
+      }
+    }
+  }).then(result => {
+    if (result.isConfirmed && result.value) {
+      Swal.fire('Éxito', 'Pagos registrados correctamente.', 'success');
+      mostrarFacturasPorCobrar();
+      mostrarBolsillos();
+    } else if (result.isDenied) {
+      Swal.fire('Cancelado', 'No se registraron pagos.', 'info');
+    }
+  });
+}
+
+// ✅ Generar el contenido HTML del modal
+function generarHTMLSwalPagos(factura, tiposPago) {
+  const opciones = Object.entries(tiposPago).map(
+    ([id, nombre]) => `<option value="${id}">${nombre}</option>`
+  ).join('');
+
+  return `
+    <style>
+      .swal-grid-2col {
+        display: grid;
+        grid-template-columns: 0.4fr 0.6fr;
+        gap: 1rem;
+        align-items: start;
+      }
+      .swal-form-horizontal .form-group {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+      }
+      .swal-form-horizontal .form-group label {
+        flex: 0 0 100px;
+        margin-right: 0.5rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+      }
+      .swal-form-horizontal .form-group input,
+      .swal-form-horizontal .form-group select {
+        flex: 1;
+      }
+      .swal-datos-factura {
+        padding: 0.5em;
+        background-color: #f8f9fa;
+        border-radius: 6px;
+        margin-bottom: 0.8rem;
+        font-size: 0.9rem;
+      }
+    </style>
+
+    <div class="swal-datos-factura text-start">
+      <div><strong>Proveedor:</strong> ${factura.proveedor_nombre}</div>
+      <div><strong>Total:</strong> $${factura.monto_total.toLocaleString('es-ES')}</div>
+      <div><strong>Saldo pendiente:</strong> $${(factura.saldo_pendiente ?? factura.monto_total).toLocaleString('es-ES')}</div>
+    </div>
+
+    <div class="swal-grid-2col">
+      <div class="swal-form-horizontal">
+        <div class="form-group">
+          <label for="pago-tipo-interno">Tipo Pago</label>
+          <select class="form-select form-select-sm" id="pago-tipo-interno">${opciones}</select>
+        </div>
+        <div class="form-group">
+          <label for="pago-fecha-interno">Fecha</label>
+          <input type="date" class="form-control form-control-sm" id="pago-fecha-interno"
+       value="${new Date().toLocaleDateString('en-CA')}">
+        </div>
+        <div class="form-group">
+          <label for="pago-monto-interno">Monto</label>
+          <input type="number" class="form-control form-control-sm" id="pago-monto-interno" min="1" step="0.01" placeholder="Ej: 50000">
+        </div>
+        <div class="form-group">
+          <label for="pago-observaciones-interno">Obs.</label>
+          <input type="text" class="form-control form-control-sm" id="pago-observaciones-interno" placeholder="Opcional">
+        </div>
+        <button type="button" class="btn btn-success btn-sm w-100 mt-2" id="btn-agregar-pago-interno">
+          <i class="fas fa-plus"></i> Agregar este pago
+        </button>
+      </div>
+
+      <div id="tabla-pagos-internos">
+        ${renderizarTablaPagosInternos(factura)}
+      </div>
+    </div>
+  `;
+}
+
+// ✅ Agregar pago con validación
+function agregarPagoInterno(tiposPago, factura) {
+  const tipoPagoId = parseInt(document.getElementById('pago-tipo-interno').value);
+  const fechaPago = document.getElementById('pago-fecha-interno').value;
+  const monto = parseFloat(document.getElementById('pago-monto-interno').value);
+  const observaciones = document.getElementById('pago-observaciones-interno').value.trim();
+
+  if (!tipoPagoId || isNaN(monto) || monto <= 0 || !fechaPago) {
+    Swal.showValidationMessage('Todos los campos obligatorios deben estar completos y correctos.');
+    return;
+  }
+
+  const saldoPendiente = factura.saldo_pendiente ?? factura.monto_total;
+  const totalAgregado = pagosTemporales.reduce((sum, p) => sum + p.monto, 0);
+
+  if ((totalAgregado + monto) > saldoPendiente) {
+    Swal.showValidationMessage(`El total de pagos supera el saldo pendiente ($${saldoPendiente.toLocaleString('es-ES')}).`);
+    return;
+  }
+
+  const nombreTipoPago = tiposPago[tipoPagoId] || '';
+
+  pagosTemporales.push({
+    tipo_pago_id: tipoPagoId,
+    nombre_tipo_pago: nombreTipoPago,
+    fecha_pago: fechaPago,
+    monto,
+    observaciones
+  });
+
+  document.getElementById('tabla-pagos-internos').innerHTML = renderizarTablaPagosInternos(factura);
+}
+
+// ✅ Renderizar tabla con total acumulado
+function renderizarTablaPagosInternos(factura) {
+  if (pagosTemporales.length === 0) {
+    return '<div class="text-muted fst-italic">No has agregado pagos aún.</div>';
+  }
+
+  const total = pagosTemporales.reduce((sum, p) => sum + p.monto, 0);
+  const saldoPendiente = factura.saldo_pendiente ?? factura.monto_total;
+  const saldoRestante = saldoPendiente - total;
+
+  const rows = pagosTemporales.map((pago, index) => `
+    <tr>
+      <td class="text-center">${index + 1}</td>
+      <td>${pago.nombre_tipo_pago}</td>
+      <td>${pago.fecha_pago}</td>
+      <td class="text-end">$${pago.monto.toLocaleString('es-ES')}</td>
+      <td>${pago.observaciones || '-'}</td>
+      <td class="text-center">
+        <button type="button" class="btn btn-outline-danger btn-sm" onclick="eliminarPagoInterno(${index}, ${saldoPendiente})">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </td>
+    </tr>
+  `).join('');
+
+  return `
+    <style>
+      .tabla-pagos-scroll {
+        max-height: 180px;
+        overflow-y: auto;
+      }
+      .tabla-pagos-scroll table {
+        margin-bottom: 0;
+      }
+      .tabla-pagos-scroll thead th {
+        position: sticky;
+        top: 0;
+        background-color: #f8f9fa;
+        z-index: 1;
+      }
+      .resumen-pagos {
+        margin-top: 0.5rem;
+        padding: 0.4rem 0.6rem;
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.95rem;
+        font-weight: 500;
+      }
+    </style>
+
+    <div class="table-responsive tabla-pagos-scroll">
+      <table class="table table-sm table-bordered">
+        <thead class="table-light">
+          <tr>
+            <th class="text-center">#</th>
+            <th>Tipo Pago</th>
+            <th>Fecha</th>
+            <th class="text-end">Monto</th>
+            <th>Observaciones</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="resumen-pagos">
+      <div>Pagado: <span class="text-success">$${total.toLocaleString('es-ES')}</span></div>
+      <div>Saldo Restante: <span class="${saldoRestante < 0 ? 'text-danger' : 'text-success'}">$${saldoRestante.toLocaleString('es-ES')}</span></div>
+    </div>
+  `;
+}
+
+
+// ✅ Eliminar pago
+function eliminarPagoInterno(index, saldoPendiente) {
+  pagosTemporales.splice(index, 1);
+  document.getElementById('tabla-pagos-internos').innerHTML = renderizarTablaPagosInternos({ saldo_pendiente: saldoPendiente });
+}
+
+
+
 
 // Inicialización al cargar la página
 document.addEventListener('DOMContentLoaded', async () => {
+  document.getElementById('lista-cuentas-cxp').addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-pagar');
+    if (btn) {
+      const factura = JSON.parse(btn.dataset.factura);
+      pagarFactura(factura);
+    }
+  });
+
   usuario = datos.id;
   rol = datos.rol;
   // Ahora sí se pueden mostrar los datos correctamente

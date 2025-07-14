@@ -4,124 +4,59 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Editar Datos de la Empresa</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <title>Datos de la Empresa</title>
     <link rel="stylesheet" href="/static/css/datos_empresa.css">
-    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
-    <link rel="stylesheet" href="/static/css/menu-global.css" />
-    <script type="module" src="/static/js/cargarDeafaul/cargar.js" defer></script>
-
 </head>
 
 <body>
- 
-    <form id="formDatosEmpresa" novalidate>
-        <!-- Logo en esquina superior derecha -->
+    <form id="formDatosEmpresa" enctype="multipart/form-data" method="POST">
+        <!-- Logo -->
         <label for="logoInput" class="logo-container" title="Haz clic para cambiar logo">
-            <img id="logoPreview" src="/uploads/logo_empresa.png" alt="Logo de la empresa" />
-            <input type="file" id="logoInput" name="logo" accept="image/*" onchange="previewLogo(event)" />
+            <img id="logoPreview" src="/static/Iconos/logo.png" alt="Logo de la empresa" style="height: 150px;"/>
+            <input type="file" id="logoInput" name="logoInput" accept="image/*" onchange="previewLogo(event)" />
         </label>
 
-        <!-- Datos generales -->
-        <h2>Información General</h2>
-        <!-- Modificación en la sección de Información General -->
-<div class="form-grid">
-    <div>
-        <label for="nombreEmpresa">Nombre Legal</label>
-        <input type="text" id="nombreEmpresa" name="nombreEmpresa" required placeholder="Ej: Constructora Andina S.A." />
-    </div>
-    <div>
-        <label for="razonSocial">Razón Social</label>
-        <input type="text" id="razonSocial" name="razonSocial" required placeholder="Ej: Constructora Andina Sociedad Anónima" />
-    </div>
-    <div>
-        <label for="nit">NIT</label>
-        <input type="text" id="nit" name="nit" required placeholder="Ej: 900.123.456-1" pattern="^\d{3}\.\d{3}\.\d{3}-\d$" />
-    </div>
-    <div>
-        <label for="giro">Giro Comercial</label>
-        <input type="text" id="giro" name="giro" required placeholder="Ej: Construcción de edificios" />
-    </div>
-    <div>
-        <label for="añoFundacion">Año de Fundación</label>
-        <input type="number" id="añoFundacion" name="añoFundacion" min="1900" max="2025" placeholder="Ej: 2005" />
-    </div>
-    <div>
-        <label for="tamañoEmpresa">Tamaño de Empresa</label>
-        <select id="tamañoEmpresa" name="tamañoEmpresa">
-            <option value="">Seleccione</option>
-            <option value="micro">Microempresa</option>
-            <option value="pequeña">Pequeña</option>
-            <option value="mediana">Mediana</option>
-            <option value="grande">Grande</option>
-        </select>
-    </div>
-</div>
 
+        <!-- Datos Generales -->
+        <h2>Información de la Empresa</h2>
+        <div class="form-grid">
+            <div>
+                <label for="nombreEmpresa">Nombre Legal</label>
+                <input type="text" id="nombreEmpresa" name="nombreEmpresa" required
+                    placeholder="Ej: Proyectemos OK JJ" />
+            </div>
+            <div>
+                <label for="nit">NIT</label>
+                <input type="text" id="nit" name="nit" placeholder="Ej: 900.123.456-1" />
+            </div>
+        </div>
 
         <!-- Contacto -->
         <h2>Contacto</h2>
         <div class="form-grid">
             <div>
                 <label for="direccion">Dirección Principal</label>
-                <input type="text" id="direccion" name="direccion" required placeholder="Ej: Av. Providencia 1234" />
+                <input type="text" id="direccion" name="direccion" required placeholder="Ej: Calle 13 # 25 - 14" />
             </div>
             <div>
                 <label for="region">Región</label>
-                <select id="region" name="region" required onchange="updateCities()">
-                    <option value="">Seleccione una región</option>
-                    <option value="caribe">Caribe</option>
-                    <option value="andina">Andina</option>
-                    <option value="pacifico">Pacífico</option>
-                    <option value="llanos">Llanos</option>
-                    <option value="amazonas">Amazonas</option>
-                    <option value="orinoquia">Orinoquía</option>
-                </select>
+                <input type="text" id="region" name="region" placeholder="Ej: Cundinamarca" />
             </div>
             <div>
                 <label for="ciudad">Ciudad</label>
-                <select id="ciudad" name="ciudad" required>
-                    <option value="">Seleccione una ciudad</option>
-                </select>
+                <input type="text" id="ciudad" name="ciudad" placeholder="Ej: Bogotá" />
             </div>
             <div>
                 <label for="telefono">Teléfono Principal</label>
-                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: +57 300 123 4567" pattern="^\+57\s?\d{3}\s?\d{3}\s?\d{4}$" />
-            </div>
-            <div>
-                <label for="telefonoSecundario">Teléfono Secundario</label>
-                <input type="tel" id="telefonoSecundario" name="telefonoSecundario" placeholder="Ej: +57 301 234 5678" pattern="^\+57\s?\d{3}\s?\d{3}\s?\d{4}$" />
+                <input type="tel" id="telefono" name="telefono" required placeholder="Ej: 3175414049" />
             </div>
             <div>
                 <label for="email">Email Principal</label>
-                <input type="email" id="email" name="email" required placeholder="Ej: contacto@andina.co" pattern="^[^@\s]+@[^@\s]+\.[^@\s]+$" />
+                <input type="email" id="email" name="email" required placeholder="Ej: soporteprotectemos@gmail.com" />
             </div>
             <div>
                 <label for="sitioWeb">Sitio Web</label>
-                <input type="url" id="sitioWeb" name="sitioWeb" placeholder="Ej: https://www.andina.co" pattern="https?://.+" />
-            </div>
-        </div>
-
-        <!-- Redes Sociales -->
-        <div class="social-media-section">
-            <h2>Redes Sociales</h2>
-            <div class="social-grid">
-                <div>
-                    <label for="facebook" class="social-label"><i class="fab fa-facebook"></i> Facebook</label>
-                    <input type="url" id="facebook" name="facebook" placeholder="Ej: https://www.facebook.com/andina" pattern="https?://.+" />
-                </div>
-                <div>
-                    <label for="instagram" class="social-label"><i class="fab fa-instagram"></i> Instagram</label>
-                    <input type="url" id="instagram" name="instagram" placeholder="Ej: https://www.instagram.com/andina" pattern="https?://.+" />
-                </div>
-                <div>
-                    <label for="linkedin" class="social-label"><i class="fab fa-linkedin"></i> LinkedIn</label>
-                    <input type="url" id="linkedin" name="linkedin" placeholder="Ej: https://www.linkedin.com/company/andina" pattern="https?://.+" />
-                </div>
-                <div>
-                    <label for="twitter" class="social-label"><i class="fab fa-twitter"></i> Twitter</label>
-                    <input type="url" id="twitter" name="twitter" placeholder="Ej: https://www.twitter.com/andina" pattern="https?://.+" />
-                </div>
+                <input type="url" id="sitioWeb" name="sitioWeb" placeholder="Ej: https://www.tusitio.com" />
             </div>
         </div>
 
@@ -130,14 +65,13 @@
             <button type="button" class="btn-outline" id="btnCancelar">
                 <i class="fas fa-times"></i> Cancelar
             </button>
-            <button type="submit" class="btn-primary">
+            <button type="submit" class="btn-primary" id="btnGuardarEmpresa">
                 <i class="fas fa-save"></i> Guardar Cambios
             </button>
         </div>
     </form>
 
     <script src="/static/js/datos_empresa.js"></script>
-    <script src="/static/js/home.js"></script>
 </body>
 
 </html>

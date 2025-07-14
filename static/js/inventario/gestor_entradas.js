@@ -1,9 +1,22 @@
 // gestor_entradas.js
 
 document.addEventListener("DOMContentLoaded", () => {
+    // Obtener los inputs
+    const emisionInput = document.getElementById('fecha-emision');
+    const vencimientoInput = document.getElementById('fecha-vencimiento-factura');
+
+    // Obtener fecha de hoy en formato YYYY-MM-DD
+    const hoy = new Date();
+    const hoyStr = hoy.toISOString().split('T')[0];
+    emisionInput.value = hoyStr;
+
+    // Calcular fecha + 1 mes
+    const vencimiento = new Date(hoy);
+    vencimiento.setMonth(vencimiento.getMonth() + 1);
+    const vencimientoStr = vencimiento.toISOString().split('T')[0];
+    vencimientoInput.value = vencimientoStr;
     let pagosAgregados = [];
     let usuarioId = datos.id; // Ajusta o remueve si aún no usas login
-    alert(usuarioId)
     // Variables globales
     const proveedorInput = document.getElementById("proveedor");
     const buscarProveedorBtn = document.getElementById("buscar-proveedor");

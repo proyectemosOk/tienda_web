@@ -1,16 +1,20 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Usuarios</title>
   <link rel="stylesheet" href="/static/css/personal.css">
+  <script src="/static/js/cargarDeafaul/cargar.js" ></script>
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/personal.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link rel="stylesheet" href="/static/css/menu-global.css" />
+
 </head>
+
 <body>
-  
+
   <div class="navbar">
     <h2>Sistema de Gestión de Usuarios</h2>
   </div>
@@ -23,12 +27,12 @@
         <input type="password" id="pass" placeholder="Contraseña" required>
         <input type="email" id="email" placeholder="Email" required>
         <input type="tel" id="telefono" placeholder="Teléfono" required maxlength="10">
-        <select id="rol" required>
+        <select name="rol" id="rol" required>
           <option value="">Selecciona un Rol</option>
-          <option>Administrador</option>
-          <option>Empleado</option>
-          <option>Supervisor</option>
+          <option value="admin">Administrador</option>
+          <option value="ventas">Ventas</option>
         </select>
+
         <button type="submit">Guardar Usuario</button>
       </form>
     </div>
@@ -64,14 +68,16 @@
         <input type="tel" id="edit-telefono" placeholder="Teléfono" required>
 
         <select id="edit-rol" required>
-          <option>Administrador</option>
-          <option>Empleado</option>
-          <option>Supervisor</option>
+
+          <option value="">Selecciona un Rol</option>
+          <option value="admin">Administrador</option>
+          <option value="ventas">Ventas</option>
         </select>
+
 
         <input type="password" id="edit-pass" placeholder="Nueva contraseña (opcional)">
         <button type="submit">Guardar cambios</button>
-        
+
       </form>
 
     </div>
@@ -84,7 +90,8 @@
 
   <!-- <script src="/static/js/personal.js"></script> -->
   <script src="{{ url_for('static', filename='js/personal.js') }}"></script>
-  <script src="/static/js/home.js"></script>
+
 
 </body>
+
 </html>
