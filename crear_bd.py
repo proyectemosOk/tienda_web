@@ -464,7 +464,7 @@ def crear_tablas(base):
     cursor.executemany("INSERT OR IGNORE INTO tipos_pago (id, nombre, descripcion) VALUES (?, ?, ?)", 
 ((1,'Efectivo', 'Pago en efectivo'),
 (2,'Transferencia', 'Transferencia bancaria'),
-(3,'Targeta', 'Pago con tarjeta de débito')
+(3,'Tarjeta', 'Pago con tarjeta de débito')
 ))
     
     # Crear tabla si no existe

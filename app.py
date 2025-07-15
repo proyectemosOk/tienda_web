@@ -1,39 +1,12 @@
-<<<<<<< HEAD
-# conexion_base.py
-import sqlite3
-=======
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
 import os
 from conexion_base import *
 from orden import Orden
->>>>>>> 6f765a0858894bf0e65f2639a137831bbdafd9e0
 from firebase_config import ServicioFirebase
 from crear_bd import crear_tablas
 import bcrypt
 from typing import Dict, Union
 
-<<<<<<< HEAD
-class ConexionBase:
-    def __init__(self, nombre_bd: str, ruta_credenciales_firebase: str = None):
-        """
-        Inicializa la conexión a la base de datos SQLite y, opcionalmente, a Firebase.
-        :param nombre_bd: Ruta a la base de datos SQLite.
-        :param ruta_credenciales_firebase: Ruta al archivo JSON de credenciales de Firebase.
-        """
-        self.nombre_bd = nombre_bd
-        self.firebase = None
-        crear_tablas(nombre_bd)
-
-        if ruta_credenciales_firebase:
-            try:
-                self.firebase = ServicioFirebase(ruta_credenciales_firebase)
-                print(f"✅ Firebase conectado con: {ruta_credenciales_firebase}")
-            except Exception as e:
-                print(f"❌ Error al inicializar Firebase: {e}")
-
-    def conectar(self):
-        return sqlite3.connect(self.nombre_bd)
-=======
 import os
 import sys
 
@@ -68,7 +41,6 @@ def serve_img_productos(filename):
 
 def obtener_id_por_nombre(tabla, buscar, columna):
     resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
->>>>>>> 6f765a0858894bf0e65f2639a137831bbdafd9e0
 
     def ejecutar_consulta(self, consulta, parametros=()):
         conexion = self.conectar()
@@ -440,10 +412,6 @@ def obtener_id_por_nombre(tabla, buscar, columna):
         Devuelve una lista de órdenes con ID, estado_entrada como Descripción,
         fecha como Fecha Ingreso y el estado (nombre) proveniente de la tabla estados_servicios.
         """
-<<<<<<< HEAD
-        consulta = """
-            SELECT o.id, o.estado_entrada, o.fecha, e.estado
-=======
 
         total_resultados = conn_db.ejecutar_personalizado(consulta_total, parametros)
         total_resultados = total_resultados[0][0] if total_resultados else 0
@@ -1565,7 +1533,6 @@ def obtener_servicios():
     try:
         servicios = conn_db.ejecutar_personalizado('''
             SELECT o.id, o.estado_entrada, o.fecha, es.estado
->>>>>>> 6f765a0858894bf0e65f2639a137831bbdafd9e0
             FROM ordenes o
             LEFT JOIN estados_servicios e ON o.estado = e.id
         """
