@@ -167,18 +167,17 @@ def crear_tablas(base):
     ''')
     cursor.execute("SELECT COUNT(*) FROM usuarios")
 
-    if total == 0:
-        usuarios_por_defecto = [
-            ("superAdministrador", hashear("@4dm1n321"), "superadmin@correo.com", "9999999999", "superAdmin"),
-            ("Administrador", hashear("4dm1n321"), "admin@correo.com", "1111111111", "admin"),
-            ("Ventas", hashear("v3nt4s"), "ventas@correo.com", "2222222222", "ventas"),
-            ("Ventas1", hashear("v3nt4s1"), "ventas1@correo.com", "3333333333", "ventas"),
-        ]
+    usuarios_por_defecto = [
+        ("superAdministrador", hashear("@4dm1n321"), "superadmin@correo.com", "9999999999", "superAdmin"),
+        ("Administrador", hashear("4dm1n321"), "admin@correo.com", "1111111111", "admin"),
+        ("Ventas", hashear("v3nt4s"), "ventas@correo.com", "2222222222", "ventas"),
+        ("Ventas1", hashear("v3nt4s1"), "ventas1@correo.com", "3333333333", "ventas"),
+    ]
 
-        cursor.executemany('''
-            INSERT INTO usuarios (nombre, contrasena, email, telefono, rol)
-            VALUES (?, ?, ?, ?, ?)
-        ''', usuarios_por_defecto)
+    cursor.executemany('''
+        INSERT OR IGNORE INTO usuarios (nombre, contrasena, email, telefono, rol)
+        VALUES (?, ?, ?, ?, ?)
+    ''', usuarios_por_defecto)
     
 
     # Crear tabla de productos
@@ -193,6 +192,7 @@ def crear_tablas(base):
         stock INTEGER,
         categoria TEXT NOT NULL,
         unidad TEXT NOT NULL,
+        activo INTEGER NOT NULL,
         FOREIGN KEY (categoria) REFERENCES categorias (id),
         FOREIGN KEY (unidad) REFERENCES unidades (id)
     )
@@ -295,14 +295,16 @@ def crear_tablas(base):
 
 
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS pagos_venta (
+        CREATE TABLE IF NOT EXISTS pagos_venta (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         venta_id INTEGER NOT NULL,
-        metodo_pago TEXT NOT NULL,
+        metodo_pago INTEGER NOT NULL,
         valor REAL NOT NULL,
-        usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
-        FOREIGN KEY (venta_id) REFERENCES ventas (id)
-    )
+        usuario_id INTEGER NOT NULL,
+        FOREIGN KEY (venta_id) REFERENCES ventas(id),
+        FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    );
     ''')
 
     cursor.execute('''
@@ -403,7 +405,7 @@ def crear_tablas(base):
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY (estado_pago_id) REFERENCES estado_pago(id)
     )''')
-    print("hola")
+
     # Tabla de Estados de pagos
     cursor.execute('''CREATE TABLE IF NOT EXISTS estado_pago (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -460,9 +462,9 @@ def crear_tablas(base):
         )
     ''')
     cursor.executemany("INSERT OR IGNORE INTO tipos_pago (id, nombre, descripcion) VALUES (?, ?, ?)", 
-((1,'EFECTIVO', 'Pago en efectivo'),
-(2,'TRANSFERENCIA', 'Transferencia bancaria'),
-(3,'TARGETA', 'Pago con tarjeta de débito')
+((1,'Efectivo', 'Pago en efectivo'),
+(2,'Transferencia', 'Transferencia bancaria'),
+(3,'Targeta', 'Pago con tarjeta de débito')
 ))
     
     # Crear tabla si no existe
@@ -541,8 +543,6 @@ def crear_tablas(base):
     monto REAL,
     FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
     FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
-    FOREIGN KEY (referencias_id) REFERENCES ordenes(id) ON DELETE CASCADE
-    FOREIGN KEY (referencias_id) REFERENCES ventas(id) ON DELETE CASCADE
 );
 ''')
 

@@ -14,6 +14,7 @@ class ConexionBase:
         """
         self.nombre_bd = nombre_bd
         self.firebase = None
+        crear_tablas(nombre_bd)
 
         if ruta_credenciales_firebase:
             try:
