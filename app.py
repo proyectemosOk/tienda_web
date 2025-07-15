@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
 import os
 from conexion_base import *
 from orden import Orden
@@ -18,17 +18,37 @@ import math
 from apis_factura import *
 from api_empresa import *
 
+import os
+import sys
+
+
+
+  # Asegura que la carpeta exista
+
 app = Flask(__name__)
 app.register_blueprint(extras)  
 app.register_blueprint(facturas_bp)
 app.register_blueprint(empresa_bp)
 UPLOAD_FOLDER = 'uploads'
 
-IMAGES_FOLDER = 'static/img_productos'  # La carpeta de imágenes
+
 DEFAULT_IMAGE = 'img.png'  # La imagen por defecto en la raíz del proyecto
 conn_db = ConexionBase("tienda_jfleong6_1.db")
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# Detecta si estamos en una app congelada (.exe con PyInstaller)
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)  # Ruta donde está el .exe
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Desarrollo normal
+# Ruta absoluta a la carpeta de imágenes
+IMAGES_FOLDER = os.path.join(BASE_DIR, 'static', 'img_productos')
+os.makedirs(IMAGES_FOLDER, exist_ok=True)
+# Ruta personalizada para servir imágenes desde static/img_productos
+@app.route('/img_productos/<path:filename>')
+def serve_img_productos(filename):
+    return send_from_directory(IMAGES_FOLDER, filename)
 
 def obtener_id_por_nombre(tabla, buscar, columna):
     resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
@@ -374,16 +394,14 @@ def obtener_resumen_ventas():
     try:
         # Desglose global por método de pago
         fecha_hoy = date.today().isoformat()
-        print(fecha_hoy)
         desglose_pagos = conn_db.ejecutar_personalizado('''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
-            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE DATE(fecha) = ?
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.id
+            WHERE DATE(v.fecha) = ?
             GROUP BY tp.nombre
-        ''',((fecha_hoy),))
-        print(desglose_pagos)
+        ''', ((fecha_hoy),))
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
         ventas = conn_db.ejecutar_personalizado('''
             SELECT v.id, v.fecha, v.total_venta, c.nombre
@@ -451,10 +469,11 @@ def obtener_detalle_venta(id_venta):
 
         # Desglose de pagos de la venta
         desglose = conn_db.ejecutar_personalizado('''
-            SELECT metodo_pago, SUM(valor)
-            FROM pagos_venta
-            WHERE venta_id = ?
-            GROUP BY metodo_pago
+            SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
+            FROM pagos_venta pv
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.id
+            WHERE pv.venta_id = ?
+            GROUP BY tp.nombre
         ''', (id_venta,))
 
         desglose_pagos = {m: float(v) for m, v in desglose}
@@ -901,7 +920,8 @@ def obtener_productos():
     productos_list = []
 
     for prod in productos:
-        url_imagen = f"/static/img_productos/{prod[0]}.png"
+        # Nueva URL: servida por la ruta personalizada, no por static
+        url_imagen = f"/img_productos/{prod[0]}.png"
         productos_list.append({
             "id": prod[0],
             "nombre": prod[1],
@@ -909,11 +929,12 @@ def obtener_productos():
             "categoria": prod[3],
             "descripcion": prod[4],
             "codigo": prod[5],
-            "stock":prod[6],
+            "stock": prod[6],
             "imagen": url_imagen
         })
 
     return jsonify(productos_list)
+
 
 @app.route('/api/metodos_pago', methods=['GET'])
 def obtener_metodos_pago():
@@ -1260,6 +1281,7 @@ def crear_venta():
     total_utilidad = total_precio_venta - total_precio_compra
 
     for pago in data["metodos_pago"]:
+        pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre=?",(pago["metodo"],))[0][0]
         detalles_pagos = {
             "venta_id": id,
             "metodo_pago": pago["metodo"],

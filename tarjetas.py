@@ -27,21 +27,21 @@ class TarjetasEmpresariales:
             consulta = """
                 SELECT id, nombre, descripcion, actual 
                 FROM tipos_pago
-                WHERE actual != 0
                 ORDER BY nombre
             """
             
             resultado = self.conn.ejecutar_personalizado(consulta)
-
+            
             bolsillos = []
             for row in resultado:
+
                 bolsillos.append({
                     'id': row[0],
                     'nombre': row[1],
                     'descripcion': row[2],
                     'valor_actual': row[3] or 0
                 })
-            
+
             return bolsillos
         except Exception as e:
             print(f"Error obteniendo bolsillos: {e}")
@@ -52,15 +52,12 @@ class TarjetasEmpresariales:
         try:
             if tipo_pago_id:
                 consulta = """
-                    SELECT COALESCE(SUM(pv.valor), 0) as total
+                    SELECT COALESCE(SUM(pv.valor), 0) AS total
                     FROM pagos_venta pv
                     INNER JOIN ventas v ON pv.venta_id = v.id
-                    WHERE DATE(v.fecha) = ? AND pv.metodo_pago = (
-                        SELECT nombre FROM tipos_pago WHERE id = ?
-                    ) AND v.estado = 1
+                    WHERE DATE(v.fecha) = ? AND pv.metodo_pago = ? AND v.estado = 1
                 """
                 parametros = (fecha, tipo_pago_id)
-                
             else:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) as total
@@ -135,14 +132,15 @@ class TarjetasEmpresariales:
         return round(cambio, 1)
     
     def generar_datos_tarjetas(self):
+        
         """Genera los datos completos para las tarjetas empresariales"""
         try:
             fecha_hoy = self.obtener_fecha_hoy()
             fecha_ayer = self.obtener_fecha_ayer()
-            
+            print("hjja")
             # Obtener bolsillos (tipos de pago)
             bolsillos = self.obtener_bolsillos_tipos_pago()
-            
+            print("hola ",bolsillos)
             tarjetas_datos = []
             for bolsillo in bolsillos:
                 # Valores para el bolsillo actual
