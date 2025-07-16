@@ -118,6 +118,7 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
 
     // 🔹 3️⃣ Calcular totales
     const totalGeneral = datosBolsillos.reduce((total, b) => total + b.total, 0);
+
     const totalGastos = gastos.reduce((total, g) => total + g.monto, 0);
     const utilidadNeta = totalGeneral - totalGastos - totalFacturas;
 
@@ -131,21 +132,58 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
     let htmlBolsillos = '';
 
     bolsillosFiltrados.forEach(bolsillo => {
-      const iconoTotal = bolsillo.comportamiento === 1 ? 'fas fa-arrow-up' : 'fas fa-arrow-down';
-      const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
+      const modulosOrden = ['ventas', 'servicios', 'facturas', 'gastos'];
+      let contenidoModulos = '';
+      let totalBolsillo = 0;
 
-      htmlBolsillos += `
-        <div class="tarjeta-bolsillo">
-          <div class="encabezado">
-            <i class="fas fa-wallet"></i>
-            <span>${bolsillo.bolsillo}</span>
-          </div>
-          <div class="total ${colorTotal}">
-            <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
-            <span><i class="${iconoTotal}"></i> ${bolsillo.porcentaje}%</span>
-          </div>
-        </div>`;
+      // Calcular total visible y construir bloques de módulo
+      modulosOrden.forEach(modulo => {
+        const datos = bolsillo.modulos[modulo];
+        if (!datos) return;
+
+        const valor = datos.total;
+
+        if (valor !== 0) {
+          const esNegativo = valor < 0 || modulo === 'gastos' || modulo === 'facturas';
+          const color = esNegativo ? 'color-rojo' : 'color-verde';
+          const icono = esNegativo ? 'fas fa-arrow-down' : 'fas fa-arrow-up';
+
+
+
+          contenidoModulos += `
+        <div class="linea-modulo ${color}">
+          <i class="${icono}"></i>
+          <span>${modulo.charAt(0).toUpperCase() + modulo.slice(1)}:</span>
+          <strong>$${valor.toLocaleString('es-ES')}</strong>
+        </div>
+      `;
+        }
+      });
+
+      // Solo mostrar si hay módulos que mostrar
+      if (contenidoModulos.trim() !== '') {
+        const colorTotal = bolsillo.total <= 0 ? 'color-rojo' : 'color-verde';
+
+        htmlBolsillos += `
+        
+      <div class="tarjeta-bolsillo">
+      <div class="encabezado">
+          <i class="fas fa-wallet"></i>
+          <span>${bolsillo.bolsillo}</span>
+        </div>
+        <div class="total ${colorTotal}">
+          <strong>$ ${bolsillo.total.toLocaleString('es-ES')}</strong>
+        </div>
+        
+        <div class="modulos">
+          ${contenidoModulos}
+        </div>
+      </div>
+    `;
+      }
     });
+
+
 
     // 🔹 6️⃣ Construir HTML de tarjeta resumen (siempre abajo)
     let htmlResumen = `

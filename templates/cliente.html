@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gestión de Clientes</title>
+
+  <!-- Estilos -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/personal.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+
+<body>
+  <div class="navbar">
+    <h2>Sistema de Gestión de Clientes</h2>
+  </div>
+
+  <div class="container">
+    <!-- Panel de formulario -->
+    <div class="form-panel">
+      <h3>Nuevo Cliente</h3>
+      <form id="formCliente">
+        <input type="text" id="nombre" placeholder="Nombre completo" required>
+
+        <select id="tipo_document" required>
+          <option value="">Tipo de documento</option>
+          <option value="CC">Cédula de ciudadanía</option>
+          <option value="NIT">NIT</option>
+          <option value="CE">Cédula de extranjería</option>
+        </select>
+
+        <input type="text" id="numero" placeholder="Número de documento" required>
+        <input type="tel" id="telefono" placeholder="Teléfono">
+        <input type="email" id="email" placeholder="Correo electrónico">
+        <button type="submit">Guardar Cliente</button>
+      </form>
+    </div>
+
+    <!-- Panel de tabla -->
+    <div class="list-panel">
+      <h3>Lista de Clientes</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Tipo Doc</th>
+            <th>Documento</th>
+            <th>Teléfono</th>
+            <th>Email</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tablaClientes">
+          <!-- Clientes se cargan dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal edición -->
+  <div id="modalEditarCliente" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="cerrarModal" class="close">&times;</span>
+      <h3>Editar Cliente</h3>
+
+      <form id="formEditarCliente">
+        <input type="hidden" id="edit-id">
+        <input type="text" id="edit-nombre" placeholder="Nombre completo" required>
+
+        <select id="edit-tipo_document" required>
+          <option value="">Tipo de documento</option>
+          <option value="CC">Cédula de ciudadanía</option>
+          <option value="NIT">NIT</option>
+          <option value="CE">Cédula de extranjería</option>
+        </select>
+
+        <input type="text" id="edit-numero" placeholder="Número de documento" required>
+        <input type="tel" id="edit-telefono" placeholder="Teléfono">
+        <input type="email" id="edit-email" placeholder="Correo electrónico">
+        <button type="submit">Guardar cambios</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="{{ url_for('static', filename='js/cliente.js') }}"></script>
+</body>
+
+</html>

@@ -27,6 +27,7 @@ document.addEventListener("DOMContentLoaded", () => {
     inventario: "/inventarios",
     cuentas: "/cierre_dia",
     personal: "/personal",
+    cliente: "/cliente",
     configuraciones: "/configuraciones",
     empresa: "/empresa",
     informes: "/informes",

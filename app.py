@@ -3,21 +3,30 @@ import os
 from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
-from crear_bd import crear_tablas
+from datetime import datetime, timedelta
+from datetime import date
+import json
+import socket
+from werkzeug.utils import secure_filename
+from werkzeug.exceptions import BadRequest
+from tarjetas import *
 import bcrypt
-from typing import Dict, Union
-
-import os
+from PIL import Image
+from io import BytesIO
+from flask import request, jsonify
+import math
+from apis_factura import *
+from api_empresa import *
+from api_clientes import *
 import sys
+from licencia import validar_licencia, crear_licencia
 
-
-
-  # Asegura que la carpeta exista
 
 app = Flask(__name__)
 app.register_blueprint(extras)  
 app.register_blueprint(facturas_bp)
 app.register_blueprint(empresa_bp)
+app.register_blueprint(clientes)
 UPLOAD_FOLDER = 'uploads'
 
 
@@ -35,6 +44,41 @@ else:
 IMAGES_FOLDER = os.path.join(BASE_DIR, 'static', 'img_productos')
 os.makedirs(IMAGES_FOLDER, exist_ok=True)
 # Ruta personalizada para servir imágenes desde static/img_productos
+
+@app.route("/verificar")
+def prueba_licencia():
+    valido, msg = validar_licencia()
+    return f"¿Licencia válida? {valido} - {msg}"
+
+  # Asegura que la carpeta exista
+@app.before_request
+def verificar_licencia_global():
+    rutas_exentas = ["/activar_licencia", "/login-sesion", "/", "/static", "/api"]
+
+    ruta = request.path
+
+    # Permitir acceso a rutas exentas y archivos estáticos
+    if (
+        any(ruta == r for r in rutas_exentas) or
+        ruta.startswith("/static") or
+        ruta.startswith("/api") or
+        ruta.startswith("/uploads")
+    ):
+        return
+
+    valido, msg = validar_licencia()
+    if not valido:
+        print("❌ Licencia inválida:", msg)
+        return render_template("licencia_fallida.html")
+
+    
+@app.route("/activar_licencia", methods=["POST"])
+def activar_licencia():
+    crear_licencia()
+    return redirect("/")
+
+    
+    
 @app.route('/img_productos/<path:filename>')
 def serve_img_productos(filename):
     return send_from_directory(IMAGES_FOLDER, filename)
@@ -42,375 +86,273 @@ def serve_img_productos(filename):
 def obtener_id_por_nombre(tabla, buscar, columna):
     resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
 
-    def ejecutar_consulta(self, consulta, parametros=()):
-        conexion = self.conectar()
-        cursor = conexion.cursor()
-        try:
-            cursor.execute(consulta, parametros)
-            conexion.commit()
-            if consulta.strip().upper().startswith("INSERT"):
-                return cursor.lastrowid
-            return None
-        except sqlite3.IntegrityError as e:
-            mensaje = str(e)
-            if "UNIQUE constraint failed" in mensaje:
-                # Extraer el nombre de la columna del mensaje
-                # Ejemplo: 'UNIQUE constraint failed: tabla.columna'
-                parts = mensaje.split(':')
-                if len(parts) > 1:
-                    columna_info = parts[1].strip()  # 'tabla.columna'
-                    columna = columna_info.split('.')[-1]  # 'columna'
-                    return {"error": "El valor ya existe en la columna.", "columna": columna}
-                else:
-                    return {"error": "El valor ya existe en una columna."}
-            else:
-                return {"error": mensaje}
-        except sqlite3.Error as e:
-            return {"error": str(e)}
-        finally:
-            
-            conexion.close()
+    return resultado[0][0] if resultado else None
 
+def redimensionar_imagen(archivo, max_ancho=800, max_alto=800):
+    try:
+        img = Image.open(archivo)
+        img.thumbnail((max_ancho, max_alto))  # Redimensionar manteniendo proporción
 
-    def insertar(self, tabla, datos, expresion_sql=False):
-        columnas = []
-        placeholders = []
-        valores = []
+        buffer = BytesIO()
+        img.save(buffer, format="JPEG", quality=85)
+        return buffer.getvalue()
+    except Exception as e:
+        print("⚠️ Error redimensionando imagen:", e)
+        return None
 
-        if expresion_sql:
-            for col, val in datos.items():
-                columnas.append(col)
-                if isinstance(val, str) and val.strip().lower().endswith(')'):
-                    # Asumimos que es una función SQL
-                    placeholders.append(val)
-                else:
-                    placeholders.append("?")
-                    valores.append(val)
-        else:
-            columnas = list(datos.keys())
-            placeholders = ["?"] * len(datos)
-            valores = list(datos.values())
+@app.route('/')
+def index():
+    return render_template('login-sesion.html')
 
-        columnas_sql = ", ".join(columnas)
-        placeholders_sql = ", ".join(placeholders)
+@app.route('/home')
+def home():
+    return render_template('home.html')
 
-        consulta = f"INSERT INTO {tabla} ({columnas_sql}) VALUES ({placeholders_sql})"
+@app.route('/personal')
+def personal():
+    return render_template('personal.html')
 
-        resultado = self.ejecutar_consulta(consulta, tuple(valores))
-        print(consulta, valores)
-        print(resultado)
+@app.route('/login-sesion')
+def login_sesion():
+    return render_template('login-sesion.html')
 
-        # Verificar errores UNIQUE
-        if isinstance(resultado, dict) and "error" in resultado:
-            if "columna" in resultado:
-                return None, {"error": resultado["error"], "columna": resultado["columna"]}
-            else:
-                return None, {"error": resultado["error"]}
+@app.route('/ordenes')
+def orden():
+    return render_template('/ordenes/gestor.html')
 
-        id_generado = resultado
+@app.route('/orden/nueva')
+def new_orden():
+    return render_template('/ordenes/orden.html')
 
-        if self.firebase and id_generado:
-            try:
-                datos_con_id = datos.copy()
-                datos_con_id["id"] = id_generado
-                self.firebase.db.collection(tabla).document(str(id_generado)).set(datos_con_id)
-                print(f"🔥 Documento '{id_generado}' insertado en Firebase colección '{tabla}'.")
-            except Exception as e:
-                print(f"⚠️ Error subiendo a Firebase: {e}")
+@app.route('/empresa')
+def empresa():
+    return render_template('datos_empresa.html')
 
-        return id_generado, None
+@app.route('/ventas')
+def ventas():
+    return render_template('vista_de_producto.html')
 
+@app.route('/inventarios')
+def inventarios():
+    return render_template('gestor_inventario.html')
+@app.route('/principal')
+def menu_global():
+    return render_template('menu-global.html')
 
+@app.route("/monederos")
+def monedero():
+    return render_template('monedero.html')
 
-    def seleccionar(self, tabla, columnas="*", condicion=None, parametros=()):
-        consulta = f"SELECT {columnas} FROM {tabla}"
-        if condicion:
-            consulta += f" WHERE {condicion}"
-        conexion = self.conectar()
-        cursor = conexion.cursor()
-        try:
-            cursor.execute(consulta, parametros)
-            return cursor.fetchall()
-        except sqlite3.Error as e:
-            print(f"❌ Error SELECT: {e}")
-            return []
-        finally:
-            conexion.close()
+@app.route('/cierre_dia')
+def cierre_dia():
+    return render_template('informe-cierre-dia.html')
 
-    def existe_registro(self, tabla, columna, valor):
-        return bool(self.seleccionar(tabla, columnas=columna, condicion=f"{columna} = ?", parametros=(valor,)))
-
-    def actualizar(self, tabla, datos, condicion, parametros_condicion=(), expresion_sql=False):
-        """
-        Actualiza registros en la tabla.
+@app.route('/submit', methods=['POST'])
+def submit():
+    form = request.form
+    
+    try:
+        # --- Validación básica obligatoria ---
+        campos_obligatorios = ['cliente', 'tipo', 'marca', 'modelo', 'estado_entrada', 'perifericos', 'observaciones', 'total_servicio', 'tipo_pago']
+        for campo in campos_obligatorios:
+            if campo not in form or not form[campo].strip():
+                raise BadRequest(f"El campo '{campo}' es obligatorio.")
         
-        Si expresion_sql es True, los valores en 'datos' serán tratados como expresiones SQL sin comillas.
-        """
-        if expresion_sql:
-            asignaciones = ", ".join(f"{col} = {val}" for col, val in datos.items())
-            valores = parametros_condicion
-        else:
-            asignaciones = ", ".join(f"{col} = ?" for col in datos.keys())
-            valores = tuple(datos.values()) + tuple(parametros_condicion)
+        for key in form:
+            print(key+":\t"+form[key])
+        # --- Procesar TIPO ---
+        tipo = form['tipo'].strip()
+        if tipo == "__nuevo__":
+            tipo = form.get('nuevo_tipo', '').strip()
+            if not tipo:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo.")
+            if not conn_db.existe_registro("tipos", "nombre", tipo):
+                tipo = conn_db.insertar("tipos", {"nombre": tipo})[0]
+        tipo = obtener_id_por_nombre("tipos", tipo, "id")
+        if not tipo:
+            raise BadRequest("Tipo no válido o no encontrado.")
+
+        # --- Procesar TIPO DE PAGO ---
+        tipo_pago = form['tipo_pago'].strip()
+        if tipo_pago == "__nuevo__":
+            tipo_pago = form.get('nuevo_tipo_pago', '').strip()
+            if not tipo_pago:
+                raise BadRequest("Debe ingresar un nombre para el nuevo tipo de pago.")
+            if not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
+                tipo_pago = conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})[0]
+        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "id")
+        if not tipo_pago:
+            raise BadRequest("Tipo de pago no válido o no encontrado.")
+
+        # --- Procesar SERVICIOS ---
+        servicios = form.getlist('servicios[]')
+        servicios_nuevos = form.getlist('servicios_nuevo[]')
         
-        consulta = f"UPDATE {tabla} SET {asignaciones} WHERE {condicion}"
-        conexion = self.conectar()
-        cursor = conexion.cursor()
+        servicios_finales = []
+
+        for nuevos in servicios_nuevos:
+            nuevo = nuevos.strip()
+            if nuevo:
+                if not conn_db.existe_registro("servicios", "nombre", nuevo):
+                    conn_db.insertar("servicios", {"nombre": nuevo})
+                servicio_id = obtener_id_por_nombre("servicios", nuevo, "id")
+                if servicio_id:
+                    servicios_finales.append(servicio_id)
+
+        for servicio in servicios:
+            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "id")
+            if servicio_id:
+                servicios_finales.append(servicio_id)
+
+        if not servicios_finales:
+            raise BadRequest("Debe seleccionar al menos un servicio válido.")
+        print(servicios_finales)
+        # --- Obtener ID del cliente ---
+        cliente_id = obtener_id_por_nombre("clientes", form['cliente'].strip(), "numero")
+        if not cliente_id:
+            raise BadRequest("Cliente no válido o no encontrado.")
+
+        # --- Convertir monto total del servicio ---
         try:
-            cursor.execute(consulta, valores)
-            conexion.commit()
-        except sqlite3.Error as e:
-            print(f"❌ Error actualizando {tabla}: {e}")
-        finally:
-            conexion.close()
+            total_servicio = float(form.get('total_servicio', "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del servicio no es un número válido.")
 
-    def eliminar(self, tabla, condicion, parametros=()):
-        consulta = f"DELETE FROM {tabla} WHERE {condicion}"
-        self.ejecutar_consulta(consulta, parametros)
+        # --- Crear objeto Orden ---
+        orden = Orden(
+            cliente=cliente_id,
+            usuario_id=form["usuario"],
+            tipo=tipo,
+            marca=form['marca'].strip(),
+            modelo=form['modelo'].strip(),
+            estado_entrada=form['estado_entrada'].strip(),
+            perifericos=form['perifericos'].strip(),
+            observaciones=form['observaciones'].strip(),
+            total_servicio=total_servicio
+        )
+        orden_dict = orden.a_dict()
+        orden_id = conn_db.insertar("ordenes", orden_dict)
 
-    def contar(self, tabla, condicion=None, parametros=()):
-        consulta = f"SELECT COUNT(*) FROM {tabla}"
-        if condicion:
-            consulta += f" WHERE {condicion}"
-        conexion = self.conectar()
-        cursor = conexion.cursor()
-        try:
-            cursor.execute(consulta, parametros)
-            return cursor.fetchone()[0]
-        except sqlite3.Error as e:
-            print(f"❌ Error COUNT: {e}")
-            return None
-        finally:
-            conexion.close()
+        # --- Insertar servicios relacionados ---
+        for servicio_id in servicios_finales:
 
-    def ejecutar_personalizado(self, consulta, parametros=()):
-        conexion = self.conectar()
-        cursor = conexion.cursor()
-        try:
-            cursor.execute(consulta, parametros)
-            return cursor.fetchall()
-        except sqlite3.Error as e:
-            print(f"❌ Error consulta personalizada: {e}")
-            return None
-        finally:
-            conexion.commit()
-            conexion.close()
-
-    def ejecutar_personalizado_1(self, consulta, parametros=None):
-        with self.conectar() as conn:
-            conn.row_factory = sqlite3.Row
-            cursor = conn.cursor()
-            if parametros:
-                cursor.execute(consulta, parametros)
-            else:
-                cursor.execute(consulta)
-            resultados = cursor.fetchall()
-            return [dict(row) for row in resultados]
-
-    def validar_credenciales(self, tabla: str, usuario: str, contrasena: str) -> Dict[str, Union[bool, str, int]]:
-        """
-        Valida credenciales de usuario con protección contra ataques comunes.
-        
-        Parámetros:
-            tabla (str): Nombre de la tabla de usuarios
-            usuario (str): Nombre de usuario ingresado
-            contrasena (str): Contraseña en texto claro
-            
-        Retorna:
-            dict: Resultado con estructura:
-            {
-                'valido': bool,
-                'mensaje': str,
-                'id_usuario': int (solo si válido),
-                'rol': str (solo si válido)
-            }
-            
-        Mejoras implementadas:
-        - Validación de formato de hash
-        - Protección contra timing attacks
-        - Manejo seguro de errores
-        - Eliminación de datos sensibles en respuesta
-        """
-        try:
-            # 1. Validación básica de entrada
-            if not all([usuario, contrasena]):
-                return {"valido": False, "mensaje": "Credenciales incompletas"}
-                
-            # 2. Consulta segura con parámetros
-            resultado = self.seleccionar(
-                tabla=tabla,
-                columnas="id, contrasena, rol",
-                condicion="nombre = ?",
-                parametros=(usuario,)
-            )
-            print(resultado)
-            # 3. Validar existencia de usuario
-            if not resultado or len(resultado[0]) != 3:
-                return {"valido": False, "mensaje": "Credenciales inválidas"}
-                
-            id_usuario, hash_almacenado, rol = resultado[0]
-            
-            # 4. Verificar formato del hash
-            if not hash_almacenado.startswith("$2b$"):
-                
-                return {"valido": False, "mensaje": "Error de configuración de seguridad"}
-                
-            # 5. Comparación segura contra timing attacks
-            contraseña_valida = bcrypt.checkpw(
-                contrasena.encode('utf-8'),
-                hash_almacenado.encode('utf-8')
-            )
-            print(contraseña_valida)
-            if contraseña_valida:
-                return {
-                    "valido": True,
-                    "mensaje": "Autenticación exitosa",
-                    "id_usuario": id_usuario,
-                    "rol": rol
-                }
-            else:
-                return {"valido": False, "mensaje": "Credenciales inválidas"}
-                
-        except bcrypt.CryptBackendError as e:
-            # Loggear error sin exponer detalles
-            print(f"Error de cifrado: {str(e)}")
-            return {"valido": False, "mensaje": "Error del sistema"}
-            
-        except Exception as e:
-            # Manejo genérico de errores
-            print(f"Error inesperado: {str(e)}")
-            return {"valido": False, "mensaje": "Error en el proceso de autenticación"}
-
-        def registrar_cliente_seguro(self, cliente_data: dict) -> dict:
-            """
-            Registra un nuevo cliente en la base principal y genera su base de datos personalizada.
-            
-            :param cliente_data: Diccionario con los campos necesarios del cliente.
-            :return: Diccionario con el resultado del registro.
-            """
-            try:
-                # Separar datos
-                email = cliente_data["email"]
-                parte_email = email.split('@')[0]
-                contrasena_hash = cliente_data["contrasena"]
-
-                # Insertar cliente (base_datos es temporal aquí)
-                cliente_data_temp = cliente_data.copy()
-                cliente_data_temp["base_datos"] = ""
-                cliente_data_temp["usuario"] = parte_email
-
-                id_cliente = self.insertar("clientes", cliente_data_temp)
-
-                # Crear nombre de base de datos personalizada
-                base_datos = f"tienda_{parte_email}_{id_cliente}.db"
-
-                # Actualizar cliente con base_datos real
-                self.actualizar(
-                    tabla="clientes",
-                    datos={"base_datos": base_datos},
-                    condicion="id = ?",
-                    parametros_condicion=(id_cliente,)
-                )
-
-                # Crear la nueva base de datos del cliente
-                crear_tablas(base_datos)
-
-                # Insertar al usuario admin en su propia base de datos
-                cliente_db = ConexionBase(base_datos)
-                usuario_admin = {
-                    "usuario": parte_email,
-                    "contrasena": contrasena_hash,
-                    "rol": "admin"
-                }
-                cliente_db.insertar("usuarios", usuario_admin)
-
-                return {
-                    "exito": True,
-                    "usuario": parte_email,
-                    "base_datos": base_datos,
-                    "pass": contrasena_hash
-                }
-
-            except Exception as e:
-                return {
-                    "exito": False,
-                    "error": f"Error al registrar cliente: {str(e)}"
-                }
-
-    def registrar_cierre_dia(self, data: dict):
-        try:
-            # Insertar en cierres_dia
-            cierre_data = {
-                "fecha": data["fecha"],
-                "total_ingresos": data["total_ingresos"],
-                "total_egresos": data["total_egresos"],
-                "total_neto": data["total_neto"],
-                "observaciones": data.get("observaciones", ""),
-                "creado_por": data.get("creado_por", "")
-            }
-            cierre_id, error = self.insertar("cierres_dia", cierre_data)
-            if error:
-                return {"exito": False, "error": error}
-
-            # Insertar en cierres_dia_detalle_pagos y movimientos
-            for tipo_pago, contenido in data["tipos_pago"].items():
-                monto_ingreso = contenido["monto"]
-                self.insertar("cierres_dia_detalle_pagos", {
-                    "cierre_id": cierre_id,
-                    "tipo_pago": tipo_pago,
-                    "monto": monto_ingreso
-                })
-
-                for tipo, ids in contenido["descripcion"].items():
-                    for id_ref, monto in ids.items():
-                        self.insertar("cierres_dia_movimientos", {
-                            "cierre_id": cierre_id,
-                            "tipo": tipo,
-                            "id_referencia": id_ref,
-                            "monto": monto,
-                            "tipo_pago": tipo_pago
-                        })
-
-                # Actualizar monto en caja_mayor sumando ingresos
-                self.actualizar("caja_mayor", {"monto": f"monto + {monto_ingreso}"}, {"nombre": tipo_pago}, expresion_sql=True)
-
-            # Insertar en cierres_dia_detalle_categorias
-            self.insertar("cierres_dia_detalle_categorias", {
-                "cierre_id": cierre_id,
-                "descripcion": "ventas_y_servicios",
-                "monto": data["total_ingresos"]
-            })
-            self.insertar("cierres_dia_detalle_categorias", {
-                "cierre_id": cierre_id,
-                "descripcion": "gastos",
-                "monto": data["total_egresos"]
+            conn_db.insertar("orden_servicios", {
+                "id_orden": int(orden_id[0]),
+                "servicio": int(servicio_id)
             })
 
-            # Restar gastos del monto en caja_mayor y registrar movimientos
-            for tipo_pago, items in data.get("gastos", {}).items():
-                if tipo_pago == "monto":
-                    continue
-                for id_ref, monto in items.items():
-                    self.insertar("cierres_dia_movimientos", {
-                        "cierre_id": cierre_id,
-                        "tipo": "gasto",
-                        "id_referencia": id_ref,
-                        "monto": monto,
-                        "tipo_pago": tipo_pago
+        # --- Registrar pago ---
+        try:
+            monto_pago = float(form.get("pago", "0").strip())
+        except ValueError:
+            raise BadRequest("El monto del pago no es válido.")
+
+        conn_db.insertar("pagos_servicios", {
+            "id_orden": int(orden_id[0]),
+            "tipo_pago": tipo_pago,
+            "monto": monto_pago
+        })
+        
+        imagenes = request.files.getlist("imagenes")
+        for archivo in imagenes:
+            if archivo and archivo.filename != "":
+                imagen_redimensionada = redimensionar_imagen(archivo)
+                if imagen_redimensionada:
+                    conn_db.insertar("img_ordenes", {
+                        "id_orden": orden_id,
+                        "imagen": imagen_redimensionada
                     })
 
-                    # Actualizar monto en caja_mayor restando egresos
-                    self.actualizar("caja_mayor", {"monto": f"monto - {monto}"}, {"nombre": tipo_pago}, expresion_sql=True)
+        # --- Respuesta de éxito ---
+        return jsonify({
+            "mensaje": "✅ Orden registrada correctamente.",
+            "orden_id": orden_id,
+            "orden": orden_dict
+        })
 
-            return {"exito": True, "cierre_id": cierre_id}
+    except BadRequest as e:
+        return jsonify({"error": str(e)}), 400
 
-        except Exception as e:
-            return {"exito": False, "error": str(e)}
+    except Exception as e:
+        # Error inesperado del servidor
+        print("❌ Error interno:", e)
+        return jsonify({"error": "Error interno del servidor"}), 500
 
-    def obtener_resumen_ordenes(self):
+@app.route('/api/tipos')
+def api_tipos():
+    tipos = conn_db.seleccionar("tipos","*")
+    return jsonify({t[0]: t[1] for t in tipos})
+
+@app.route('/api/servicios')
+def api_servicios():
+    servicios = conn_db.seleccionar("servicios", "id, nombre")
+    return jsonify({s[0]: s[1] for s in servicios})
+
+@app.route('/api/tipos_pago')
+def api_tipos_pago():
+    tipos_pago = conn_db.seleccionar("tipos_pago", "id, nombre")
+    return jsonify({t[0]: t[1] for t in tipos_pago})
+
+@app.route('/api/productos', methods=['GET'])
+def api_productos():
+    try:
+        # 1️⃣ Obtener parámetros con valores por defecto
+        pagina = request.args.get('pagina', default=1, type=int)
+        limite = request.args.get('limite', default=10, type=int)
+        search = request.args.get('search', default='', type=str).strip()
+        offset = (pagina - 1) * limite
+
+        # 2️⃣ Construir filtro de búsqueda dinámico
+        filtro_where = "WHERE p.activo = 1"
+        parametros = []
+
+        if search:
+            # Agregar búsqueda en id, codigo, nombre, descripcion, categoria
+            search_like = f"%{search}%"
+            filtro_where += """
+                AND (
+                    p.id LIKE ?
+                    OR p.codigo LIKE ?
+                    OR p.nombre LIKE ?
+                    OR p.descripcion LIKE ?
+                    OR p.categoria LIKE ?
+                )
+            """
+            parametros.extend([search_like]*5)
+
+        # 3️⃣ Consulta principal paginada con JOIN, GROUP BY, ORDER BY
+        consulta_datos = f"""
+            SELECT
+                p.id,
+                p.codigo,
+                p.nombre,
+                p.descripcion,
+                p.categoria,
+                p.stock,
+                p.precio_compra,
+                p.precio_venta,
+                COALESCE(SUM(dv.cantidad), 0) AS cantidad_vendida
+            FROM productos p
+            LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+            {filtro_where}
+            GROUP BY p.id
+            ORDER BY cantidad_vendida DESC
+            LIMIT ? OFFSET ?
         """
-        Devuelve una lista de órdenes con ID, estado_entrada como Descripción,
-        fecha como Fecha Ingreso y el estado (nombre) proveniente de la tabla estados_servicios.
+
+        parametros_datos = parametros + [limite, offset]
+
+        resultados = conn_db.ejecutar_personalizado(consulta_datos, parametros_datos)
+
+        # 4️⃣ Consulta para contar el total (sin LIMIT/OFFSET)
+        consulta_total = f"""
+            SELECT COUNT(*) FROM (
+                SELECT p.id
+                FROM productos p
+                LEFT JOIN detalles_ventas dv ON p.id = dv.producto_id
+                {filtro_where}
+                GROUP BY p.id
+            ) AS subquery
         """
 
         total_resultados = conn_db.ejecutar_personalizado(consulta_total, parametros)
@@ -489,10 +431,11 @@ def obtener_resumen_ventas():
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
-            JOIN tipos_pago tp ON pv.metodo_pago = tp.id
-            WHERE DATE(v.fecha) = ?
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
+            WHERE DATE(fecha) = ?
             GROUP BY tp.nombre
-        ''', ((fecha_hoy),))
+        ''',((fecha_hoy),))
+        print(desglose_pagos)
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
         ventas = conn_db.ejecutar_personalizado('''
             SELECT v.id, v.fecha, v.total_venta, c.nombre
@@ -1011,8 +954,7 @@ def obtener_productos():
     productos_list = []
 
     for prod in productos:
-        # Nueva URL: servida por la ruta personalizada, no por static
-        url_imagen = f"/img_productos/{prod[0]}.png"
+        url_imagen = f"/static/img_productos/{prod[0]}.png"
         productos_list.append({
             "id": prod[0],
             "nombre": prod[1],
@@ -1020,12 +962,11 @@ def obtener_productos():
             "categoria": prod[3],
             "descripcion": prod[4],
             "codigo": prod[5],
-            "stock": prod[6],
+            "stock":prod[6],
             "imagen": url_imagen
         })
 
     return jsonify(productos_list)
-
 
 @app.route('/api/metodos_pago', methods=['GET'])
 def obtener_metodos_pago():
@@ -1372,7 +1313,7 @@ def crear_venta():
     total_utilidad = total_precio_venta - total_precio_compra
 
     for pago in data["metodos_pago"]:
-        pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre=?",(pago["metodo"],))[0][0]
+        pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre = ?",(pago["metodo"],))[0][0]
         detalles_pagos = {
             "venta_id": id,
             "metodo_pago": pago["metodo"],
@@ -1534,26 +1475,30 @@ def obtener_servicios():
         servicios = conn_db.ejecutar_personalizado('''
             SELECT o.id, o.estado_entrada, o.fecha, es.estado
             FROM ordenes o
-            LEFT JOIN estados_servicios e ON o.estado = e.id
-        """
+            LEFT JOIN estados_servicios es ON o.estado = es.id
+        ''')
 
-        try:
-            resultados = self.ejecutar_personalizado(consulta)
-            if not resultados:
-                return []
+        resultado = []
+        conteo_estados = {}
 
-            resumen = []
-            for fila in resultados:
-                id_orden, descripcion, fecha_ingreso, estado_str = fila
-                resumen.append({
-                    "ID": id_orden,
-                    "Descripción": descripcion,
-                    "Fecha Ingreso": fecha_ingreso,
-                    "Estado": estado_str or "Desconocido"
-                })
-            return resumen
+        for id_orden, descripcion, fecha, estado in servicios:
+            estado = estado or "Desconocido"
+            conteo_estados[estado] = conteo_estados.get(estado, 0) + 1
+            resultado.append({
+                "id": id_orden,
+                "descripcion": descripcion,
+                "fecha": fecha,
+                "estado": estado
+            })
 
-        except Exception as e:
-            print(f"❌ Error al obtener resumen de órdenes con JOIN: {e}")
-            return []
+        return jsonify({
+            "servicios": resultado,
+            "conteo_estados": conteo_estados
+        })
 
+    except Exception as e:
+        print(f"Error al obtener resumen de servicios: {e}")
+        return jsonify({"error": "Error al obtener servicios"}), 500
+
+if __name__ == '__main__':
+    app.run(host="0.0.0.0", port=5000,  debug=True)

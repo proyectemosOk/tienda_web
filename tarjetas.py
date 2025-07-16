@@ -88,6 +88,35 @@ class TarjetasEmpresariales:
             print(f"Error obteniendo servicios: {e}")
             return 0
 
+    def obtener_gastos_por_fecha_id_pago(self, fecha, id_pago):
+        """Obtiene el total de servicios en una fecha específica"""
+        try:
+            consulta = """
+                SELECT 
+                SUM(g.monto)
+                FROM gastos g
+                WHERE DATE(g.fecha_entrada) >= ? AND metodo_pago = ?
+                ORDER BY g.fecha_entrada ASC;
+            """
+            gastos = self.conn.ejecutar_personalizado(consulta, (fecha,id_pago,))[0][0] 
+            gastos = gastos if gastos else 0
+            
+            consulta = '''
+                SELECT 
+                    SUM(monto) AS TOTAL
+                FROM pagos_factura
+                WHERE DATE(fecha_pago) = ? AND tipo_pago_id = ?
+            '''
+
+            facturas = conn_db.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),id_pago))[0][0]
+            facturas = facturas if facturas else 0
+
+
+            return facturas+gastos, {"facturas":{"total":facturas},"gastos":{"total":gastos}}
+        except Exception as e:
+            print(f"Error obteniendo servicios: {e}")
+            return 0
+  
     
     def obtener_gastos_por_fecha(self, fecha):
         """Obtiene el total de servicios en una fecha específica"""
@@ -140,17 +169,19 @@ class TarjetasEmpresariales:
             print("hjja")
             # Obtener bolsillos (tipos de pago)
             bolsillos = self.obtener_bolsillos_tipos_pago()
-            print("hola ",bolsillos)
+            
             tarjetas_datos = []
             for bolsillo in bolsillos:
+                
                 # Valores para el bolsillo actual
                 ventas_hoy = self.obtener_ventas_por_tipo_pago_fecha(fecha_hoy, bolsillo['id'])
                 ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'])
                 servicios_hoy = self.obtener_servicios_por_fecha(fecha_hoy, bolsillo['id'])
                 servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['id'])
-                
+                total, gastos = self.obtener_gastos_por_fecha_id_pago(fecha_hoy, bolsillo['id'])
+
                 # Calcular total del bolsillo (valor actual configurado)
-                total_bolsillo = ventas_hoy + servicios_hoy
+                total_bolsillo = ventas_hoy + servicios_hoy - total
                 if total_bolsillo<=0:
                     continue
 
@@ -161,10 +192,9 @@ class TarjetasEmpresariales:
                 # Determinar comportamiento (1 = subida, 0 = bajada)
                 comportamiento_ventas = 1 if porcentaje_ventas >= 0 else 0
                 comportamiento_servicios = 1 if porcentaje_servicios >= 0 else 0
-                
+
                 comportamiento_general = 1 if (ventas_hoy + servicios_hoy) >= (ventas_ayer + servicios_ayer) else 0
-                
-                
+
                 # Construir objeto de tarjeta
                 tarjeta = {
                     "bolsillo": bolsillo['nombre'],
@@ -176,16 +206,18 @@ class TarjetasEmpresariales:
                     "comportamiento": comportamiento_general,
                     "modulos": {
                         "ventas": {
+                            "total":ventas_hoy,
                             "porcentaje": abs(porcentaje_ventas),
                             "sub_comportamiento": comportamiento_ventas
                         },
                         "servicios": {
+                            "total":servicios_hoy,
                             "porcentaje": abs(porcentaje_servicios),
                             "sub_comportamiento": comportamiento_servicios
-                        }
+                        },
+                        **gastos
                     }
                 }
-                
                 tarjetas_datos.append(tarjeta)
             
             return tarjetas_datos
