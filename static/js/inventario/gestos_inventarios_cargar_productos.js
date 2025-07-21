@@ -27,15 +27,21 @@ async function cargar_productos() {
                         <button class="btn btn-sm btn-info" onclick="ver_detalle_producto('${producto.codigo}')">
                             <img src="${iconoVer}" alt="Ver" width="16">
                         </button>
-                        <button class="btn btn-sm btn-warning" onclick="editar_producto('${producto.codigo}')">
-                            <img src="${iconoEditar}" alt="Editar" width="16">
-                        </button>
-                        <button class="btn btn-sm btn-danger" onclick="eliminar_producto('${producto.codigo}')">
-                            <img src="${iconoEliminar}" alt="Eliminar" width="16">
-                        </button>
+                        ${['superAdmin', 'admin'].includes(datos.rol) ? `
+                            <button class="btn btn-sm btn-warning" onclick="editar_producto('${producto.codigo}')">
+                                <img src="${iconoEditar}" alt="Editar" width="16">
+                            </button>
+                        ` : ''}
+                        ${['superAdmin', 'admin'].includes(datos.rol) ? `
+                            <button class="btn btn-sm btn-danger" onclick="eliminar_producto('${producto.codigo}')">
+                                <img src="${iconoEliminar}" alt="Eliminar" width="16">
+                            </button>
+                        ` : ''}
                     </div>
                 </td>
             `;
+
+
             tbody.appendChild(fila);
         });
 
@@ -497,20 +503,27 @@ function nuevo_producto_1() {
                         .then(data => {
 
                             // Verifica si hay imagen seleccionada
-                            console.log(data.id[0])
+                            console.log(data)
 
-                            if (imagenFileSeleccionada && data.id[0]) {
+                            alert(data.id)
+                            if (imagenFileSeleccionada && data.id) {
                                 const formData = new FormData();
                                 formData.append('imagen', imagenFileSeleccionada);
                                 console.log('formData (archivo):', imagenFileSeleccionada);
 
-                                fetch(`/api/productos/${data.id[0]}/imagen`, {
+                                fetch(`/api/productos/${data.id}/imagen`, {
                                     method: 'POST',
                                     body: formData
-                                }).then(res => res.json())
-                                    .then(() => {
+                                })
+                                    .then(async res => {
+                                        const respuesta = await res.json();
+
+                                        if (!res.ok || !respuesta.ok) {
+                                            throw new Error(respuesta.error || 'Error al guardar la imagen');
+                                        }
+
                                         imagenFileSeleccionada = null;
-                                        Swal.fire('¡Creado!', 'El producto ha sido registrado exitosamente.', 'success');
+                                        Swal.fire('¡Creado!', 'El producto y su imagen han sido registrados exitosamente.', 'success');
                                         cargar_productos();
                                     })
                                     .catch(err => {
@@ -518,6 +531,7 @@ function nuevo_producto_1() {
                                         Swal.fire('Error', 'El producto se creó pero la imagen no pudo subirse.', 'warning');
                                         cargar_productos();
                                     });
+
                             } else {
                                 Swal.fire('¡Creado!', 'El producto ha sido registrado exitosamente.', 'success');
 

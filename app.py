@@ -16,17 +16,28 @@ from io import BytesIO
 from flask import request, jsonify
 import math
 from apis_factura import *
+from api_cierre_caja import *
+
 from api_empresa import *
 from api_clientes import *
+from api_informes import *
+
+
 import sys
 from licencia import validar_licencia, crear_licencia
+from PIL import Image
+import io
+
 
 
 app = Flask(__name__)
 app.register_blueprint(extras)  
 app.register_blueprint(facturas_bp)
+app.register_blueprint(cierre_caja)
 app.register_blueprint(empresa_bp)
 app.register_blueprint(clientes)
+app.register_blueprint(informes)
+
 UPLOAD_FOLDER = 'uploads'
 
 
@@ -42,6 +53,7 @@ else:
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))  # Desarrollo normal
 # Ruta absoluta a la carpeta de imágenes
 IMAGES_FOLDER = os.path.join(BASE_DIR, 'static', 'img_productos')
+# print(IMAGES_FOLDER,"\n",BASE_DIR)
 os.makedirs(IMAGES_FOLDER, exist_ok=True)
 # Ruta personalizada para servir imágenes desde static/img_productos
 
@@ -81,6 +93,12 @@ def activar_licencia():
     
 @app.route('/img_productos/<path:filename>')
 def serve_img_productos(filename):
+    ruta_imagen = os.path.join(IMAGES_FOLDER, filename)
+    
+    if not os.path.isfile(ruta_imagen):
+        # Si no existe la imagen solicitada, usar img.png por defecto
+        filename = "img.png"
+
     return send_from_directory(IMAGES_FOLDER, filename)
 
 def obtener_id_por_nombre(tabla, buscar, columna):
@@ -425,24 +443,41 @@ def obtener_producto(codigo):
 @app.route('/api/ventas/dia', methods=['GET'])
 def obtener_resumen_ventas():
     try:
-        # Desglose global por método de pago
-        fecha_hoy = date.today().isoformat()
-        desglose_pagos = conn_db.ejecutar_personalizado('''
+        fecha_inicio = request.args.get('inicio')
+        fecha_fin = request.args.get('fin')
+        fecha_unica = request.args.get('fecha')
+
+        # Determinar el rango de fechas para el filtro
+        if fecha_inicio and fecha_fin:
+            where_clause = "DATE(v.fecha) BETWEEN ? AND ?"
+            params = (fecha_inicio, fecha_fin)
+        elif fecha_unica:
+            where_clause = "DATE(v.fecha) = ?"
+            params = (fecha_unica,)
+        else:
+            hoy = date.today().isoformat()
+            where_clause = "DATE(v.fecha) = ?"
+            params = (hoy,)
+
+        # Desglose de pagos por método de pago
+        desglose_pagos = conn_db.ejecutar_personalizado(f'''
             SELECT tp.nombre AS metodo_pago, SUM(pv.valor) AS total
             FROM pagos_venta pv
             JOIN ventas v ON pv.venta_id = v.id
-            JOIN tipos_pago tp ON pv.metodo_pago = tp.nombre
-            WHERE DATE(fecha) = ?
+            JOIN tipos_pago tp ON pv.metodo_pago = tp.id
+            WHERE {where_clause}
             GROUP BY tp.nombre
-        ''',((fecha_hoy),))
-        print(desglose_pagos)
+        ''', params)
+
         desglose = {metodo_pago: total for metodo_pago, total in desglose_pagos}
-        ventas = conn_db.ejecutar_personalizado('''
+
+        # Lista de ventas en el rango
+        ventas = conn_db.ejecutar_personalizado(f'''
             SELECT v.id, v.fecha, v.total_venta, c.nombre
             FROM ventas v
             JOIN clientes c ON v.cliente_id = c.id
-            WHERE DATE(fecha) = ?
-        ''',((fecha_hoy),))
+            WHERE {where_clause}
+        ''', params)
 
         resumen = [
             {
@@ -462,8 +497,8 @@ def obtener_resumen_ventas():
     except Exception as e:
         print(f"Error al obtener resumen de ventas: {e}")
         return jsonify({"error": "Error al obtener ventas."}), 500
-
 # API para obtener detalles de venta por ID
+
 @app.route('/api/ventas/<int:id_venta>/detalle', methods=['GET'])
 def obtener_detalle_venta(id_venta):
     try:
@@ -525,6 +560,7 @@ def obtener_detalle_venta(id_venta):
     except Exception as e:
         print(f"Error al obtener detalle de venta {id_venta}: {e}")
         return jsonify({"error": "Error al obtener detalle de venta."}), 500
+
 
 @app.route('/api/ventas/cargar', methods=['GET'])
 def cargar_ventas():
@@ -671,81 +707,105 @@ def eliminar_producto(codigo):
 @app.route('/api/productos', methods=['POST'])
 def crear_producto():
     try:
-        
         data = request.get_json()
 
-        # Validar campos obligatorios
+        # ✅ Validar campos obligatorios
         campos_obligatorios = ['codigo', 'nombre', 'categoria', 'unidad', 'stock', 'precio_compra', 'precio_venta']
         for campo in campos_obligatorios:
             if campo not in data or not str(data[campo]).strip():
                 return jsonify({"ok": False, "error": f"El campo '{campo}' es obligatorio."}), 400
 
+        # 🧼 Limpiar y convertir datos
         codigo = data['codigo'].strip()
         nombre = data['nombre'].strip()
         descripcion = data.get('descripcion', '').strip()
-        categoria = data['categoria'].strip()
-        unidad = data['unidad'].strip()
+        categoria_nombre = data['categoria'].strip()
+        unidad_nombre = data['unidad'].strip()
         unidad_simbolo = data.get('unidad_simbolo', '').strip() or None
         stock = int(data['stock'])
         precio_compra = float(data['precio_compra'])
         precio_venta = float(data['precio_venta'])
 
-        # Validar valores numéricos
+        # 🚫 Validar valores numéricos
         if stock < 0 or precio_compra < 0 or precio_venta < 0:
             return jsonify({"ok": False, "error": "Valores numéricos no pueden ser negativos."}), 400
 
+        # 🔄 Iniciar transacción
+        conn_db.iniciar_transaccion()
+
         # 1️⃣ Verificar/crear categoría
         cat_resultado = conn_db.seleccionar(
-            "categorias", columnas="id, categoria", condicion="categoria = ?", parametros=(categoria,)
+            "categorias", columnas="id", condicion="categoria = ?", parametros=(categoria_nombre,)
         )
         if not cat_resultado:
-            conn_db.insertar("categorias", {"categoria": categoria})
+            conn_db.insertar("categorias", {"categoria": categoria_nombre})
 
         # 2️⃣ Verificar/crear unidad
         unidad_resultado = conn_db.seleccionar(
-            "unidades", columnas="id, unidad", condicion="unidad = ?", parametros=(unidad,)
+            "unidades", columnas="id", condicion="unidad = ?", parametros=(unidad_nombre,)
         )
         if not unidad_resultado:
             conn_db.insertar("unidades", {
-                "unidad": unidad,
+                "unidad": unidad_nombre,
                 "simbolo": unidad_simbolo
             })
 
+        # 🔁 Obtener IDs actualizados
+        categoria_id = obtener_id_por_nombre("categorias", categoria_nombre, "categoria")
+        unidad_id = obtener_id_por_nombre("unidades", unidad_nombre, "unidad")
+
         # 3️⃣ Insertar producto
-        id_producto = conn_db.insertar("productos", {
+        id_producto, error = conn_db.insertar("productos", {
             "codigo": codigo,
             "nombre": nombre,
             "descripcion": descripcion,
-            "categoria": categoria,
-            "unidad": unidad,
+            "categoria": categoria_id,
+            "unidad": unidad_id,
             "stock": stock,
             "precio_compra": precio_compra,
             "precio_venta": precio_venta,
             "activo": 1
         })
 
-        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente.", "id":id_producto})
+        if error:
+            conn_db.revertir_transaccion()
+            return jsonify({"ok": False, "error": error["error"]}), 400
+
+        # ✅ Confirmar todo
+        conn_db.confirmar_transaccion()
+        return jsonify({"ok": True, "mensaje": "Producto creado exitosamente.", "id": id_producto})
 
     except Exception as e:
         print("Error en /api/productos:", e)
+        conn_db.revertir_transaccion()
         return jsonify({"ok": False, "error": "Ocurrió un error al crear el producto."}), 500
 
 @app.route('/api/productos/<int:id_producto>/imagen', methods=['POST'])
 def subir_imagen_producto(id_producto):
     if 'imagen' not in request.files:
         return jsonify({"ok": False, "error": "No se envió ningún archivo"}), 400
+
     file = request.files['imagen']
+
     if file.filename == '':
         return jsonify({"ok": False, "error": "Nombre de archivo vacío"}), 400
-    # Verificar extensión (opcional)
-    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif')):
+
+    if not file.filename.lower().endswith(('.png', '.jpg', '.jpeg', '.gif', '.webp')):
         return jsonify({"ok": False, "error": "Formato no permitido"}), 400
-    # Guardar con nombre consistente
+
     filename = f"{id_producto}.png"
     filepath = os.path.join(IMAGES_FOLDER, filename)
-    file.save(filepath)
 
-    return jsonify({"ok": True, "mensaje": "Imagen guardada exitosamente"})
+    try:
+        # Convertir a PNG si no es .png
+        image = Image.open(file.stream).convert("RGBA")
+        image.save(filepath, format="PNG")
+        print("vamos bien")
+
+        return jsonify({"ok": True, "mensaje": "Imagen guardada correctamente"})
+    except Exception as e:
+        return jsonify({"ok": False, "error": f"No se pudo guardar la imagen: {str(e)}"}), 500
+
 
 @app.route('/api/opciones_producto', methods=['GET'])
 def obtener_opciones_producto():
@@ -782,7 +842,7 @@ def crear_proveedor():
                 "direccion": datos.get("direccion"),
                 "telefono": datos["telefono"],
                 "email": datos.get("email"),
-                "fechar_registro": "date('now', 'localtime')",
+                "fecha_registro": "date('now', 'localtime')",
                 "estado": 1
             },
             expresion_sql=True
@@ -848,7 +908,6 @@ def buscar_proveedor():
         }), 200
 
     return jsonify({'ok': False, 'error': 'Proveedor no encontrado'}), 404
-
 
 @app.route('/api/proveedores', methods=['GET'])
 def cargar_proveedores():
@@ -952,9 +1011,9 @@ def eliminar_proveedor(id):
 def obtener_productos():
     productos = conn_db.seleccionar('productos', "id, nombre, precio_venta, categoria, descripcion, codigo, stock")
     productos_list = []
-
+    
     for prod in productos:
-        url_imagen = f"/static/img_productos/{prod[0]}.png"
+        url_imagen = f"img_productos/{prod[0]}.png"
         productos_list.append({
             "id": prod[0],
             "nombre": prod[1],
@@ -1271,75 +1330,80 @@ def crear_venta():
     if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
         return jsonify({"error": "Campos requeridos faltantes"}), 400
 
-    new_venta = {
-        'vendedor_id': data['vendedor_id'],
-        "cliente_id": data["cliente_id"],
-        "total_venta": data["total_venta"],
-        "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "total_compra": 0,
-        "total_utilidad": 0
-    }
+    try:
+        conn_db.iniciar_transaccion()  # BEGIN
 
-    id, error = conn_db.insertar("ventas", new_venta)
-    if not id:
-        return jsonify({"valido": False, "mensaje": "Venta no registrada"}), 401
-
-    total_precio_compra = 0
-
-    for producto in data["productos"]:
-        detalles_ventas = {
-            "venta_id": id,
-            "producto_id": producto["codigo"],
-            "cantidad": producto["cantidad"],
-            "precio_unitario": producto["precio_unitario"]
+        new_venta = {
+            'vendedor_id': data['vendedor_id'],
+            "cliente_id": data["cliente_id"],
+            "total_venta": data["total_venta"],
+            "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "total_compra": 0,
+            "total_utilidad": 0
         }
-        conn_db.insertar("detalles_ventas", detalles_ventas)
 
-        # Actualizar stock
-        can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
-        nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
-        conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
+        id, error = conn_db.insertar("ventas", new_venta)
+        if not id:
+            raise Exception("Venta no registrada")
 
-        # Obtener precio_compra directamente desde productos
-        resultado = conn_db.seleccionar("productos", "precio_compra", "id= ?", (producto["codigo"],))
-        if resultado:
-            precio_compra = float(resultado[0][0])
-        else:
-            precio_compra = 0
+        total_precio_compra = 0
 
-        total_precio_compra += precio_compra * float(producto["cantidad"])
+        for producto in data["productos"]:
+            detalles_ventas = {
+                "venta_id": id,
+                "producto_id": producto["codigo"],
+                "cantidad": producto["cantidad"],
+                "precio_unitario": producto["precio_unitario"]
+            }
+            conn_db.insertar("detalles_ventas", detalles_ventas)
 
-    total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
-    total_utilidad = total_precio_venta - total_precio_compra
+            can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
+            nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
+            conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
 
-    for pago in data["metodos_pago"]:
-        pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre = ?",(pago["metodo"],))[0][0]
-        detalles_pagos = {
-            "venta_id": id,
-            "metodo_pago": pago["metodo"],
-            "valor": pago["valor"],
-            "usuario_id":data['vendedor_id']
-        }
-        conn_db.insertar("pagos_venta", detalles_pagos)
-        conn_db.actualizar(
-            "tipos_pago",
-            {"actual": f"actual + {pago['valor']}"},
-            "nombre = ?",
-            (pago["metodo"],),
-            expresion_sql=True
-        )
+            resultado = conn_db.seleccionar("productos", "precio_compra", "id= ?", (producto["codigo"],))
+            precio_compra = float(resultado[0][0]) if resultado else 0
+            total_precio_compra += precio_compra * float(producto["cantidad"])
 
-    conn_db.actualizar("ventas", {
-        "total_compra": total_precio_compra,
-        "total_utilidad": total_utilidad
-    }, "id = ?", (id,))
+        total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
+        total_utilidad = total_precio_venta - total_precio_compra
 
+        for pago in data["metodos_pago"]:
+            pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre = ?", (pago["metodo"],))[0][0]
+            detalles_pagos = {
+                "venta_id": id,
+                "metodo_pago": pago["metodo"],
+                "valor": pago["valor"],
+                "usuario_id": data['vendedor_id']
+            }
+            conn_db.insertar("pagos_venta", detalles_pagos)
+            conn_db.actualizar(
+                "tipos_pago",
+                {"actual": f"actual + {pago['valor']}"},
+                "id = ?",
+                (pago["metodo"],),
+                expresion_sql=True
+            )
 
-    return jsonify({
-        "valido": True,
-        "mensaje": f"Venta exitosa {id}",
-        "id": id
-    }), 200
+        conn_db.actualizar("ventas", {
+            "total_compra": total_precio_compra,
+            "total_utilidad": total_utilidad
+        }, "id = ?", (id,))
+
+        conn_db.confirmar_transaccion()  # COMMIT
+
+        return jsonify({
+            "valido": True,
+            "mensaje": f"Venta exitosa {id}",
+            "id": id
+        }), 200
+
+    except Exception as e:
+        conn_db.cancelar_transaccion()  # ROLLBACK
+        return jsonify({
+            "valido": False,
+            "mensaje": f"Error: {str(e)}"
+        }), 500
 
 # API cargar usuarios
 @app.route("/api/cargar/usuarios", methods=["GET"])

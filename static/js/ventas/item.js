@@ -163,7 +163,9 @@ class TicketDeVenta {
       cantidad: item.cantidad,
       precio_unitario: item.precio
     }));
-
+    if(productos==[]){
+      return
+    }
     // Obtener métodos de pago visibles con valor
     let metodosPago = Array.from(document.querySelectorAll('.payment-input'))
       .filter(input => input.value.trim() !== '')
@@ -198,7 +200,7 @@ class TicketDeVenta {
       productos: productos
     };
 
-    console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
+    // console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
 
     fetch('api/crear_venta', {
       method: 'POST',
@@ -497,6 +499,9 @@ async function obtenerDatosJSONVentasPorID(id) {
 }
 
 function validarYProcesarPago(metodos_pago, totalVenta) {
+  if(!totalVenta){
+    return
+  }
   const sumaPagos = metodos_pago.reduce((sum, item) => sum + item.valor, 0);
 
   if (sumaPagos !== totalVenta) {

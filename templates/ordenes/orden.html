@@ -8,7 +8,7 @@
     <script src="/static/js/cargarDeafaul/cargar.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ordenes/orden.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script src="/static/js/ordenes/siguient-etapa.js" defer></script>
+    
 </head>
 
 <body>
@@ -68,7 +68,7 @@
             </div>
 
             <!-- ETAPA 2: ARTÍCULO -->
-            <div class="form-stage" data-stage="2">
+            <div class="form-stage hidden" data-stage="2">
                 <div class="stage-header">
                     <div class="stage-icon">📱</div>
                     <div class="stage-info">
@@ -113,7 +113,7 @@
             </div>
 
             <!-- ETAPA 3: SERVICIOS, PERIFÉRICOS Y OBSERVACIONES -->
-            <div class="form-stage" data-stage="3">
+            <div class="form-stage hidden" data-stage="3">
                 <div class="stage-header">
                     <div class="stage-icon">🔧</div>
                     <div class="stage-info">
@@ -153,9 +153,24 @@
                 </div>
             </div>
 
+            <!-- ETAPA 4: PAGOS -->
+            <div class="form-stage hidden" data-stage="4">
+                <h4>Pagos</h4>
+                <div class="form-group mt-3">
+                    <label for="valor_servicio">💰 Valor total del servicio</label>
+                    <input type="number" class="form-control" id="valor_servicio" name="valor_servicio"
+                        placeholder="Ej: 150000" required>
+                </div>
+
+                <div>
+                    <button type="button" class="btn btn-primary" onclick="abrirSwalPagos(factura, tiposPago)">Agregar
+                        pagos</button>
+                    <div id="tabla-pagos-internos" class="mt-3"></div>
+                </div>
+            </div>
 
             <!-- ETAPA 5: FOTOS -->
-            <div class="form-stage" data-stage="4">
+            <div class="form-stage  hidden" data-stage="5">
                 <div class="stage-header">
                     <div class="stage-icon">📸</div>
                     <div class="stage-info">
@@ -177,13 +192,13 @@
             </div>
 
             <!-- Controles de navegación -->
-            <div class="navigation-buttons">
+            <div class="navigation-buttons form-navigation">
                 <button type="button" id="prevBtn" class="btn btn-secondary">⬅️ Atrás</button>
                 <button type="button" id="nextBtn" class="btn btn-primary">Siguiente ➡️</button>
             </div>
 
             <!-- Sección de Envío -->
-            <div class="submit-section">
+            <div class="submit-section hidden">
                 <button type="submit" class="btn btn-success submit-btn">
                     ✅ Enviar Orden de Servicio
                 </button>
@@ -195,60 +210,10 @@
         </form>
     </div>
 
-    <!-- Modal Nuevo Cliente -->
-    <div id="modal-nuevo-cliente" class="modal-overlay hidden">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Registrar Nuevo Cliente</h3>
-                <button type="button" class="close-modal" id="close-modal">×</button>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="nuevo_nombre">Nombre Completo *</label>
-                    <input type="text" id="nuevo_nombre" class="form-control" required
-                        placeholder="Nombre completo del cliente">
-                </div>
-                <div class="form-group">
-                    <label for="nuevo_tipo_documento">Tipo de Documento</label>
-                    <select id="nuevo_tipo_documento" class="form-control">
-                        <option value="CC">Cédula de Ciudadanía</option>
-                        <option value="CE">Cédula de Extranjería</option>
-                        <option value="NIT">NIT</option>
-                        <option value="Otro">Otro</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label for="nuevo_numero">Número de Documento *</label>
-                <input type="text" id="nuevo_numero" class="form-control" required
-                    placeholder="Número de identificación">
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="nuevo_telefono">Teléfono</label>
-                    <input type="tel" id="nuevo_telefono" class="form-control" placeholder="Número de contacto">
-                </div>
-                <div class="form-group">
-                    <label for="nuevo_email">Email</label>
-                    <input type="email" id="nuevo_email" class="form-control" placeholder="correo@ejemplo.com">
-                </div>
-            </div>
-
-            <div class="text-center mt-4">
-                <button type="button" id="guardar-cliente" class="btn btn-primary">
-                    💾 Guardar Cliente
-                </button>
-                <button type="button" class="btn btn-secondary ml-2" id="cancelar-cliente">
-                    Cancelar
-                </button>
-            </div>
-        </div>
-    </div>
 
     <script src="{{ url_for('static', filename='js/ordenes/orden.js') }}" defer></script>
+    <script src="/static/js/ordenes/siguient-etapa.js" defer></script>
 
 </body>
 

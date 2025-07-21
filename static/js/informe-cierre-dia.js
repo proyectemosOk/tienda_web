@@ -52,6 +52,7 @@ const reporteData = {
         "monto": 140000
     }
 };
+
 async function loadData() {
     try {
         const response = await fetch('/static');

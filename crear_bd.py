@@ -180,24 +180,24 @@ def crear_tablas(base):
     ''', usuarios_por_defecto)
     
 
-    # Crear tabla de productos
+    # Crear tabla de productos 
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS productos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        codigo TEXT NOT NULL unique,
-        nombre TEXT NOT NULL,
-        descripcion TEXT,
-        precio_compra REAL,
-        precio_venta REAL,
-        stock INTEGER,
-        categoria TEXT NOT NULL,
-        unidad TEXT NOT NULL,
-        activo INTEGER NOT NULL,
-        FOREIGN KEY (categoria) REFERENCES categorias (id),
-        FOREIGN KEY (unidad) REFERENCES unidades (id)
-    )
-    ''')
-    
+        CREATE TABLE IF NOT EXISTS productos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            codigo TEXT NOT NULL unique,
+            nombre TEXT NOT NULL,
+            descripcion TEXT,
+            precio_compra REAL,
+            precio_venta REAL,
+            stock INTEGER,
+            categoria INTEGER NOT NULL,
+            unidad INTEGER NOT NULL,
+            activo INTEGER NOT NULL,
+            FOREIGN KEY (categoria) REFERENCES categorias (id),
+            FOREIGN KEY (unidad) REFERENCES unidades (id),
+            FOREIGN KEY (unidad) REFERENCES unidades (id)
+        )
+        ''')
     productos = [
     (1,1,"Laptop", "Laptop básica para oficina",1200000, 1500000, 10, "Tecnología", "Unidad"),
     (2,2,"Mouse", "Mouse inalámbrico",20000, 25000, 50, "Tecnología", "Unidad"),
@@ -292,8 +292,18 @@ def crear_tablas(base):
     (5, "Accesorios")
     ]
     #cursor.executemany('''INSERT OR IGNORE INTO categorias (id, categoria) VALUES (?, ?)''', categorias)
-
-
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS modulos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nombre TEXT NOT NULL UNIQUE,
+        comportamiento INTEGER NOT NULL
+    );''')
+    cursor.execute("""INSERT OR IGNORE INTO modulos (nombre, comportamiento) VALUES
+        ('Ventas', 1),
+        ('Servicios', 1),
+        ('Gastos', 0),
+        ('Facturas', 0);
+        """)
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS pagos_venta (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -301,6 +311,8 @@ def crear_tablas(base):
         metodo_pago INTEGER NOT NULL,
         valor REAL NOT NULL,
         usuario_id INTEGER NOT NULL,
+        estado INTEGER DEFAULT 1,
+        
         FOREIGN KEY (venta_id) REFERENCES ventas(id),
         FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id),
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
@@ -400,7 +412,7 @@ def crear_tablas(base):
     monto_total INTEGER NOT NULL,
     estado_pago_id INTEGER DEFAULT 1,
     usuario_id INTEGER,
-    
+    estado INTEGER DEFAULT 1,
     FOREIGN KEY (proveedor_id) REFERENCES proveedores(id),
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id),
     FOREIGN KEY (estado_pago_id) REFERENCES estado_pago(id)
@@ -426,6 +438,8 @@ def crear_tablas(base):
         fecha_pago DATE NOT NULL,
         monto DECIMAL(10,2) NOT NULL,
         observaciones TEXT,
+        estado INTEGER DEFAULT 1,
+        
         usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
         FOREIGN KEY (factura_id) REFERENCES facturas_proveedor(id),
         FOREIGN KEY (tipo_pago_id) REFERENCES tipos_pago(id)
@@ -477,6 +491,7 @@ def crear_tablas(base):
             id_usuario INTEGER NOT NULL,
             categoria INTEGER NOT NULL,
             metodo_pago INTEGER NOT NULL,
+            estado INTEGER DEFAULT 1,            
             FOREIGN KEY (categoria) REFERENCES categoria_gastos(id),
             FOREIGN KEY (id_usuario) REFERENCES usuarios(id),
             FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id)
@@ -516,7 +531,7 @@ def crear_tablas(base):
         CREATE TABLE IF NOT EXISTS cierres_dia_detalle_pagos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cierre_id INTEGER NOT NULL,
-            tipo_pago TEXT NOT NULL,
+            tipo_pago INTEGER NOT NULL,
             monto REAL NOT NULL,
             FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
             FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
@@ -527,24 +542,27 @@ def crear_tablas(base):
         CREATE TABLE IF NOT EXISTS cierres_dia_detalle_categorias (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cierre_id INTEGER NOT NULL,
-            descripcion TEXT NOT NULL, 
+            id_modulo INTEGER NOT NULL,
             monto REAL NOT NULL,
-            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_modulo) REFERENCES modulos(id) ON DELETE CASCADE
         );
     ''')
 
     cursor.execute('''
-    CREATE TABLE IF NOT EXISTS cierres_dia_movimientos (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    cierre_id INTEGER NOT NULL,
-    tipo_pago TEXT,
-    categoria TEXT,
-    referencia_id TEXT,
-    monto REAL,
-    FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE
-    FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE
-);
-''')
+            CREATE TABLE IF NOT EXISTS cierres_dia_movimientos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            cierre_id INTEGER NOT NULL,
+            tipo_pago INTEGER,
+            id_modulo INTEGER,
+            referencia_id TEXT,
+            monto REAL,
+            FOREIGN KEY (cierre_id) REFERENCES cierres_dia(id) ON DELETE CASCADE,
+            FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id) ON DELETE CASCADE,
+            FOREIGN KEY (id_modulo) REFERENCES modulos(id) ON DELETE CASCADE
+        );
+
+        ''')
 
     
     cursor.execute("""
@@ -654,6 +672,7 @@ def crear_tablas(base):
             id_orden INTEGER NOT NULL,
             tipo_pago INTEGER,
             monto REAL NOT NULL,
+            estado INTEGER DEFAULT 1,
             usuario_id INTEGER NOT NULL REFERENCES usuarios(id),
             FOREIGN KEY (tipo_pago) REFERENCES tipos_pago(id),
             FOREIGN KEY(id_orden) REFERENCES ordenes(id)

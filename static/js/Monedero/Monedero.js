@@ -1001,7 +1001,6 @@ function renderizarTablaPagosInternos(factura) {
   `;
 }
 
-
 // ✅ Eliminar pago
 function eliminarPagoInterno(index, saldoPendiente) {
   pagosTemporales.splice(index, 1);

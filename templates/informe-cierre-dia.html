@@ -1,11 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cierre de día</title>
+    <script src="/static/js/cargarDeafaul/cargar.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
     <link rel="stylesheet" href="/static/css/informe-cierre-dia.css">
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -30,6 +35,9 @@
                     <p id="total-neto">$0</p>
                 </div>
             </div>
+            <div class="resumen-grid" id="bolsillos-resumen">
+                <!-- Aquí se insertarán dinámicamente los saldos por tipo de pago -->
+            </div>
             <div class="observaciones">
                 <input type="text" id="observaciones" required placeholder="Cuenteme sus problemas">
                 <label for="observaciones" class="label">Observaciones:</label>
@@ -39,26 +47,41 @@
 
         <section class="detalle">
             <div class="ingresos-detalle">
-              <h2>Ingresos por Tipo de Pago</h2>
-              <div id="tipos-pago-container" class="detalle-container"></div>
+                <h2>Ingresos por Tipo de Pago</h2>
+                <div id="tipos-pago-container" class="detalle-container panel alto-completo""></div>
             </div>
-          
-            <div class="egresos-detalle">
-              <div class="gastos-detalle">
-                <h3>Gastos</h3>
-                <div id="gastos-container" class="detalle-container"></div>
-              </div>
-              <div class="facturas-detalle">
-                <h3>Facturas</h3>
-                <div id="facturas-container" class="detalle-container"></div>
-              </div>
-            </div>
-          </section>   
-          <div class="btn-cerrar">
+
+            <div class=" egresos-detalle">
+                    <div class="gastos-detalle">
+                        <h3>Gastos</h3>
+                        <div id="gastos-container" class="detalle-container panel medio-alto"></div>
+                    </div>
+                    <div class="facturas-detalle">
+                        <h3>Facturas</h3>
+                        <div id="facturas-container" class="detalle-container panel medio-alto"></div>
+                    </div>
+                </div>
+        </section>
+        <div class="btn-cerrar">
             <button id="cierre-dia-btn">Cerrar día</button>
-        </div>       
+        </div>
     </div>
 
-    <script src="/static/js/informe-cierre-dia.js"></script>
+    <script src="/static/js/informe-cierre-dia-copy.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+    <!-- Modal PDF estilo Tailwind -->
+    <div id="modal-pdf" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl w-[90%] h-[90%] relative flex flex-col overflow-hidden">
+            <button onclick="cerrarModalPDF()" class="absolute top-3 right-3 text-gray-600 hover:text-red-600 text-xl">
+                &times;
+            </button>
+            <iframe id="iframe-pdf" class="w-full h-full border-none rounded-b-2xl"></iframe>
+        </div>
+    </div>
+
+
 </body>
+
 </html>

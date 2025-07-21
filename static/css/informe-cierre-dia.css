@@ -49,15 +49,7 @@
     box-shadow: var(--shadow-md);
     border-bottom: 4px solid var(--accent);
   }
-  
-  /* Sección Principal - Diseño en 2 columnas */
-  .main-content {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    margin-bottom: 32px;
-  }
-  
+    
   /* Columna Izquierda - Ingresos */
   .ingresos-column {
     grid-column: 1;
@@ -68,7 +60,7 @@
     grid-column: 2;
     display: grid;
     grid-template-rows: auto auto;
-    gap: 24px;
+    /* gap: 24px; */
   }
   
   /* Sección de Gastos (arriba en egresos) */
@@ -142,21 +134,14 @@
     color: var(--primary-light);
   }
   
-  /* Sección de Detalle */
-  .detalle-container {
-    background-color: white;
-    border-radius: var(--border-radius);
-    padding: 0;
-    box-shadow: var(--shadow-sm);
-    margin-bottom: 0;
-    overflow: hidden;
-  }
-  
   /* Tablas - Diseño Ejecutivo */
   table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.875rem;
+    overflow-x: auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
   
   th, td {
@@ -187,21 +172,26 @@
   }
   
   /* Eliminar barras de desplazamiento */
-  .detalle-container, table {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  #tipos-pago-container{
+    height: max-content;
+    max-height: 80vh;
   }
+  #facturas-container, #gastos-container{
+    height: max-content;
+    max-height: 40vh;
+  }
+  #facturas-container, #tipos-pago-container, #gastos-container{
+    overflow-y: auto;
+  }
+
   
   /* Asegurar que no aparezcan barras innecesarias */
-  .detalle-container::-webkit-scrollbar, 
-  table::-webkit-scrollbar {
-    display: none;
-  }
+
   .detalle {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 32px;
-    margin-bottom: 40px;
+    /* gap: 32px; */
+    /* margin-bottom: 40px; */
   }
   
   /* Ingresos a la izquierda */
@@ -209,15 +199,14 @@
     grid-column: 1;
     background-color: white;
     border-radius: var(--border-radius);
-    padding: 20px;
     box-shadow: var(--shadow-sm);
   }
   
 
   .egresos-detalle {
-    grid-column: 2;
+    /* grid-column: 2;
     display: grid;
-    grid-template-rows: 1fr 1fr;
+    grid-template-rows: 1fr 1fr; */
     gap: 24px;
   }
 
@@ -293,9 +282,11 @@
 .btn-cerrar{
   display: flex;
   flex-direction: row-reverse;
+  margin-top: 5vh;;
 }
 button {
-  position: relative;
+  position: sticky;
+  /* bottom: 5vh;; */
   padding: 10px 20px;
   border-radius: var(--border-radius);
   border: 1px solid var(--accent);
@@ -335,6 +326,7 @@ button::before {
   box-shadow: 0 0 60px 40px white;
   transform: skewX(-20deg);
 }
+
 
 @keyframes sh02 {
   from {

@@ -17,12 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const submitSection = document.querySelector('.submit-section');
 
     function showStage(stage) {
-        // Ocultar todas
         stages.forEach(s => s.classList.add('hidden'));
-        // Mostrar la actual
-        document.querySelector(`.form-stage[data-stage="${stage}"]`).classList.remove('hidden');
+        const current = document.querySelector(`.form-stage[data-stage="${stage}"]`);
+        if (current) current.classList.remove('hidden');
 
-        // Actualizar progreso visual
         progressIndicators.forEach((indicator, index) => {
             if (index < stage) {
                 indicator.classList.add('active');
@@ -31,11 +29,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Mostrar u ocultar botones
         prevBtn.style.display = (stage === 1) ? 'none' : 'inline-block';
         nextBtn.textContent = (stage === totalStages) ? 'Finalizar' : 'Siguiente ➡️';
-
-        // Mostrar sección de envío solo en la última etapa
         submitSection.style.display = (stage === totalStages) ? 'block' : 'none';
     }
 
@@ -47,16 +42,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     nextBtn.addEventListener('click', () => {
+        // Validación específica para la etapa 4 (PAGOS)
+        if (currentStage === 4) {
+            const valorServicio = document.getElementById('valor_servicio');
+            if (!valorServicio || valorServicio.value.trim() === '' || parseFloat(valorServicio.value) <= 0) {
+                Swal.fire('Campo obligatorio', 'Debes ingresar el valor total del servicio antes de finalizar.', 'warning');
+                return;
+            }
+        }
+
         if (currentStage < totalStages) {
             currentStage++;
             showStage(currentStage);
         } else {
-            // Estamos en la última, disparar el submit
+            // Enviar formulario si todo está correcto
             document.querySelector('.orden-form').requestSubmit();
         }
     });
 
-    // Inicializar vista
+    // Inicializar
     showStage(currentStage);
 });
-

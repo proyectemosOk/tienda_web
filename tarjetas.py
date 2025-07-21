@@ -54,18 +54,16 @@ class TarjetasEmpresariales:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) AS total
                     FROM pagos_venta pv
-                    INNER JOIN ventas v ON pv.venta_id = v.id
-                    WHERE DATE(v.fecha) = ? AND pv.metodo_pago = ? AND v.estado = 1
+                    WHERE pv.metodo_pago = ? AND pv.estado = 1
                 """
-                parametros = (fecha, tipo_pago_id)
+                parametros = (tipo_pago_id,)
             else:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) as total
                     FROM pagos_venta pv
-                    INNER JOIN ventas v ON pv.venta_id = v.id
-                    WHERE DATE(v.fecha) = ? AND v.estado = 1
+                    WHERE pv.estado = ?
                 """
-                parametros = (fecha,)
+                parametros = (1,)
             
             resultado = self.conn.ejecutar_personalizado(consulta, parametros)
             return resultado[0][0] if resultado else 0
@@ -76,81 +74,96 @@ class TarjetasEmpresariales:
     def obtener_servicios_por_fecha(self, fecha, id_tipo_pago):
         """Obtiene el total de servicios en una fecha específica y por tipo de pago"""
         try:
+            # Validar tipo de dato
+            if not isinstance(id_tipo_pago, (int, str)):
+                raise ValueError("id_tipo_pago debe ser int o str")
+
             consulta = """
-                SELECT COALESCE(SUM(o.total_servicio), 0) AS total
-                FROM ordenes o
-                JOIN pagos_servicios p ON o.id = p.id_orden
-                WHERE DATE(o.fecha) = ? AND p.tipo_pago = ?
+                SELECT COALESCE(SUM(monto), 0) AS total
+                FROM pagos_servicios
+                WHERE estado = 1 AND tipo_pago = ?
             """
-            resultado = self.conn.ejecutar_personalizado(consulta, (fecha, id_tipo_pago))
+            resultado = self.conn.ejecutar_personalizado(consulta, (id_tipo_pago,))
             return resultado[0][0] if resultado else 0
         except Exception as e:
             print(f"Error obteniendo servicios: {e}")
             return 0
 
-    def obtener_gastos_por_fecha_id_pago(self, fecha, id_pago):
-        """Obtiene el total de servicios en una fecha específica"""
-        try:
-            consulta = """
-                SELECT 
-                SUM(g.monto)
-                FROM gastos g
-                WHERE DATE(g.fecha_entrada) >= ? AND metodo_pago = ?
-                ORDER BY g.fecha_entrada ASC;
-            """
-            gastos = self.conn.ejecutar_personalizado(consulta, (fecha,id_pago,))[0][0] 
-            gastos = gastos if gastos else 0
-            
-            consulta = '''
-                SELECT 
-                    SUM(monto) AS TOTAL
-                FROM pagos_factura
-                WHERE DATE(fecha_pago) = ? AND tipo_pago_id = ?
-            '''
 
-            facturas = conn_db.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),id_pago))[0][0]
+    def obtener_gastos_por_fecha_id_pago(self, fecha, id_pago):
+        """Obtiene el total de gastos y pagos de factura en una fecha específica por método de pago"""
+        try:
+            # Validar tipo de parámetro
+            if not isinstance(id_pago, (int, str)):
+                raise ValueError("id_pago debe ser un int o str válido")
+
+            # Consultar gastos
+            consulta_gastos = """
+                SELECT SUM(g.monto)
+                FROM gastos g
+                WHERE g.estado = 1 AND g.metodo_pago = ?
+            """
+            resultado_gastos = self.conn.ejecutar_personalizado(consulta_gastos, (id_pago,))
+            gastos = resultado_gastos[0][0] if resultado_gastos else 0
+            gastos = gastos if gastos else 0
+
+            # Consultar pagos de factura
+            consulta_facturas = """
+                SELECT SUM(monto)
+                FROM pagos_factura
+                WHERE tipo_pago_id = ? AND estado = 1
+            """
+            resultado_facturas = self.conn.ejecutar_personalizado(consulta_facturas, (id_pago,))
+            facturas = resultado_facturas[0][0] if resultado_facturas else 0
             facturas = facturas if facturas else 0
 
+            total = facturas + gastos
+            detalles = {
+                "facturas": {"total": facturas},
+                "gastos": {"total": gastos}
+            }
 
-            return facturas+gastos, {"facturas":{"total":facturas},"gastos":{"total":gastos}}
+            return total, detalles
+
         except Exception as e:
-            print(f"Error obteniendo servicios: {e}")
-            return 0
-  
-    
+            print(f"❌ Error obteniendo servicios: {e}")
+            return 0, {"facturas": {"total": 0}, "gastos": {"total": 0}}
+
     def obtener_gastos_por_fecha(self, fecha):
-        """Obtiene el total de servicios en una fecha específica"""
+        """Obtiene el listado de gastos en una fecha específica"""
         try:
             consulta = """
                 SELECT 
-                g.id,
-                g.fecha_entrada,
-                g.monto,
-                g.descripcion,
-                c.descripcion AS categoria,
-                tp.nombre AS metodo_pago
+                    g.id,
+                    g.fecha_entrada,
+                    g.monto,
+                    g.descripcion,
+                    c.descripcion AS categoria,
+                    tp.nombre AS metodo_pago
                 FROM gastos g
                 JOIN categoria_gastos c ON g.categoria = c.id
                 JOIN tipos_pago tp ON g.metodo_pago = tp.id
-                WHERE DATE(g.fecha_entrada) >= ?
+                WHERE g.estado = 1
                 ORDER BY g.fecha_entrada ASC;
             """
             resultado = self.conn.ejecutar_personalizado(consulta, (fecha,))
             gastos = [
                 {
                     "id": fila[0],
-                    "descripcion": fila[1],
+                    "fecha": fila[1],
                     "monto": fila[2],
-                    "categoria": fila[3],
-                    "fecha": fila[4]
+                    "descripcion": fila[3],
+                    "categoria": fila[4],
+                    "metodo_pago": fila[5],
                 }
-                for fila in resultado
-]
+                for fila in resultado or []
+            ]
 
-            return gastos if gastos else 0
+            return gastos
+
         except Exception as e:
-            print(f"Error obteniendo servicios: {e}")
-            return 0
+            print(f"❌ Error obteniendo gastos: {e}")
+            return []
     
     def calcular_porcentaje_cambio(self, valor_actual, valor_anterior):
         """Calcula el porcentaje de cambio entre dos valores"""
@@ -166,7 +179,7 @@ class TarjetasEmpresariales:
         try:
             fecha_hoy = self.obtener_fecha_hoy()
             fecha_ayer = self.obtener_fecha_ayer()
-            print("hjja")
+            
             # Obtener bolsillos (tipos de pago)
             bolsillos = self.obtener_bolsillos_tipos_pago()
             
@@ -175,45 +188,49 @@ class TarjetasEmpresariales:
                 
                 # Valores para el bolsillo actual
                 ventas_hoy = self.obtener_ventas_por_tipo_pago_fecha(fecha_hoy, bolsillo['id'])
-                ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'])
+                print(f"{ventas_hoy=}")
+                # ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'])
                 servicios_hoy = self.obtener_servicios_por_fecha(fecha_hoy, bolsillo['id'])
-                servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['id'])
+                print(f"{servicios_hoy=}")
+                
+                # servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['id'])
                 total, gastos = self.obtener_gastos_por_fecha_id_pago(fecha_hoy, bolsillo['id'])
+                print(f"{gastos=} \n{total=}")
 
                 # Calcular total del bolsillo (valor actual configurado)
-                total_bolsillo = ventas_hoy + servicios_hoy - total
-                if total_bolsillo<=0:
+                total_bolsillo = ventas_hoy + servicios_hoy
+                if total_bolsillo==0:
                     continue
 
-                # Calcular porcentajes de cambio
-                porcentaje_ventas = self.calcular_porcentaje_cambio(ventas_hoy, ventas_ayer)
-                porcentaje_servicios = self.calcular_porcentaje_cambio(servicios_hoy, servicios_ayer)
+                # # Calcular porcentajes de cambio
+                # porcentaje_ventas = self.calcular_porcentaje_cambio(ventas_hoy, ventas_ayer)
+                # porcentaje_servicios = self.calcular_porcentaje_cambio(servicios_hoy, servicios_ayer)
 
-                # Determinar comportamiento (1 = subida, 0 = bajada)
-                comportamiento_ventas = 1 if porcentaje_ventas >= 0 else 0
-                comportamiento_servicios = 1 if porcentaje_servicios >= 0 else 0
+                # # Determinar comportamiento (1 = subida, 0 = bajada)
+                # comportamiento_ventas = 1 if porcentaje_ventas >= 0 else 0
+                # comportamiento_servicios = 1 if porcentaje_servicios >= 0 else 0
 
-                comportamiento_general = 1 if (ventas_hoy + servicios_hoy) >= (ventas_ayer + servicios_ayer) else 0
+                # comportamiento_general = 1 if (ventas_hoy + servicios_hoy) >= (ventas_ayer + servicios_ayer) else 0
 
                 # Construir objeto de tarjeta
                 tarjeta = {
                     "bolsillo": bolsillo['nombre'],
                     "total": total_bolsillo,
-                    "porcentaje": self.calcular_porcentaje_cambio(
-                        ventas_hoy + servicios_hoy, 
-                        ventas_ayer + servicios_ayer
-                    ),
-                    "comportamiento": comportamiento_general,
+                    # "porcentaje": self.calcular_porcentaje_cambio(
+                    #     ventas_hoy + servicios_hoy, 
+                    #     ventas_ayer + servicios_ayer
+                    # ),
+                    # "comportamiento": comportamiento_general,
                     "modulos": {
                         "ventas": {
-                            "total":ventas_hoy,
-                            "porcentaje": abs(porcentaje_ventas),
-                            "sub_comportamiento": comportamiento_ventas
+                            "total":ventas_hoy
+                            # "porcentaje": abs(porcentaje_ventas)
+                            # "sub_comportamiento": comportamiento_ventas
                         },
                         "servicios": {
-                            "total":servicios_hoy,
-                            "porcentaje": abs(porcentaje_servicios),
-                            "sub_comportamiento": comportamiento_servicios
+                            "total":servicios_hoy
+                            # "porcentaje": abs(porcentaje_servicios)
+                            # "sub_comportamiento": comportamiento_servicios
                         },
                         **gastos
                     }
@@ -438,10 +455,10 @@ def obtener_gastos():
             FROM gastos g
             JOIN categoria_gastos cg ON g.categoria = cg.id
             JOIN usuarios u ON g.id_usuario = u.id
-            WHERE DATE(g.fecha_entrada) = ?
+            WHERE g.estado = ?
             ORDER BY g.fecha_entrada DESC
         '''        
-        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),))
+        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta,(1,))
         if filas is None:
             return jsonify({
                 "success": False,
@@ -465,10 +482,10 @@ def obtener_gastos():
             SELECT 
                 SUM(monto) AS TOTAL
             FROM pagos_factura
-            WHERE DATE(fecha_pago) = ?
+            WHERE estado = ?
         '''
 
-        filas = conn_db.ejecutar_personalizado(consulta,(datetime.now().strftime("%Y-%m-%d"),))[0][0]
+        filas = conn_db.ejecutar_personalizado(consulta,(1,))[0][0]
 
         total_facruras = filas
 
@@ -601,173 +618,6 @@ def obtener_estadisticas_generales():
             "success": False,
             "error": str(e)
         }), 500
-
-@extras.route('/demo')
-def demo_tarjetas():
-    """Página de demostración con las tarjetas"""
-    html_template = '''
-    <!DOCTYPE html>
-    <html lang="es">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Demo - Tarjetas Empresariales</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f7fa; }
-            .container { max-width: 1200px; margin: 0 auto; }
-            .titulo { text-align: center; color: #333; margin-bottom: 30px; }
-            .loading { text-align: center; font-size: 18px; color: #666; }
-            .error { color: red; text-align: center; padding: 20px; }
-            .tarjetas-container { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }
-            
-            .tarjeta-bolsillo {
-                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-                border: 1px solid #e1e8ed;
-                border-radius: 12px;
-                padding: 24px 20px;
-                width: 280px;
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-                transition: all 0.3s ease;
-                position: relative;
-                overflow: hidden;
-            }
-            
-            .tarjeta-bolsillo:hover {
-                transform: translateY(-4px);
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-            }
-            
-            .tarjeta-bolsillo::before {
-                content: '';
-                position: absolute;
-                top: 0;
-                left: 0;
-                right: 0;
-                height: 4px;
-                background: linear-gradient(90deg, #4f46e5, #06b6d4);
-            }
-            
-            .encabezado {
-                font-weight: 600;
-                font-size: 1.1em;
-                color: #1f2937;
-                margin-bottom: 16px;
-                text-transform: uppercase;
-                letter-spacing: 0.5px;
-            }
-            
-            .total {
-                font-size: 1.8em;
-                font-weight: 700;
-                margin-bottom: 20px;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-            }
-            
-            .modulos {
-                display: grid;
-                grid-template-columns: 1fr 1fr;
-                gap: 16px;
-                padding-top: 16px;
-                border-top: 1px solid #e5e7eb;
-            }
-            
-            .modulo {
-                text-align: center;
-                padding: 12px 8px;
-                background-color: rgba(249, 250, 251, 0.8);
-                border-radius: 8px;
-            }
-            
-            .color-verde { color: #059669; }
-            .color-rojo { color: #dc2626; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <h1 class="titulo">Tarjetas Empresariales - Demo</h1>
-            <div id="contenido" class="loading">Cargando datos...</div>
-        </div>
-
-        <script>
-            async function cargarTarjetas() {
-                try {
-                    const response = await fetch('/api/tarjetas-resumen');
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        mostrarTarjetas(result.data);
-                    } else {
-                        document.getElementById('contenido').innerHTML = 
-                            `<div class="error">Error: ${result.error}</div>`;
-                    }
-                } catch (error) {
-                    document.getElementById('contenido').innerHTML = 
-                        `<div class="error">Error de conexión: ${error.message}</div>`;
-                }
-            }
-            
-            function mostrarTarjetas(datos) {
-                const contenedor = document.getElementById('contenido');
-                
-                if (datos.length === 0) {
-                    contenedor.innerHTML = '<div class="error">No hay datos disponibles</div>';
-                    return;
-                }
-                
-                let html = '<div class="tarjetas-container">';
-                
-                datos.forEach(bolsillo => {
-                    const iconoTotal = bolsillo.comportamiento === 1 ? '↗' : '↘';
-                    const colorTotal = bolsillo.comportamiento === 1 ? 'color-verde' : 'color-rojo';
-                    
-                    const iconoVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? '↗' : '↘';
-                    const colorVentas = bolsillo.modulos.ventas.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-                    
-                    const iconoServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? '↗' : '↘';
-                    const colorServicios = bolsillo.modulos.servicios.sub_comportamiento === 1 ? 'color-verde' : 'color-rojo';
-                    
-                    html += `
-                        <div class="tarjeta-bolsillo">
-                            <div class="encabezado">${bolsillo.bolsillo}</div>
-                            <div class="total ${colorTotal}">
-                                <strong>$${bolsillo.total.toLocaleString('es-ES')}</strong>
-                                <span>${iconoTotal}</span>
-                            </div>
-                            <div class="modulos">
-                                <div class="modulo">
-                                    <div><strong>Ventas</strong></div>
-                                    <div class="${colorVentas}">
-                                        ${bolsillo.modulos.ventas.porcentaje}% ${iconoVentas}
-                                    </div>
-                                </div>
-                                <div class="modulo">
-                                    <div><strong>Servicios</strong></div>
-                                    <div class="${colorServicios}">
-                                        ${bolsillo.modulos.servicios.porcentaje}% ${iconoServicios}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                html += '</div>';
-                contenedor.innerHTML = html;
-            }
-            
-            // Cargar datos al iniciar
-            cargarTarjetas();
-            
-            // Actualizar cada 30 segundos
-            setInterval(cargarTarjetas, 30000);
-        </script>
-    </body>
-    </html>
-    '''
-    return render_template_string(html_template)
 
 
 @extras.route('/api/eliminar_gasto/<int:gasto_id>', methods=['DELETE'])

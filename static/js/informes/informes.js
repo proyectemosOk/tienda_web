@@ -1,22 +1,70 @@
 const puntos = new Intl.NumberFormat('es-CO').format;
 
-async function obtenerDatosJSONVentas() {
+async function obtenerDatosJSON(url, procesador = (data) => data) {
     try {
-        const response = await fetch("/api/ventas/dia");
-        if (!response.ok) {
-            throw new Error(`Error HTTP: ${response.status}`);
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+
+        if (data.ok === false) {
+            console.error("Respuesta con error:", data);
+            return null;
         }
 
-        const data = await response.json();
-        console.log(data);
-        return data;  // Usa objeto JS normal
+        return procesador(data);
     } catch (error) {
-        console.error("Error al obtener datos de ventas:", error);
-        return {
-            desglose_pagos: {},
-            ventas: []
-        };
+        console.error("Error al obtener datos desde:", url, error);
+        return null;
     }
+}
+
+function obtenerRangoFechas() {
+    const select = document.getElementById("selectRangoVentas");
+    const inputFechaInicio = document.getElementById("inputFechaPersonalizada");
+    const inputFechaFin = document.getElementById("inputFechaFinPersonalizada");
+
+    const hoy = new Date();
+    const formatoFecha = (d) => {
+        const fechaColombia = new Date(d.toLocaleString("en-US", { timeZone: "America/Bogota" }));
+        const año = fechaColombia.getFullYear();
+        const mes = String(fechaColombia.getMonth() + 1).padStart(2, "0");
+        const dia = String(fechaColombia.getDate()).padStart(2, "0");
+        return `${año}-${mes}-${dia}`;
+    };
+
+
+    let inicio = "";
+    let fin = "";
+
+    if (select.value === "personalizada") {
+        if (!inputFechaInicio.value || !inputFechaFin.value) return null;
+        inicio = inputFechaInicio.value;
+        fin = inputFechaFin.value;
+    } else if (select.value === "última_semana") {
+        const hace7dias = new Date();
+        hace7dias.setDate(hoy.getDate() - 6);
+        inicio = formatoFecha(hace7dias);
+        fin = formatoFecha(hoy);
+    } else if (select.value === "mes_actual") {
+        const primerDia = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+        inicio = formatoFecha(primerDia);
+        fin = formatoFecha(hoy);
+    } else {
+        // Hoy
+        const fecha = formatoFecha(hoy);
+        inicio = fecha;
+        fin = fecha;
+    }
+    // alert(inicio + "\n" + fin)
+    return { inicio, fin };
+}
+
+async function obtenerDatosJSONVentas() {
+    const rango = obtenerRangoFechas();
+    if (!rango) return null;
+
+    const url = `/api/ventas/rango?inicio=${rango.inicio}&fin=${rango.fin}`;
+    return await obtenerDatosJSON(url, (data) => data); // sin procesamiento
 }
 
 async function obtenerDatosJSONVentasPorID(id) {
@@ -53,23 +101,32 @@ function obtenerDatosJSONServicios() {
         ]
     };
 }
+const datosSimuladosApai = {
+    totales: {
+        ventas: 5700.00,
+        servicios: 5,
+        productos: 35
+    },
+    ventas_categoria: {
+        categorias: ['Electrónica', 'Hogar', 'Ropa', 'Accesorios'],
+        datos: [2500, 1500, 1200, 500]
+    },
+    productos: {
+        tipos: ['Instalación', 'Reparación', 'Mantenimiento', 'Diagnóstico'],
+        datos: [1, 2, 1, 1]
+    }
+};
+async function obtenerDatosJSONResumen() {
+    const rango = obtenerRangoFechas();
+    if (!rango) return null;
 
-function obtenerDatosJSONResumen() {
-    return {
-        totales: {
-            ventas: 5700.00,
-            servicios: 5,
-            productos: 35
-        },
-        ventas_categoria: {
-            categorias: ['Electrónica', 'Hogar', 'Ropa', 'Accesorios'],
-            datos: [2500, 1500, 1200, 500]
-        },
-        servicios_tipo: {
-            tipos: ['Instalación', 'Reparación', 'Mantenimiento', 'Diagnóstico'],
-            datos: [1, 2, 1, 1]
-        }
-    };
+    const url = `/api/resumen_informe?inicio=${rango.inicio}&fin=${rango.fin}`;
+
+    return await obtenerDatosJSON(url, (data) => {
+        const resumen = data.datos;
+
+        return resumen;
+    });
 }
 
 function obtenerDatosJSONHistorial() {
@@ -247,16 +304,16 @@ let periodoActual = 'semana';
 function generarColores(cantidad) {
     // Colores base predefinidos
     const coloresBase = [
-        'rgba(252, 211, 77, 0.7)', 
-        'rgba(59, 130, 246, 0.7)', 
-        'rgba(34, 197, 94, 0.7)',  
+        'rgba(252, 211, 77, 0.7)',
+        'rgba(59, 130, 246, 0.7)',
+        'rgba(34, 197, 94, 0.7)',
         'rgba(108, 117, 125, 0.7)',
-        'rgba(239, 68, 68, 0.7)',  
-        'rgba(168, 85, 247, 0.7)', 
-        'rgba(245, 158, 11, 0.7)', 
-        'rgba(20, 184, 166, 0.7)', 
-        'rgba(236, 72, 153, 0.7)', 
-        'rgba(99, 102, 241, 0.7)', 
+        'rgba(239, 68, 68, 0.7)',
+        'rgba(168, 85, 247, 0.7)',
+        'rgba(245, 158, 11, 0.7)',
+        'rgba(20, 184, 166, 0.7)',
+        'rgba(236, 72, 153, 0.7)',
+        'rgba(99, 102, 241, 0.7)',
     ];
 
     // Si necesitamos menos colores que los predefinidos, devolver solo los necesarios
@@ -286,12 +343,20 @@ let serviciosEstadoMap = {};
 
 // Inicialización cuando el DOM esté listo
 document.addEventListener('DOMContentLoaded', function () {
-    inicializarEstadoServicios();
+    cargarFiltrosVentas();
+    // inicializarEstadoServicios();
     inicializarPestanaVentas();
-    inicializarPestanaServicios();
+    // inicializarPestanaServicios();
     inicializarPestanaResumen();
-    inicializarPestanaHistorial();
-    inicializarPestanaEstadisticas();
+    // inicializarPestanaHistorial();
+    // inicializarPestanaEstadisticas();
+
+
+    if (datos.rol !== "admin" || datos.rol === "superAdmin") {
+        document.getElementById("resumen").style = "display:none";
+        document.getElementById("resumen-tab").style = "display:none";
+    }
+
 
     const tabElems = document.querySelectorAll('button[data-bs-toggle="tab"]');
     tabElems.forEach(tab => {
@@ -309,6 +374,7 @@ document.addEventListener('DOMContentLoaded', function () {
             actualizarEstadisticas();
         });
     });
+
 });
 
 // Inicializa el estado visual de servicios en memoria
@@ -525,17 +591,23 @@ function inicializarPestanaResumen() {
             responsive: true,
             scales: {
                 y: { beginAtZero: true }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
             }
+
         }
     });
 
     const ctxServiciosTipo = document.getElementById('graficoServiciosTipo').getContext('2d');
     serviciosTipoChart = new Chart(ctxServiciosTipo, {
-        type: 'bar',
+        type: 'doughnut',
         data: {
             labels: [],
             datasets: [{
-                label: 'Servicios por Tipo',
+                // label: 'Productos',
                 data: [],
                 backgroundColor: colores,
                 borderWidth: 1
@@ -543,8 +615,11 @@ function inicializarPestanaResumen() {
         },
         options: {
             responsive: true,
-            scales: {
-                y: { beginAtZero: true }
+
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                }
             }
         }
     });
@@ -552,19 +627,33 @@ function inicializarPestanaResumen() {
     actualizarDatosResumen();
 }
 
-function actualizarDatosResumen() {
-    const data = obtenerDatosJSONResumen();
+async function actualizarDatosResumen() {
+    const data = await obtenerDatosJSONResumen();
+    console.log(data)
 
+    // Mostrar u ocultar columna según valor
+    const toggleColResumen = (id, visible) => {
+        document.getElementById(id).style.display = visible ? 'block' : 'none';
+    };
+
+    // Actualizar datos y controlar visibilidad
     document.getElementById('totalVentasResumen').textContent = `$${puntos(parseFloat(data.totales.ventas))}`;
-    document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
-    document.getElementById('totalProductosResumen').textContent = data.totales.productos;
+    toggleColResumen('colVentasResumen', data.totales.ventas > 0);
 
+    document.getElementById('totalServiciosResumen').textContent = data.totales.servicios;
+    toggleColResumen('colServiciosResumen', data.totales.servicios > 0);
+
+    document.getElementById('totalProductosResumen').textContent = data.totales.productos;
+    toggleColResumen('colProductosResumen', data.totales.productos > 0);
+
+
+    // alert(data.ventas_categoria.categorias)
     ventasCategoriaChart.data.labels = data.ventas_categoria.categorias;
     ventasCategoriaChart.data.datasets[0].data = data.ventas_categoria.datos;
     ventasCategoriaChart.update();
-
-    serviciosTipoChart.data.labels = data.servicios_tipo.tipos;
-    serviciosTipoChart.data.datasets[0].data = data.servicios_tipo.datos;
+    // alert(data.productos.tipos)
+    serviciosTipoChart.data.labels = data.productos.tipos;
+    serviciosTipoChart.data.datasets[0].data = data.productos.datos;
     serviciosTipoChart.update();
 }
 
@@ -1112,3 +1201,79 @@ function imprimirHistorial(id) {
 }
 
 
+async function cargarFiltrosVentas() {
+    const rol = datos.rol;  // Asegúrate de tener `datos` disponible
+    const contenedorFiltro = document.getElementById("filtroFechaVentas");
+
+    // Crear select
+    const selectRango = document.createElement("select");
+    selectRango.className = "form-select form-select-sm";
+    selectRango.id = "selectRangoVentas";
+
+    // Crear inputs de fecha (inicio y fin)
+    const inputInicio = document.createElement("input");
+    inputInicio.type = "date";
+    inputInicio.className = "form-control form-control-sm d-none";
+    inputInicio.id = "inputFechaPersonalizada";
+
+    const inputFin = document.createElement("input");
+    inputFin.type = "date";
+    inputFin.className = "form-control form-control-sm d-none";
+    inputFin.id = "inputFechaFinPersonalizada";
+
+    // Escuchar cambios en fechas personalizadas
+    [inputInicio, inputFin].forEach(input => {
+        input.addEventListener("change", async () => {
+            if (selectRango.value === "personalizada" && inputInicio.value && inputFin.value) {
+                const fechaInicio = new Date(inputInicio.value);
+                const fechaFin = new Date(inputFin.value);
+
+                if (fechaInicio > fechaFin) {
+                    alert("La fecha de inicio no puede ser mayor que la fecha de fin.");
+                    return;
+                }
+
+                await actualizarDatosVentas();  // Solo se llama si la validación es correcta
+                await actualizarDatosResumen();
+            }
+        });
+    });
+
+    // Definir opciones según rol
+    let opciones = [];
+    if (rol === "ventas") {
+        opciones = ["Hoy", "Última semana"];
+    } else {
+        opciones = ["Hoy", "Última semana", "Mes actual", "Personalizada"];
+    }
+
+    opciones.forEach(opcion => {
+        const opt = document.createElement("option");
+        opt.value = opcion.toLowerCase().replace(/\s+/g, "_");
+        opt.textContent = opcion;
+        selectRango.appendChild(opt);
+    });
+
+    // Manejar cambio en el select
+    selectRango.addEventListener("change", async () => {
+        const esPersonalizada = selectRango.value === "personalizada";
+
+        inputInicio.classList.toggle("d-none", !esPersonalizada);
+        inputFin.classList.toggle("d-none", !esPersonalizada);
+
+        if (!esPersonalizada) {
+            inputInicio.value = "";
+            inputFin.value = "";
+
+        }
+
+        await actualizarDatosVentas();  // Solo se llama si la validación es correcta
+        await actualizarDatosResumen();
+    });
+
+    // Agregar al DOM
+    contenedorFiltro.innerHTML = ""; // Limpia contenido anterior si se recarga
+    contenedorFiltro.appendChild(selectRango);
+    contenedorFiltro.appendChild(inputInicio);
+    contenedorFiltro.appendChild(inputFin);
+}

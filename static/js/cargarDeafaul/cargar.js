@@ -1,6 +1,9 @@
-function redireccionInicio(){
+function redireccionInicio() {
     const usuario = obtenerDesdeLocalStorage("usuario");
-    if(usuario=="0" || usuario === null){
+    const fechaColombia = new Date().toLocaleDateString("es-CO", {
+        timeZone: "America/Bogota"
+    });
+    if (usuario == "0" || usuario === null || fechaColombia != usuario.fecha) {
         return window.location.href = '/';
     }
     return usuario
@@ -19,6 +22,6 @@ function obtenerDesdeLocalStorage(clave) {
 }
 var datos;
 
-document.addEventListener("DOMContentLoaded", ()=>{
+document.addEventListener("DOMContentLoaded", () => {
     datos = redireccionInicio();
 })
