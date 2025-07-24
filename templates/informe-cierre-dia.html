@@ -14,9 +14,14 @@
 <body>
     <div class="container">
         <header>
-            <h1>CIERRE DE DIA</h1>
+            
             <div class="date-info">
+                <h1>CIERRE DE DIA</h1>
                 <span id="fecha">Fecha: </span>
+            </div>
+            <div class="Usuario-info" style="justify-items: right;">
+                <h1>Usuario</h1>
+                <span id="cierre_dia_usuario"></span>
             </div>
         </header>
         <section class="resumen">
@@ -48,7 +53,7 @@
         <section class="detalle">
             <div class="ingresos-detalle">
                 <h2>Ingresos por Tipo de Pago</h2>
-                <div id="tipos-pago-container" class="detalle-container panel alto-completo""></div>
+                <div id="tipos-pago-container" class="detalle-container panel alto-completo"></div>
             </div>
 
             <div class=" egresos-detalle">
@@ -62,24 +67,29 @@
                     </div>
                 </div>
         </section>
-        <div class="btn-cerrar">
-            <button id="cierre-dia-btn">Cerrar día</button>
-        </div>
+        
+    </div>
+    <div class="container btn-cerrar">
+        <button id="cierre-dia-btn">Cerrar día</button>
     </div>
 
     <script src="/static/js/informe-cierre-dia-copy.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 
-    <!-- Modal PDF estilo Tailwind -->
-    <div id="modal-pdf" class="fixed inset-0 bg-black/60 z-50 hidden items-center justify-center">
-        <div class="bg-white rounded-2xl shadow-xl w-[90%] h-[90%] relative flex flex-col overflow-hidden">
-            <button onclick="cerrarModalPDF()" class="absolute top-3 right-3 text-gray-600 hover:text-red-600 text-xl">
+    <!-- Modal PDF grande -->
+    <div id="modal-pdf" class="fixed inset-0 bg-black/70 z-50 hidden items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-xl w-full h-full relative flex flex-col overflow-hidden">
+            <!-- Botón de cierre -->
+            <button onclick="cerrarModalPDF()">
                 &times;
             </button>
-            <iframe id="iframe-pdf" class="w-full h-full border-none rounded-b-2xl"></iframe>
+            <!-- iFrame para PDF -->
+            <iframe id="iframe-pdf" class="w-full h-full border-none" allow="fullscreen" frameborder="0">
+            </iframe>
         </div>
     </div>
+
 
 
 </body>

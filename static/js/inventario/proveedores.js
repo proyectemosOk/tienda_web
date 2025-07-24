@@ -9,25 +9,32 @@ async function cargarProveedores() {
             tablaProveedores.innerHTML = "";
             proveedores.forEach(proveedor => {
                 // Generar fila con botones y data-id
+                let botones = `
+                    <button class="btn btn-info btn-sm btn-ver" data-id="${proveedor.id}">
+                        <img src="${iconoVer}" alt="Ver" width="16">
+                    </button>
+                `;
+
+                if (datos.rol === 'admin' || datos.rol === 'superAdmin') {
+                    botones += `
+                        <button class="btn btn-warning btn-sm btn-editar" data-id="${proveedor.id}">
+                            <img src="${iconoEditar}" alt="Editar" width="16">
+                        </button>
+                        <button class="btn btn-danger btn-sm btn-eliminar" data-id="${proveedor.id}">
+                            <img src="${iconoEliminar}" alt="Eliminar" width="16">
+                        </button>
+                    `;
+                }
                 tablaProveedores.innerHTML += `
                     <tr>
                         <td>${proveedor.codigo}</td>
                         <td>${proveedor.nombre}</td>
                         <td>${proveedor.rut}</td>
                         <td>${proveedor.telefono}</td>
-                        <td>
-                            <button class="btn btn-info btn-sm btn-ver" data-id="${proveedor.id}">
-                                <img src="${iconoVer}" alt="Ver" width="16">
-                            </button>
-                            <button class="btn btn-warning btn-sm btn-editar" data-id="${proveedor.id}">
-                                <img src="${iconoEditar}" alt="Editar" width="16">
-                            </button>
-                            <button class="btn btn-danger btn-sm btn-eliminar" data-id="${proveedor.id}">
-                                <img src="${iconoEliminar}" alt="Eliminar" width="16">
-                            </button>
-                        </td>
+                        <td>${botones}</td>
                     </tr>
                 `;
+
             });
         } else {
             console.error("Error al cargar proveedores:", await respuesta.json());
@@ -259,7 +266,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const btn = event.target.closest(".btn-editar");
             const id = btn.dataset.id;
             editarProveedor(id);
-        } else if (event.target.closest(".btn-eliminar")) {
+        } else if (event.target.closest(".btn-eliminar") ) {
             const btn = event.target.closest(".btn-eliminar");
             const id = btn.dataset.id;
             eliminarProveedor(id);

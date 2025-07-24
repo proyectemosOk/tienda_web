@@ -15,7 +15,7 @@ const alertMessage = document.getElementById('alert-message');
 const filtroCategoria = document.getElementById('filtro-categoria');
 async function obtenerDatosJSONBolsillos() {
   try {
-    const response = await fetch("/api/tarjetas-resumen");
+    const response = await fetch(`/api/tarjetas-resumen?id=${datos.id}`);
     if (!response.ok) {
       throw new Error(`Error HTTP: ${response.status}`);
     }
@@ -105,7 +105,7 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
     const datosBolsillos = await obtenerDatosJSONBolsillos();
 
     // 🔹 2️⃣ Obtener gastos (y facturas) desde la API
-    const response = await fetch('/api/obtener_gastos');
+    const response = await fetch(`/api/obtener_gastos?id=${datos.id}`);
     const data = await response.json();
 
     if (!data.success) {
@@ -235,15 +235,14 @@ async function mostrarBolsillos(filtroBolsillo = "todos", filtroFecha = "") {
   }
 }
 
-
-
 // Función para mostrar los gastos con filtros
 async function mostrarGastos(filtroCategoria = "todas", filtroFecha = "", filtroMonto = 0) {
   const contenedor = document.getElementById('lista-gastos');
   contenedor.innerHTML = '<div class="cargando">Cargando gastos...</div>';
 
   try {
-    const response = await fetch('/api/obtener_gastos');
+
+    const response = await await fetch(`/api/obtener_gastos?id=${datos.id}`);
     const data = await response.json();
 
     if (!data.success) {
@@ -1044,3 +1043,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
+function cerrarCaja() {
+  // En archivo dentro del iframe
+  window.parent.postMessage({
+    tipo: "accion",
+    mensaje: "/cerrarCaja"
+  }, "*"); // puedes usar "*" o el dominio exacto por seguridad
+}

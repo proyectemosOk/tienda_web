@@ -61,7 +61,6 @@ def obtener_facturas_por_cobrar():
 def registrar_entrada():
     data = request.get_json()
     try:
-        # ✅ 1️⃣ Validar campos principales
         proveedor_id = data.get('proveedor')
         numero_factura = data.get('numero_factura')
         fecha_emision = data.get('fecha_emision')
@@ -69,25 +68,21 @@ def registrar_entrada():
         usuario_id = data.get('usuario_id')
         monto_total = data.get('monto_total', 0)
         monto_pagado = data.get('monto_pagado', 0)
-
         productos = data.get('productos', [])
         pagos = data.get('pagos', [])
-        for key, valor in data.items():
-            print(f"{key}: {valor}")
 
-        if not proveedor_id or not numero_factura or not fecha_emision or not productos:            
+        if not proveedor_id or not numero_factura or not fecha_emision or not productos:
             return jsonify({'ok': False, 'error': 'Datos incompletos'}), 400
 
-        # ✅ 2️⃣ Determinar estado de pago
+        # Estado pago
         if monto_pagado <= 0:
-            estado_pago_id = 1  # Pendiente
+            estado_pago_id = 1
         elif monto_pagado >= monto_total:
-            estado_pago_id = 3  # Pagado
+            estado_pago_id = 3
         else:
-            estado_pago_id = 2  # Parcial
+            estado_pago_id = 2
 
-            
-        # ✅ 3️⃣ Insertar en facturas_proveedor
+        # ----------------- INSERTA FACTURA -----------------
         factura_data = {
             "numero_factura": numero_factura,
             "proveedor_id": proveedor_id,
@@ -98,57 +93,96 @@ def registrar_entrada():
             "estado_pago_id": estado_pago_id,
             "usuario_id": usuario_id
         }
-        
         factura_id, error = conn_db.insertar("facturas_proveedor", factura_data)
-        
+
         if error:
             return jsonify({'ok': False, 'error': f'Error insertando factura: {error}'}), 500
 
-        # ✅ 4️⃣ Insertar cada producto en detalle_factura y actualizar stock
+        # ----------------- AGREGA/ACTUALIZA PRODUCTOS Y LOTES -----------------
         for item in productos:
-            # Obtener producto_id real
-            producto_result = conn_db.seleccionar(
-                "productos", 
-                columnas="id", 
-                condicion="codigo = ?", 
-                parametros=(item["codigo_producto"],)
-            )
-            if not producto_result:
+            prod_row = conn_db.seleccionar("productos", columnas="id,stock", condicion="codigo = ?", parametros=(item["codigo_producto"],))
+            if not prod_row:
                 return jsonify({'ok': False, 'error': f"Producto no encontrado: {item['codigo_producto']}"}), 400
-            producto_id = producto_result[0][0]
+            producto_id, stock_actual = prod_row[0]
+            stock_actual = int(stock_actual)
 
+            # Detalle de la factura
             detalle_data = {
                 "factura_id": factura_id,
                 "producto_id": producto_id,
-                "cantidad": item["cantidad"],
+                "cantidad": int(item["cantidad"]),
                 "precio_compra": item["precio_compra"],
                 "precio_venta": item["precio_venta"],
                 "fecha_entrada": item["fecha_vencimiento"]
             }
             conn_db.insertar("detalle_factura", detalle_data)
 
+            # --- ALGORITMO “CUADRE DE STOCK ROJO” ---
+            cantidad_ingresada = int(item["cantidad"])
+            cantidad_para_saldar_rojo = 0
+            nueva_cant_lote = 0
+
+            if stock_actual < 0:
+                # Parte del lote no pone unidades físicas: se usa para dejar stock en cero
+                rojo_abs = abs(stock_actual)
+                if cantidad_ingresada > rojo_abs:
+                    cantidad_para_saldar_rojo = rojo_abs
+                    nueva_cant_lote = cantidad_ingresada - rojo_abs
+                else:
+                    cantidad_para_saldar_rojo = cantidad_ingresada
+                    nueva_cant_lote = 0  # Todo es para cubrir lo rojo; el lote físico queda en cero
+            else:
+                nueva_cant_lote = cantidad_ingresada
+
+            # Actualizar el stock del producto
+            nuevo_stock = stock_actual + cantidad_ingresada
             conn_db.actualizar(
                 "productos",
                 {
-                    "stock": f"stock + {item['cantidad']}",
+                    "stock": nuevo_stock,
                     "precio_compra": item["precio_compra"],
                     "precio_venta": item["precio_venta"]
                 },
                 "id = ?",
                 (producto_id,),
-                expresion_sql=True
+                expresion_sql=False
             )
 
+            # Insertar el lote solo si hay unidades físicas
+            if nueva_cant_lote > 0:
+                conn_db.insertar("lotes_productos", {
+                    "id_producto": producto_id,
+                    "cantidad": nueva_cant_lote,
+                    "precio_compra": item["precio_compra"],
+                    "fecha_ingreso": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                })
+            # Si toda la cantidad fue para "cuadrar rojo", no crea lote físico (o podrías registrar lote con cant 0 y observación)
 
-            # Registrar lote
-            conn_db.insertar("lotes_productos", {
-                "id_producto": producto_id,
-                "cantidad": item["cantidad"],
-                "precio_compra": item["precio_compra"],
-                "fecha_ingreso": fecha_emision
-            })
+            # Validar la suma de lotes = stock global
+            cantidad_lotes = sum(
+                row[0]
+                for row in conn_db.seleccionar("lotes_productos", "cantidad", "id_producto = ?", (producto_id,))
+            )
+            stock_db = conn_db.seleccionar("productos", "stock", "id = ?", (producto_id,))[0][0]
+            # Si hay desfase, ajusta último lote agregado (caso borde: ventas entre la entrada y el cierre de la transacción)
+            if cantidad_lotes != stock_db:
+                # Ajusta lote más reciente (el que acabas de agregar)
+                ultimos_lote = conn_db.seleccionar(
+                    "lotes_productos", "id,cantidad", "id_producto = ? ORDER BY id DESC LIMIT 1", (producto_id,)
+                )
+                if ultimos_lote:
+                    id_lote, cant_lote = ultimos_lote[0]
+                    corregir = stock_db - cantidad_lotes
+                    if cant_lote + corregir >= 0:
+                        conn_db.actualizar(
+                            "lotes_productos",
+                            {"cantidad": cant_lote + corregir},
+                            "id = ?",
+                            (id_lote,),
+                            expresion_sql=False
+                        )
 
-        # ✅ 5️⃣ Insertar pagos
+        # --------------- REGISTRA LOS PAGOS DE LA FACTURA Y ACTUALIZA CAJA/CUENTAS ---------------
         for pago in pagos:
             pago_data = {
                 "factura_id": factura_id,
@@ -156,15 +190,12 @@ def registrar_entrada():
                 "fecha_pago": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 "monto": pago["monto"],
                 "observaciones": pago.get("observaciones", ""),
-                "usuario_id":usuario_id
+                "usuario_id": usuario_id
             }
             conn_db.insertar("pagos_factura", pago_data)
             monto_actual = conn_db.seleccionar("tipos_pago", "actual", "id = ?", (pago["tipo_pago_id"],))[0][0]
-            saldo_actual = int(monto_actual) - int(pago["monto"])
-            actulizar_paga = {
-                "actual": saldo_actual
-            }
-            conn_db.actualizar("tipos_pago", actulizar_paga, "id = ?",(pago["tipo_pago_id"],))
+            saldo_actual = float(monto_actual) - float(pago["monto"])
+            conn_db.actualizar("tipos_pago", {"actual": saldo_actual}, "id = ?", (pago["tipo_pago_id"],))
 
         return jsonify({'ok': True, 'factura_id': factura_id}), 201
 

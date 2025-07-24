@@ -45,8 +45,8 @@ document.getElementById('Login-sesion').addEventListener('click', async function
                 timeZone: "America/Bogota"
             });
             console.log(fechaColombia); // Ejemplo de salida: 19/07/2025
-
-            guardarEnLocalStorage("usuario", { rol: data.rol, id: data.id_usuario, fecha: fechaColombia })
+            data.fecha = fechaColombia
+            guardarEnLocalStorage("usuario", data)
             window.location.href = '/principal';
         } else {
             mostrarError(data.mensaje || 'Error de autenticación');

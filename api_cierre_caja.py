@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify, request, send_file,url_for
+from flask import Blueprint, jsonify, request, send_file,url_for,abort
 from datetime import date, datetime 
 from conexion_base import ConexionBase
 from crea_pdf.pdf_cierre_caja import *
+import pytz
 
 cierre_caja = Blueprint('cierre_caja', __name__)
 conn_db = ConexionBase("tienda_jfleong6_1.db")
@@ -10,6 +11,11 @@ conn_db = ConexionBase("tienda_jfleong6_1.db")
 def get_id(tabla, nombre):
     resultado = conn_db.seleccionar(tabla, "id", "nombre = ?", (nombre,))
     return resultado[0][0] if resultado else None
+
+def fecha_actual_colombia():
+    tz = pytz.timezone('America/Bogota')
+    ahora = datetime.now(tz)
+    return ahora.strftime('%Y-%m-%d %H:%M:%S')
 
 def actualizar_o_crear_bolsillo(idpago, nombre, nuevo_monto):
     # 1. Buscar si el bolsillo ya existe por nombre
@@ -39,6 +45,7 @@ def actualizar_o_crear_bolsillo(idpago, nombre, nuevo_monto):
 
 @cierre_caja.route("/api/cierre_dia/pending", methods=["GET"])
 def obtener_cierre_pendiente():
+    id_usuario = request.args.get("id", type=int)
     tipos_pago = {}
     total_ingresos = 0
     total_egresos = 0
@@ -51,8 +58,8 @@ def obtener_cierre_pendiente():
         FROM pagos_venta pv
         JOIN usuarios u ON u.id = pv.usuario_id
         JOIN tipos_pago tp ON tp.id = pv.metodo_pago
-        WHERE pv.estado = 1
-    ''')
+        WHERE pv.estado = 1 and u.id = ?
+    ''',(id_usuario,))
     for r in rows:
         tipos_pago.setdefault(r["tipo_pago"], {}).setdefault("Ventas", {})[f"{r['id']}"] = {
             "monto": r["valor"],
@@ -68,8 +75,8 @@ def obtener_cierre_pendiente():
         FROM pagos_servicios ps
         JOIN usuarios u ON u.id = ps.usuario_id
         JOIN tipos_pago tp ON tp.id = ps.tipo_pago
-        WHERE ps.estado = 1
-    ''')
+        WHERE ps.estado = 1 and u.id = ?
+    ''',(id_usuario,))
     for r in rows:
         tipos_pago.setdefault(r["tipo_pago"], {}).setdefault("Servicios", {})[f"{r['id']}"] = {
             "monto": r["monto"],
@@ -85,8 +92,8 @@ def obtener_cierre_pendiente():
         FROM gastos g
         JOIN usuarios u ON u.id = g.id_usuario
         JOIN tipos_pago tp ON tp.id = g.metodo_pago
-        WHERE g.estado = 1
-    ''')
+        WHERE g.estado = 1 and u.id = ?
+    ''',(id_usuario,))
     for r in rows:
         tipos_pago.setdefault(r["tipo_pago"], {}).setdefault("Gastos", {})[f"{r['id']}"] = {
             "monto": r["monto"],
@@ -105,8 +112,8 @@ def obtener_cierre_pendiente():
         JOIN tipos_pago tp ON tp.id = pf.tipo_pago_id
         JOIN facturas_proveedor fp ON fp.id = pf.factura_id
         JOIN proveedores pr ON pr.id = fp.proveedor_id
-        WHERE pf.estado = 1
-    ''')
+        WHERE pf.estado = 1 and u.id = ?
+    ''',(id_usuario,))
     for r in rows:
         tipos_pago.setdefault(r["tipo_pago"], {}).setdefault("Facturas", {})[f"{r['id']}"] = {
             "monto": r["monto"],
@@ -137,7 +144,8 @@ def obtener_cierre_pendiente():
     # RESPUESTA FINAL
     # =========================
     return jsonify({
-        "fecha": str(date.today()),
+        "usuario": conn_db.seleccionar("usuarios","nombre", "id = ?",(id_usuario,))[0][0],
+        "fecha": fecha_actual_colombia(),
         "total_ingresos": total_ingresos,
         "total_egresos": total_egresos,
         "total_neto": total_ingresos - total_egresos,
@@ -148,70 +156,68 @@ def obtener_cierre_pendiente():
 @cierre_caja.route("/api/turno/cerrar_dia", methods=["POST"])
 def cerrar_dia():
     datos = request.get_json()
-    usuario_id = datos.get("creado_por")
-
     try:
         conn_db.iniciar_transaccion()
 
-        # 1. Insertar resumen general
-        id_cierre, error = conn_db.insertar("cierres_dia", {
-            "fecha": str(date.today()),
+        # 1. Insertar resumen general en cierres_dia
+        cierre_data = {
+            "fecha": datos["fecha"],
             "total_ingresos": datos["total_ingresos"],
             "total_egresos": datos["total_egresos"],
             "total_neto": datos["total_neto"],
             "observaciones": datos.get("observaciones", ""),
-            "creado_por": usuario_id
-        })
-
-        if error:
+            "creado_por": datos.get("usuario"),
+            "creado_en": fecha_actual_colombia()
+        }
+        id_cierre, error = conn_db.insertar("cierres_dia", cierre_data)
+        if error or not id_cierre:
             conn_db.revertir_transaccion()
             return jsonify({"error": "No se pudo registrar el cierre."}), 500
 
-        tipos_pago = datos["tipos_pago"]
-
-        # 2. Insertar detalle por tipo de pago
-        for id_tipo_pago, modulos in tipos_pago.items():
-            total_pago = 0
-            id_pago = get_id("tipos_pago",id_tipo_pago)
-            for nombre_modulo, movimientos in modulos.items():
-                for info in movimientos.values():
-                    total_pago += info["monto"]
-            actualizar_o_crear_bolsillo(id_pago, id_tipo_pago, total_pago)
+        # 2. Guardar saldo total real de cada método de pago (bolsillos_actuales)
+        for tipo_pago_nombre, saldo in datos["bolsillos_actuales"].items():
+            tipo_pago_id = get_id("tipos_pago", tipo_pago_nombre)
+            if not tipo_pago_id:
+                continue  # o lanzar error si es crítico
             conn_db.insertar("cierres_dia_detalle_pagos", {
                 "cierre_id": id_cierre,
-                "tipo_pago": id_pago,
-                "monto": total_pago
+                "tipo_pago": tipo_pago_id,
+                "monto": saldo
             })
+            actualizar_o_crear_bolsillo(tipo_pago_id, tipo_pago_nombre, saldo)
 
-        # 3. Insertar movimientos individuales + desglose por categoria
-        for id_tipo_pago, modulos in tipos_pago.items():
-            id_pago = get_id("tipos_pago",id_tipo_pago)
+        # 3. Procesar movimientos y categorías
+        categorias_acumuladas = dict()  # {id_modulo: monto}
+        tipos_pago = datos.get("tipos_pago", {})
+        for tipo_pago_nombre, modulos in tipos_pago.items():
+            tipo_pago_id = get_id("tipos_pago", tipo_pago_nombre)
+            if not tipo_pago_id:
+                continue
             for nombre_modulo, movimientos in modulos.items():
-                # Obtener id_modulo real
-                id_modulo = get_id("modulos",nombre_modulo)
-
+                id_modulo = get_id("modulos", nombre_modulo)
+                if not id_modulo:
+                    continue
                 total_modulo = 0
                 ids_a_actualizar = []
                 for ref_id, info in movimientos.items():
-                    total_modulo += info["monto"]
-                    movimiento = {
+                    monto = float(info.get("monto", 0))
+                    # Tabla movimientos
+                    nuevo_mov = {
                         "cierre_id": id_cierre,
-                        "tipo_pago": id_pago,
+                        "tipo_pago": tipo_pago_id,
                         "id_modulo": id_modulo,
                         "referencia_id": ref_id,
-                        "monto": info["monto"]
+                        "monto": monto
                     }
-                    conn_db.insertar("cierres_dia_movimientos", movimiento)
+                    conn_db.insertar("cierres_dia_movimientos", nuevo_mov)
+                    total_modulo += monto
                     ids_a_actualizar.append(ref_id)
 
-                # Insertar resumen por categoría
-                conn_db.insertar("cierres_dia_detalle_categorias", {
-                    "cierre_id": id_cierre,
-                    "id_modulo": id_modulo,
-                    "monto": total_modulo
-                })
+                # Acumulado modular para detalle_categorias
+                if total_modulo != 0:
+                    categorias_acumuladas[id_modulo] = categorias_acumuladas.get(id_modulo, 0) + total_modulo
 
-                # 4. Actualizar estado = 0 en tabla correspondiente
+                # Actualización de estado de origen (solo si hay IDs a actualizar)
                 tabla_actualizar = {
                     "Ventas": ("pagos_venta", "id"),
                     "Servicios": ("pagos_servicios", "id"),
@@ -225,24 +231,43 @@ def cerrar_dia():
                         tabla,
                         {"estado": 0},
                         f"{campo_id} IN ({placeholders})",
-                        ids_a_actualizar
+                        tuple(ids_a_actualizar)
                     )
 
-        # Generar PDF
-        ruta_pdf = generar_pdf_cierre_dia(datos)
-        nombre_archivo = os.path.basename(ruta_pdf)
+        # 4. Registrar acumulados por categorías
+        for id_modulo, monto in categorias_acumuladas.items():
+            conn_db.insertar("cierres_dia_detalle_categorias", {
+                "cierre_id": id_cierre,
+                "id_modulo": id_modulo,
+                "monto": monto
+            })
+
         conn_db.confirmar_transaccion()
-        
+
+        # 5. Generar PDF, guardar JSON, devolver resultado
+        ruta_pdf = generar_pdf_cierre_dia(datos, id_cierre)
+        nombre_archivo = os.path.basename(ruta_pdf)
+
         return jsonify({
+            "ok": True,
             "mensaje": "Cierre del día realizado exitosamente.",
             "pdf_url": url_for("cierre_caja.descargar_pdf_cierre", nombre=nombre_archivo)
         })
 
     except Exception as e:
         conn_db.revertir_transaccion()
-        return jsonify({"error": str(e)}), 500   
-    
+        return jsonify({"error": str(e)}), 500
+
+# --- DESCARGA PDF ---
 @cierre_caja.route("/pdf/cierre/<nombre>")
 def descargar_pdf_cierre(nombre):
-    ruta = os.path.join(tempfile.gettempdir(), nombre)
+    base_path = os.getenv('LOCALAPPDATA')
+    if not base_path:
+        abort(500, "No se pudo detectar LOCALAPPDATA")
+    folder_path = os.path.join(base_path, 'proyectemos', 'cierre_pdf')
+    ruta = os.path.abspath(os.path.join(folder_path, nombre))
+    if not ruta.startswith(os.path.abspath(folder_path)):
+        abort(403)
+    if not os.path.exists(ruta):
+        abort(404)
     return send_file(ruta, mimetype='application/pdf')

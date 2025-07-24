@@ -21,6 +21,8 @@ from api_cierre_caja import *
 from api_empresa import *
 from api_clientes import *
 from api_informes import *
+from api_nueva_venta import *
+
 
 
 import sys
@@ -37,6 +39,8 @@ app.register_blueprint(cierre_caja)
 app.register_blueprint(empresa_bp)
 app.register_blueprint(clientes)
 app.register_blueprint(informes)
+app.register_blueprint(nueva_venta)
+
 
 UPLOAD_FOLDER = 'uploads'
 
@@ -97,7 +101,7 @@ def serve_img_productos(filename):
     
     if not os.path.isfile(ruta_imagen):
         # Si no existe la imagen solicitada, usar img.png por defecto
-        filename = "img.png"
+        filename = "logo.png"
 
     return send_from_directory(IMAGES_FOLDER, filename)
 
@@ -160,8 +164,8 @@ def menu_global():
 @app.route("/monederos")
 def monedero():
     return render_template('monedero.html')
-
-@app.route('/cierre_dia')
+    
+@app.route('/cerrarCaja')
 def cierre_dia():
     return render_template('informe-cierre-dia.html')
 
@@ -766,7 +770,13 @@ def crear_producto():
             "precio_venta": precio_venta,
             "activo": 1
         })
-
+        # Registrar lote
+        conn_db.insertar("lotes_productos", {
+            "id_producto": id_producto,
+            "cantidad": stock,
+            "precio_compra": precio_compra,
+            "fecha_ingreso": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        })
         if error:
             conn_db.revertir_transaccion()
             return jsonify({"ok": False, "error": error["error"]}), 400
@@ -1009,7 +1019,19 @@ def eliminar_proveedor(id):
 
 @app.route('/api/productos/ventas', methods=['GET'])
 def obtener_productos():
-    productos = conn_db.seleccionar('productos', "id, nombre, precio_venta, categoria, descripcion, codigo, stock")
+    consulta = """
+    SELECT 
+    productos.id, 
+    productos.nombre, 
+    productos.precio_venta, 
+    categorias.categoria AS categoria, 
+    productos.descripcion, 
+    productos.codigo, 
+    productos.stock
+    FROM productos
+    LEFT JOIN categorias ON productos.categoria = categorias.id
+    """
+    productos = conn_db.ejecutar_personalizado(consulta)
     productos_list = []
     
     for prod in productos:
@@ -1306,7 +1328,7 @@ def login():
             respuesta = {
                 "valido": True,
                 "mensaje": "Autenticación exitosa",
-                "id_usuario": resultado["id_usuario"],
+                "id": resultado["id_usuario"],
                 "rol": resultado["rol"],
                 "usuario": datos['usuario']
             }
@@ -1324,87 +1346,6 @@ def login():
             "mensaje": "Error interno del servidor"
         }), 500
    
-@app.route('/api/crear_venta', methods=['POST'])
-def crear_venta():
-    data = request.get_json()
-    if not all(campo in data for campo in ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']):
-        return jsonify({"error": "Campos requeridos faltantes"}), 400
-
-    try:
-        conn_db.iniciar_transaccion()  # BEGIN
-
-        new_venta = {
-            'vendedor_id': data['vendedor_id'],
-            "cliente_id": data["cliente_id"],
-            "total_venta": data["total_venta"],
-            "fecha": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "total_compra": 0,
-            "total_utilidad": 0
-        }
-
-        id, error = conn_db.insertar("ventas", new_venta)
-        if not id:
-            raise Exception("Venta no registrada")
-
-        total_precio_compra = 0
-
-        for producto in data["productos"]:
-            detalles_ventas = {
-                "venta_id": id,
-                "producto_id": producto["codigo"],
-                "cantidad": producto["cantidad"],
-                "precio_unitario": producto["precio_unitario"]
-            }
-            conn_db.insertar("detalles_ventas", detalles_ventas)
-
-            can_sum = conn_db.seleccionar("productos", "stock", "id= ?", (producto["codigo"],))[0][0]
-            nuevo_stock = (float(can_sum) if can_sum else 0) - float(producto["cantidad"])
-            conn_db.actualizar("productos", {"stock": nuevo_stock}, "id = ?", (producto["codigo"],))
-
-            resultado = conn_db.seleccionar("productos", "precio_compra", "id= ?", (producto["codigo"],))
-            precio_compra = float(resultado[0][0]) if resultado else 0
-            total_precio_compra += precio_compra * float(producto["cantidad"])
-
-        total_precio_venta = sum(prod["precio_unitario"] * prod["cantidad"] for prod in data["productos"])
-        total_utilidad = total_precio_venta - total_precio_compra
-
-        for pago in data["metodos_pago"]:
-            pago["metodo"] = conn_db.seleccionar("tipos_pago", "id", "nombre = ?", (pago["metodo"],))[0][0]
-            detalles_pagos = {
-                "venta_id": id,
-                "metodo_pago": pago["metodo"],
-                "valor": pago["valor"],
-                "usuario_id": data['vendedor_id']
-            }
-            conn_db.insertar("pagos_venta", detalles_pagos)
-            conn_db.actualizar(
-                "tipos_pago",
-                {"actual": f"actual + {pago['valor']}"},
-                "id = ?",
-                (pago["metodo"],),
-                expresion_sql=True
-            )
-
-        conn_db.actualizar("ventas", {
-            "total_compra": total_precio_compra,
-            "total_utilidad": total_utilidad
-        }, "id = ?", (id,))
-
-        conn_db.confirmar_transaccion()  # COMMIT
-
-        return jsonify({
-            "valido": True,
-            "mensaje": f"Venta exitosa {id}",
-            "id": id
-        }), 200
-
-    except Exception as e:
-        conn_db.cancelar_transaccion()  # ROLLBACK
-        return jsonify({
-            "valido": False,
-            "mensaje": f"Error: {str(e)}"
-        }), 500
-
 # API cargar usuarios
 @app.route("/api/cargar/usuarios", methods=["GET"])
 def cargar_usuarios():
@@ -1566,3 +1507,4 @@ def obtener_servicios():
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5000,  debug=True)
+    

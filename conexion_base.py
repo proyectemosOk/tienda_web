@@ -4,6 +4,7 @@ from firebase_config import ServicioFirebase
 from crear_bd import crear_tablas
 import bcrypt
 from typing import Dict, Union
+from datetime import datetime
 
 class ConexionBase:
     def __init__(self, nombre_bd: str, ruta_credenciales_firebase: str = None):
@@ -52,9 +53,28 @@ class ConexionBase:
             cursor.execute(consulta, parametros)
             if not self.conn_actual:
                 conexion.commit()
+            
+            # Insertar en registro_modificaciones después de ejecutar la consulta original
+            # Construir texto para campo detalle con consulta + parámetros
+            detalle_texto = f"Consulta ejecutada: {consulta} | Parámetros: {parametros}"
+
+            # Datos fijos que me pediste
+            id_producto = 2
+            id_usuario = 3
+
+            # Insertar registro en registro_modificaciones
+            insert_log = """
+                INSERT INTO registro_modificaciones (id_producto, id_usuario, fecha_hora, detalle)
+                VALUES (?, ?, datetime('now'), ?)
+            """
+            cursor.execute(insert_log, (id_producto, id_usuario, detalle_texto))
+            if not self.conn_actual:
+                conexion.commit()
+
             if consulta.strip().upper().startswith("INSERT"):
                 return cursor.lastrowid
             return None
+
         except sqlite3.IntegrityError as e:
             mensaje = str(e)
             if "UNIQUE constraint failed" in mensaje:
@@ -69,6 +89,7 @@ class ConexionBase:
         finally:
             if not self.conn_actual:
                 conexion.close()
+
 
     def insertar(self, tabla, datos, expresion_sql=False):
         columnas, placeholders, valores = [], [], []
@@ -188,6 +209,30 @@ class ConexionBase:
             cursor.execute(consulta, parametros or ())
             resultados = cursor.fetchall()
             return [dict(row) for row in resultados]
+    
+    def registrar_modificacion(self, producto_id, usuario_id, detalle):
+        """Inserta un registro en la tabla registro_modificaciones."""
+        datos_modificacion = {
+            "id_producto": producto_id,
+            "id_usuario": usuario_id,
+            "fecha_hora": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "detalle": detalle
+        }
+        # Insertar directamente en la tabla sin trigger de nuevo log para evitar recursión
+        # Se puede usar el método ejecutar_consulta para evitar log anidado
+        consulta = "INSERT INTO registro_modificaciones (id_producto, id_usuario, fecha_hora, detalle) VALUES (?, ?, ?, ?)"
+        parametros = (producto_id, usuario_id, datos_modificacion["fecha_hora"], detalle)
+        conexion, cursor = self._get_conexion_y_cursor()
+        try:
+            cursor.execute(consulta, parametros)
+            if not self.conn_actual:
+                conexion.commit()
+        except Exception as e:
+            print(f"Error al registrar modificación: {e}")
+        finally:
+            if not self.conn_actual:
+                conexion.close()
+
     
     def validar_credenciales(self, tabla: str, usuario: str, contrasena: str) -> Dict[str, Union[bool, str, int]]:
         """

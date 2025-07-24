@@ -1,6 +1,6 @@
 class Producto {
-    constructor(id, nombre, precio, categoria, descripcion, codigo,stock, imagen) {
-        
+    constructor(id, nombre, precio, categoria, descripcion, codigo, stock, imagen) {
+
         this.id = id;
         this.nombre = nombre;
         this.precio = precio;
@@ -36,7 +36,7 @@ class Producto {
     mostrarModal() {
         const modalImage = document.getElementById('modal-image');
         modalImage.src = this.imagen;
-        modalImage.onerror = function() {
+        modalImage.onerror = function () {
             this.onerror = null; // evitar bucles infinitos
             this.src = '/static/img_productos/img.png'; // imagen predeterminada
         };
@@ -47,7 +47,7 @@ class Producto {
         document.getElementById('modal-description').innerText = this.descripcion;
         document.getElementById('product-modal').style.display = 'block';
     }
-    agregar_item(){
+    agregar_item() {
         ticket.agregarItem(this.id, this.nombre, this.precio, this.codigo, this.stock);
     }
 }
@@ -67,7 +67,7 @@ class CatalogoProductos {
     mostrarTodos() {
         // Ocultar todos los productos primero
         this.productos.forEach(p => p.elemento.style.display = 'none');
-        
+
         // Mostrar solo los primeros 12 productos
         this.productos.slice(0, 12).forEach(p => p.elemento.style.display = '');
     }
@@ -76,8 +76,13 @@ class CatalogoProductos {
         if (!query) {
             this.mostrarTodos();
         } else {
+            console.log(this.productos)
             this.productos.forEach(p => {
-                if (p.codigo.toLowerCase().includes(query.toLowerCase()) || p.nombre.toLowerCase().includes(query.toLowerCase()) || p.categoria.toLowerCase().includes(query.toLowerCase())) {
+                if (
+                    p.codigo.toLowerCase().includes(query.toLowerCase()) ||
+                    p.nombre.toLowerCase().includes(query.toLowerCase()) ||
+                    p.categoria.toLowerCase().includes(query.toLowerCase())
+                ) {
                     p.elemento.style.display = '';
                 } else {
                     p.elemento.style.display = 'none';

@@ -35,12 +35,14 @@
   
   /* Contenedor Principal */
   .container {
-    max-width: 1366px;
+    max-width: 800px;
     margin: 40px auto;
     padding: 0 20px;
   }
   /* Encabezado - Estilo Ejecutivo */
   header {
+    display: flex;
+    justify-content: space-between;
     background-color: var(--primary);
     color: var(--light-text);
     padding: 24px 32px;
@@ -76,9 +78,9 @@
   /* Tarjetas de Resumen - Estilo Ejecutivo */
   .resumen-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    margin-bottom: 40px;
+    grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+    gap: 12px;
+    margin-bottom: 10px;
   }
   .card::before {
     content: '';
@@ -122,21 +124,21 @@
     position: relative;
     overflow: hidden;
   }
-  /* Observaciones */
+  /* Observaciones
   .observaciones {
     background-color: white;
     border-radius: var(--border-radius);
-    padding: 20px;
+    padding: 10px;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 32px;
+    margin-bottom: 10px;
     border-left: 4px solid var(--medium-gray);
     font-style: italic;
     color: var(--primary-light);
-  }
+  } */
   
   /* Tablas - Diseño Ejecutivo */
   table {
-    width: 100%;
+    width: 50%;
     border-collapse: collapse;
     font-size: 0.875rem;
     overflow-x: auto;
@@ -145,7 +147,7 @@
   }
   
   th, td {
-    padding: 16px 20px;
+    padding: 8px 10px;
     text-align: left;
     border-bottom: 1px solid var(--light-border);
     text-align: center;
@@ -155,15 +157,18 @@
   th {
     background-color: var(--primary);
     color: white;
-    font-weight: 500;
+    font-weight: 300;
     letter-spacing: 0.5px;
     position: sticky;
     top: 0;
   }
-  
+  .sub-encabezado{
+    color: white;
+    background-color: var(--primary-light);
+  }
   /* Tipos de Pago */
   .tipo-pago-cell {
-    background-color: rgba(45, 62, 80, 0.03);
+    background-color: rgba(255, 0, 13, 0.03);
     font-weight: 500;
     color: var(--primary);
     vertical-align: top;
@@ -188,15 +193,16 @@
   /* Asegurar que no aparezcan barras innecesarias */
 
   .detalle {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    max-width: 800px;
+    display: flex;
+    justify-content: center;
+    /* grid-template-columns: 1fr 1fr; */
     /* gap: 32px; */
     /* margin-bottom: 40px; */
   }
   
   /* Ingresos a la izquierda */
   .ingresos-detalle {
-    grid-column: 1;
     background-color: white;
     border-radius: var(--border-radius);
     box-shadow: var(--shadow-sm);
@@ -225,13 +231,12 @@
   }
   .observaciones {
     position: relative;
-    margin: 50px auto;
     color: white;
     background-color: white;
     border-radius: var(--border-radius);
-    padding: 20px;
+    padding: 15px;
     box-shadow: var(--shadow-sm);
-    margin-bottom: 32px;
+    margin-bottom: 5px;
     border-left: 4px solid var(--medium-gray);
     font-style: italic;
     color: var(--primary-light);

@@ -1,6 +1,6 @@
 async function loadData() {
     try {
-        const response = await fetch('/api/cierre_dia/pending');
+        const response = await fetch(`/api/cierre_dia/pending?id=${datos.id}`);
         if (!response.ok) throw new Error('No se pudo cargar el reporte de cierre');
         return await response.json();
     } catch (error) {
@@ -29,6 +29,7 @@ function displayBolsillos(data) {
 
 function displayGeneralData(data) {
     document.getElementById('fecha').textContent = data.fecha;
+    document.getElementById('cierre_dia_usuario').textContent = datos.usuario
     document.getElementById('total-ingresos').textContent = formatCurrency(data.total_ingresos);
     document.getElementById('total-egresos').textContent = formatCurrency(data.total_egresos);
     document.getElementById('total-neto').textContent = formatCurrency(data.total_neto);
@@ -36,38 +37,44 @@ function displayGeneralData(data) {
 
 function displayTiposPago(data) {
     const container = document.getElementById('tipos-pago-container');
-    let html = '<table><thead><tr><th>Tipo de Pago</th><th>Módulo</th><th>REF</th><th>Monto</th><th>Usuario</th></tr></thead><tbody>';
+    let html = '<table><thead><tr><th>Módulo</th><th>REF</th><th>Monto</th></tr></thead><tbody>';
 
     let totales = {};
+    
     for (const [tipoPago, modulos] of Object.entries(data.tipos_pago)) {
 
-
+        let total =0
+        let html2 =""
         for (const [modulo, items] of Object.entries(modulos)) {
             for (const [id, info] of Object.entries(items)) {
                 if (modulo == "Gastos" || modulo == "Facturas") continue;
-                html += `
+                html2 += `
                     <tr>
-                        <td>${tipoPago}</td>
                         <td>${modulo}</td>
                         <td>${id}</td>
-                        <td>${info.usuario || '-'}</td>
                         <td>${formatCurrency(info.monto)}</td>
                     </tr>
                 `;
+                total += info.monto
                 if (totales[modulo]) {
                     totales[modulo] += info.monto;
                 } else {
                     totales[modulo] = info.monto;
                 }
+                
             }
         }
-
+        let html1 = `<tr >
+                        <td class = "sub-encabezado">Pago</td>
+                        <td class = "sub-encabezado">${tipoPago}</td>
+                        <td class = "sub-encabezado">${formatCurrency(total)}</td>
+                    </tr>`
+        html += html2 !== "" ? html1 + html2 : "";
     }
+    
     for (const [modulo, total] of Object.entries(totales))
         html += `
     <tr>
-        <td></td>
-        <td></td>
         <td></td>
         <td>Total ${modulo}</td>
         <td>${formatCurrency(total)}</td>
@@ -125,6 +132,27 @@ function displayFacturas(data) {
     container.innerHTML = html;
 }
 
+function getHtmlWithStyles(element) {
+    const clone = element.cloneNode(true);
+    const allElements = clone.querySelectorAll("*");
+
+    allElements.forEach((node, i) => {
+        const computed = window.getComputedStyle(element.querySelectorAll("*")[i]);
+        const style = Array.from(computed).map(prop => {
+            return `${prop}:${computed.getPropertyValue(prop)};`;
+        }).join('');
+        node.setAttribute('style', style);
+    });
+
+    const computed = window.getComputedStyle(element);
+    const style = Array.from(computed).map(prop => {
+        return `${prop}:${computed.getPropertyValue(prop)};`;
+    }).join('');
+    clone.setAttribute('style', style);
+
+    return clone.outerHTML;
+}
+
 async function cerrarDiaTurno(data) {
     try {
         // Mostrar alerta de carga
@@ -137,7 +165,8 @@ async function cerrarDiaTurno(data) {
                 Swal.showLoading();
             }
         });
-
+        const container = document.querySelector('.container'); 
+        data.html = getHtmlWithStyles(container);
         const respuesta = await fetch('/api/turno/cerrar_dia', {
             method: 'POST',
             headers: {
@@ -159,6 +188,7 @@ async function cerrarDiaTurno(data) {
             title: 'Día cerrado correctamente',
             showConfirmButton: true,
         });
+        return resultado
 
     } catch (error) {
         console.error('Hubo un problema al cerrar el día:', error);
@@ -228,18 +258,18 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const resultado = await cerrarDiaTurno(reporteData);
 
-                if (resultado && !resultado.error) {
+                if (resultado.ok) {
                     Swal.fire({
                         icon: 'success',
                         title: 'Cierre exitoso',
                         text: 'El turno se cerró correctamente.',
                         confirmButtonText: 'Aceptar'
                     }).then(() => {
-                        if (res.isConfirmed && resultado.pdf_url) {
-                            mostrarPDFenModal(resultado.pdf_url);
-                        } else {
-                            window.location.reload();
-                        }
+                        console.log(resultado.pdf_url);
+
+                        mostrarPDFenModal(resultado.pdf_url);
+
+
                     });
                 } else {
                     Swal.fire({
@@ -251,6 +281,4 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
     });
-
-
 });

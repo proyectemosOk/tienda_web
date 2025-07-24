@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     configuraciones: "/configuraciones",
     empresa: "/empresa",
     informes: "/informes",
+    cerrarCaja:"/cerrarCaja",
     casa: "bienvenida",
     salir:"salir"
   };
@@ -67,4 +68,10 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   });
+});
+
+window.addEventListener("message", (event) => {
+  if (event.data.tipo === "accion") {
+    cargarPagina(event.data.mensaje);
+  }
 });

@@ -18,21 +18,38 @@ async function insertarClientesEnTabla() {
   clientes.forEach(cliente => {
     const fila = document.createElement('tr');
     fila.innerHTML = `
-      <td>${cliente.id}</td>
-      <td>${cliente.nombre}</td>
-      <td>${cliente.tipo_document}</td>
-      <td>${cliente.numero}</td>
-      <td>${cliente.telefono}</td>
-      <td>${cliente.email}</td>
-      <td>
-        <button class="editar-btn">✏️</button>
-      </td>
-    `;
+    <td>${cliente.id}</td>
+    <td>${cliente.nombre}</td>
+    <td>${cliente.tipo_document}</td>
+    <td>${cliente.numero}</td>
+    <td>${cliente.telefono}</td>
+    <td>${cliente.email}</td>
+    <td class="editar-col">
+      ${(datos.rol === 'admin' || datos.rol === 'superAdmin')
+        ? `<button class="editar-btn">✏️</button>`
+        : ''
+      }
+      ${(datos.rol === 'admin' || datos.rol === 'superAdmin')
+        ? `<button class="eliminar-btn">🗑️</button>`
+        : ''
+      }
+    </td>
+  `;
 
-    fila.querySelector('.editar-btn').addEventListener('click', () => abrirModalEdicion(cliente));
-    fila.querySelector('.eliminar-btn').addEventListener('click', () => eliminarCliente(cliente, fila));
+    // Solo agregar eventos si los botones existen
+    const btnEditar = fila.querySelector('.editar-btn');
+    if (btnEditar) {
+      btnEditar.addEventListener('click', () => abrirModalEdicion(cliente));
+    }
+
+    const btnEliminar = fila.querySelector('.eliminar-btn');
+    if (btnEliminar) {
+      btnEliminar.addEventListener('click', () => eliminarCliente(cliente, fila));
+    }
+
     tablaClientes.appendChild(fila);
   });
+
 }
 
 function abrirModalEdicion(cliente) {

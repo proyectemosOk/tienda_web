@@ -47,23 +47,23 @@ class TarjetasEmpresariales:
             print(f"Error obteniendo bolsillos: {e}")
             return []
     
-    def obtener_ventas_por_tipo_pago_fecha(self, fecha, tipo_pago_id=None):
+    def obtener_ventas_por_tipo_pago_fecha(self, fecha, tipo_pago_id=None, usuario_id = 2):
         """Obtiene el total de ventas por tipo de pago en una fecha específica"""
         try:
             if tipo_pago_id:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) AS total
                     FROM pagos_venta pv
-                    WHERE pv.metodo_pago = ? AND pv.estado = 1
+                    WHERE pv.metodo_pago = ? AND pv.estado = 1 and pv.usuario_id = ?
                 """
-                parametros = (tipo_pago_id,)
+                parametros = (tipo_pago_id, usuario_id)
             else:
                 consulta = """
                     SELECT COALESCE(SUM(pv.valor), 0) as total
                     FROM pagos_venta pv
-                    WHERE pv.estado = ?
+                    WHERE pv.estado = ? and pv.usuario_id = ?
                 """
-                parametros = (1,)
+                parametros = (1, usuario_id)
             
             resultado = self.conn.ejecutar_personalizado(consulta, parametros)
             return resultado[0][0] if resultado else 0
@@ -71,7 +71,7 @@ class TarjetasEmpresariales:
             print(f"Error obteniendo ventas por tipo de pago: {e}")
             return 0
     
-    def obtener_servicios_por_fecha(self, fecha, id_tipo_pago):
+    def obtener_servicios_por_fecha(self, fecha, id_tipo_pago, usuario_id):
         """Obtiene el total de servicios en una fecha específica y por tipo de pago"""
         try:
             # Validar tipo de dato
@@ -81,17 +81,18 @@ class TarjetasEmpresariales:
             consulta = """
                 SELECT COALESCE(SUM(monto), 0) AS total
                 FROM pagos_servicios
-                WHERE estado = 1 AND tipo_pago = ?
+                WHERE estado = 1 AND tipo_pago = ? and usuario_id = ?
             """
-            resultado = self.conn.ejecutar_personalizado(consulta, (id_tipo_pago,))
+            resultado = self.conn.ejecutar_personalizado(consulta, (id_tipo_pago,usuario_id))
             return resultado[0][0] if resultado else 0
         except Exception as e:
             print(f"Error obteniendo servicios: {e}")
             return 0
 
 
-    def obtener_gastos_por_fecha_id_pago(self, fecha, id_pago):
+    def obtener_gastos_por_fecha_id_pago(self, fecha, id_pago, usuario_id):
         """Obtiene el total de gastos y pagos de factura en una fecha específica por método de pago"""
+        id_usuario = usuario_id
         try:
             # Validar tipo de parámetro
             if not isinstance(id_pago, (int, str)):
@@ -101,9 +102,9 @@ class TarjetasEmpresariales:
             consulta_gastos = """
                 SELECT SUM(g.monto)
                 FROM gastos g
-                WHERE g.estado = 1 AND g.metodo_pago = ?
+                WHERE g.estado = 1 AND g.metodo_pago = ? and g.id_usuario = ?
             """
-            resultado_gastos = self.conn.ejecutar_personalizado(consulta_gastos, (id_pago,))
+            resultado_gastos = self.conn.ejecutar_personalizado(consulta_gastos, (id_pago,id_usuario))
             gastos = resultado_gastos[0][0] if resultado_gastos else 0
             gastos = gastos if gastos else 0
 
@@ -111,9 +112,9 @@ class TarjetasEmpresariales:
             consulta_facturas = """
                 SELECT SUM(monto)
                 FROM pagos_factura
-                WHERE tipo_pago_id = ? AND estado = 1
+                WHERE tipo_pago_id = ? AND estado = 1 and usuario_id = ? 
             """
-            resultado_facturas = self.conn.ejecutar_personalizado(consulta_facturas, (id_pago,))
+            resultado_facturas = self.conn.ejecutar_personalizado(consulta_facturas, (id_pago,usuario_id))
             facturas = resultado_facturas[0][0] if resultado_facturas else 0
             facturas = facturas if facturas else 0
 
@@ -129,7 +130,7 @@ class TarjetasEmpresariales:
             print(f"❌ Error obteniendo servicios: {e}")
             return 0, {"facturas": {"total": 0}, "gastos": {"total": 0}}
 
-    def obtener_gastos_por_fecha(self, fecha):
+    def obtener_gastos_por_fecha(self, fecha, usuario_id):
         """Obtiene el listado de gastos en una fecha específica"""
         try:
             consulta = """
@@ -143,10 +144,10 @@ class TarjetasEmpresariales:
                 FROM gastos g
                 JOIN categoria_gastos c ON g.categoria = c.id
                 JOIN tipos_pago tp ON g.metodo_pago = tp.id
-                WHERE g.estado = 1
+                WHERE g.estado = 1 and g.id_usuario = ?
                 ORDER BY g.fecha_entrada ASC;
             """
-            resultado = self.conn.ejecutar_personalizado(consulta, (fecha,))
+            resultado = self.conn.ejecutar_personalizado(consulta, (usuario_id, ))
             gastos = [
                 {
                     "id": fila[0],
@@ -173,7 +174,7 @@ class TarjetasEmpresariales:
         cambio = ((valor_actual - valor_anterior) / valor_anterior) * 100
         return round(cambio, 1)
     
-    def generar_datos_tarjetas(self):
+    def generar_datos_tarjetas(self,usuario_id):
         
         """Genera los datos completos para las tarjetas empresariales"""
         try:
@@ -187,20 +188,20 @@ class TarjetasEmpresariales:
             for bolsillo in bolsillos:
                 
                 # Valores para el bolsillo actual
-                ventas_hoy = self.obtener_ventas_por_tipo_pago_fecha(fecha_hoy, bolsillo['id'])
+                ventas_hoy = self.obtener_ventas_por_tipo_pago_fecha(fecha_hoy, bolsillo['id'], usuario_id)
                 print(f"{ventas_hoy=}")
-                # ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'])
-                servicios_hoy = self.obtener_servicios_por_fecha(fecha_hoy, bolsillo['id'])
+                # ventas_ayer = self.obtener_ventas_por_tipo_pago_fecha(fecha_ayer, bolsillo['id'], usuario_id)
+                servicios_hoy = self.obtener_servicios_por_fecha(fecha_hoy, bolsillo['id'], usuario_id)
                 print(f"{servicios_hoy=}")
                 
-                # servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['id'])
-                total, gastos = self.obtener_gastos_por_fecha_id_pago(fecha_hoy, bolsillo['id'])
-                print(f"{gastos=} \n{total=}")
+                # servicios_ayer = self.obtener_servicios_por_fecha(fecha_ayer, bolsillo['id'], usuario_id)
+                total, gastos = self.obtener_gastos_por_fecha_id_pago(fecha_hoy, bolsillo['id'], usuario_id)
+                print(f"{bolsillo["nombre"]=}\t{gastos=} \t{total=}")
 
                 # Calcular total del bolsillo (valor actual configurado)
-                total_bolsillo = ventas_hoy + servicios_hoy
-                if total_bolsillo==0:
-                    continue
+                total_bolsillo = ventas_hoy + servicios_hoy -total
+                # if total_bolsillo==0:
+                #     continue
 
                 # # Calcular porcentajes de cambio
                 # porcentaje_ventas = self.calcular_porcentaje_cambio(ventas_hoy, ventas_ayer)
@@ -252,11 +253,12 @@ class TarjetasEmpresariales:
         }
         return datos
     
-    def generar_datos_gastos(self):
+    def generar_datos_gastos(self, usuario_id):
+        
         try:
             fecha_hoy = self.obtener_fecha_hoy()
             
-            return self.obtener_gastos_por_fecha(fecha=fecha_hoy )
+            return self.obtener_gastos_por_fecha(fecha=fecha_hoy,usuario_id = usuario_id)
             
         except:
             pass
@@ -267,10 +269,10 @@ generador_tarjetas = TarjetasEmpresariales(conn_db)
 
 @extras.route('/api/tarjetas-resumen', methods=['GET'])
 def obtener_tarjetas_resumen():
-    
+    usuario_id = request.args.get("id", type=int)
     """Endpoint principal para obtener datos de tarjetas resumen"""
     try:
-        datos = generador_tarjetas.generar_datos_tarjetas()
+        datos = generador_tarjetas.generar_datos_tarjetas(usuario_id)
         
         return jsonify({
             "success": True,
@@ -288,10 +290,11 @@ def obtener_tarjetas_resumen():
 
 @extras.route('/api/gastos', methods=['GET'])
 def obtener_resumen_gastos():
+    usuario_id = request.args.get("id", type=int)
     
     """Endpoint principal para obtener datos de tarjetas resumen"""
     try:
-        datos = generador_tarjetas.generar_datos_gastos()
+        datos = generador_tarjetas.generar_datos_gastos(usuario_id)
         
         return jsonify({
             "success": True,
@@ -441,6 +444,8 @@ def guardar_gasto():
 
 @extras.route('/api/obtener_gastos', methods=['GET'])
 def obtener_gastos():
+    usuario_id = request.args.get("id", type=int)
+    print(usuario_id)
     try:
 
         consulta = '''
@@ -455,10 +460,10 @@ def obtener_gastos():
             FROM gastos g
             JOIN categoria_gastos cg ON g.categoria = cg.id
             JOIN usuarios u ON g.id_usuario = u.id
-            WHERE g.estado = ?
+            WHERE g.estado = ? and g.id_usuario = ?
             ORDER BY g.fecha_entrada DESC
         '''        
-        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta,(1,))
+        filas = generador_tarjetas.conn.ejecutar_personalizado(consulta,(1,usuario_id))
         if filas is None:
             return jsonify({
                 "success": False,

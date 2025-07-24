@@ -327,7 +327,7 @@ def crear_tablas(base):
                 fecha DATETIME DEFAULT CURRENT_DATE,
                 precio_compra REAL NOT NULL,
                 precio_venta REAL NOT NULL,
-                usuario TEXT NOT NULL,
+                usuario integer NOT NULL,
                 observacion TEXT,
                 FOREIGN KEY (producto_id) REFERENCES productos (id)
                 FOREIGN KEY (usuario) REFERENCES usuarios (id)

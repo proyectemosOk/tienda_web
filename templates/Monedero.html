@@ -28,7 +28,13 @@
   <div class="contenedor-principal">
     <!-- Contenido principal -->
     <main class="contenido">
-      <h1 class="titulo-principal"><i class="fas fa-cash-register"></i> Cierre de Caja</h1>
+      <h1 class="titulo-principal" style="display: flex; justify-content: space-between; align-items: center;">
+        <span><i class="fas fa-cash-register"></i> Cierre de Caja</span>
+        <button onclick="cerrarCaja()" class="btn btn-verde">
+          <i class="fas fa-save"></i> Cerrar Caja
+        </button>
+      </h1>
+
 
       <!-- Acciones rápidas -->
       <div class="acciones-rapidas">
@@ -125,7 +131,7 @@
               <input type="text" id="categoria" placeholder="Ej: Administrativos">
             </div>
             <div class="acciones-form">
-              <button class="btn btn-verde btn-guardar-categoria onclick=" guardarNuevaCategoria()"
+              <button class="btn btn-verde btn-guardar-categoria" onclick=" guardarNuevaCategoria()"
                 class="btn btn-verde"><i class="fa-save"></i>
                 Guardar</button>
             </div>
