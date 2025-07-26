@@ -53,7 +53,8 @@ class ConexionBase:
             cursor.execute(consulta, parametros)
             if not self.conn_actual:
                 conexion.commit()
-            
+            if consulta.strip().upper().startswith("INSERT"):
+                id_reg = cursor.lastrowid
             # Insertar en registro_modificaciones después de ejecutar la consulta original
             # Construir texto para campo detalle con consulta + parámetros
             detalle_texto = f"Consulta ejecutada: {consulta} | Parámetros: {parametros}"
@@ -72,7 +73,7 @@ class ConexionBase:
                 conexion.commit()
 
             if consulta.strip().upper().startswith("INSERT"):
-                return cursor.lastrowid
+                return id_reg
             return None
 
         except sqlite3.IntegrityError as e:

@@ -1069,6 +1069,7 @@ function verDetalleServicio(id) {
 // Funciones para imprimir ticket e historial
 async function imprimirTicket(id) {
     const venta = await obtenerDatosJSONVentasPorID(id);
+    console.log(venta)
     if (!venta || !venta.productos) {
         alert('❌ Venta no encontrada o sin productos');
         return;

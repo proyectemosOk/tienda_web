@@ -521,7 +521,7 @@ def crear_tablas(base):
             total_egresos REAL DEFAULT 0,
             total_neto REAL DEFAULT 0,
             observaciones TEXT,
-            creado_por TEXT,
+            creado_por INTEGER NOT NULL,
             creado_en DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (creado_por) REFERENCES usuarios(id) ON DELETE CASCADE
         );

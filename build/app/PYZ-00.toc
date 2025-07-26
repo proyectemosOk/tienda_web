@@ -328,6 +328,10 @@
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\_distutils_hack\\override.py',
    'PYMODULE'),
+  ('_markupbase',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\_markupbase.py',
+   'PYMODULE'),
   ('_py_abc',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\_py_abc.py',
@@ -356,6 +360,10 @@
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\_threading_local.py',
    'PYMODULE'),
+  ('api_cierre_caja',
+   'D:\\Mis '
+   'Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\api_cierre_caja.py',
+   'PYMODULE'),
   ('api_clientes',
    'D:\\Mis '
    'Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\api_clientes.py',
@@ -367,6 +375,10 @@
   ('api_informes',
    'D:\\Mis '
    'Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\api_informes.py',
+   'PYMODULE'),
+  ('api_nueva_venta',
+   'D:\\Mis '
+   'Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\api_nueva_venta.py',
    'PYMODULE'),
   ('apis_factura',
    'D:\\Mis '
@@ -535,6 +547,10 @@
   ('blinker.base',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\blinker\\base.py',
+   'PYMODULE'),
+  ('brotli',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\brotli.py',
    'PYMODULE'),
   ('bz2',
    'C:\\Users\\Ing '
@@ -975,6 +991,11 @@
   ('copy',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\copy.py',
+   'PYMODULE'),
+  ('crea_pdf', '-', 'PYMODULE'),
+  ('crea_pdf.pdf_cierre_caja',
+   'D:\\Mis '
+   'Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\crea_pdf\\pdf_cierre_caja.py',
    'PYMODULE'),
   ('crear_bd',
    'D:\\Mis Documentos\\Documents\\tienda\\tienda_web\\tienda_web\\crear_bd.py',
@@ -1439,6 +1460,38 @@
   ('fnmatch',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\fnmatch.py',
+   'PYMODULE'),
+  ('fpdf',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\__init__.py',
+   'PYMODULE'),
+  ('fpdf.fonts',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\fonts.py',
+   'PYMODULE'),
+  ('fpdf.fpdf',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\fpdf.py',
+   'PYMODULE'),
+  ('fpdf.html',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\html.py',
+   'PYMODULE'),
+  ('fpdf.php',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\php.py',
+   'PYMODULE'),
+  ('fpdf.py3k',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\py3k.py',
+   'PYMODULE'),
+  ('fpdf.template',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\template.py',
+   'PYMODULE'),
+  ('fpdf.ttfonts',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\fpdf\\ttfonts.py',
    'PYMODULE'),
   ('fractions',
    'C:\\Users\\Ing '
@@ -2419,6 +2472,10 @@
   ('html.entities',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\html\\entities.py',
+   'PYMODULE'),
+  ('html.parser',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\html\\parser.py',
    'PYMODULE'),
   ('http',
    'C:\\Users\\Ing '
@@ -3894,6 +3951,26 @@
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\pydoc_data\\topics.py',
    'PYMODULE'),
+  ('pytz',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytz\\__init__.py',
+   'PYMODULE'),
+  ('pytz.exceptions',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytz\\exceptions.py',
+   'PYMODULE'),
+  ('pytz.lazy',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytz\\lazy.py',
+   'PYMODULE'),
+  ('pytz.tzfile',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytz\\tzfile.py',
+   'PYMODULE'),
+  ('pytz.tzinfo',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\pytz\\tzinfo.py',
+   'PYMODULE'),
   ('queue',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\queue.py',
@@ -5224,6 +5301,74 @@
   ('xmlrpc.client',
    'C:\\Users\\Ing '
    'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\xmlrpc\\client.py',
+   'PYMODULE'),
+  ('yaml',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\__init__.py',
+   'PYMODULE'),
+  ('yaml.composer',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\composer.py',
+   'PYMODULE'),
+  ('yaml.constructor',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\constructor.py',
+   'PYMODULE'),
+  ('yaml.cyaml',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\cyaml.py',
+   'PYMODULE'),
+  ('yaml.dumper',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\dumper.py',
+   'PYMODULE'),
+  ('yaml.emitter',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\emitter.py',
+   'PYMODULE'),
+  ('yaml.error',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\error.py',
+   'PYMODULE'),
+  ('yaml.events',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\events.py',
+   'PYMODULE'),
+  ('yaml.loader',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\loader.py',
+   'PYMODULE'),
+  ('yaml.nodes',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\nodes.py',
+   'PYMODULE'),
+  ('yaml.parser',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\parser.py',
+   'PYMODULE'),
+  ('yaml.reader',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\reader.py',
+   'PYMODULE'),
+  ('yaml.representer',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\representer.py',
+   'PYMODULE'),
+  ('yaml.resolver',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\resolver.py',
+   'PYMODULE'),
+  ('yaml.scanner',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\scanner.py',
+   'PYMODULE'),
+  ('yaml.serializer',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\serializer.py',
+   'PYMODULE'),
+  ('yaml.tokens',
+   'C:\\Users\\Ing '
+   'Fredy\\AppData\\Local\\Programs\\Python\\Python312\\Lib\\site-packages\\yaml\\tokens.py',
    'PYMODULE'),
   ('zipfile',
    'C:\\Users\\Ing '

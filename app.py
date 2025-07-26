@@ -515,7 +515,7 @@ def obtener_detalle_venta(id_venta):
             JOIN usuarios u ON v.vendedor_id = u.id
             WHERE v.id = ?
         ''', (id_venta,))
-
+        
         if not venta_info:
             return jsonify({"error": "Venta no encontrada"}), 404
 
@@ -528,7 +528,8 @@ def obtener_detalle_venta(id_venta):
             JOIN productos p ON dv.producto_id = p.id
             WHERE dv.venta_id = ?
         ''', (id_venta,))
-
+        
+        print("hola  ",detalles)
         productos = [
             {
                 "cantidad": cant,

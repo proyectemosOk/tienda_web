@@ -113,9 +113,21 @@ def generar_pdf_cierre_dia(datos, id_cierre):
     pdf.multi_cell(0, 6, msg_caja, align='L')
     pdf.set_text_color(33, 33, 33)
     pdf.set_x(10)
-    pdf.cell(58, H_CELDAS, f"Efectivo: {formato_col(datos['bolsillos_actuales'].get('Efectivo', 0))}", 0, 0, 'C')
-    pdf.cell(58, H_CELDAS, f"Nequi: {formato_col(datos['bolsillos_actuales'].get('Nequi', 0))}", 0, 0, 'C')
-    pdf.cell(58, H_CELDAS, f"Transferencia: {formato_col(datos['bolsillos_actuales'].get('Transferencia', 0))}", 0, 1, 'C')
+    # Asumiendo H_CELDAS y pdf ya definidos
+
+    bolsillos = datos.get('bolsillos_actuales', {})
+    # Filtrar bolsillos con valor diferente de cero
+    bolsillos_validos = {k: v for k, v in bolsillos.items() if v != 0}
+
+    if bolsillos_validos:
+        ancho_celda = int(190 / len(bolsillos_validos))  # ajustar ancho según cantidad, 190 es aproximado para margen
+
+        for i, (nombre, valor) in enumerate(bolsillos_validos.items()):
+            # Mostrar nombre con capitalización y formato: Efectivo, Nequi, etc.
+            texto = f"{nombre.capitalize()}: {formato_col(valor)}"
+            # El último con ln=1 para salto de línea, otros ln=0
+            ln_val = 1 if i == len(bolsillos_validos) -1 else 0
+            pdf.cell(ancho_celda, H_CELDAS, texto, 0, ln=ln_val, align='C')
     pdf.ln(7)
 
     # Observaciones solo si hay

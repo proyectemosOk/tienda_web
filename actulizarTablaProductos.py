@@ -1,10 +1,23 @@
 import sqlite3
+def crear_categorias(db_path='tienda_jfleong6_1.db'):
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
 
+    print("1. creando 'categorias'")
+    
+    cursor.execute("select categoria, sum(categoria) as total from productos group by categoria")
+    for categoria, cant in cursor.fetchall():
+        cursor.execute("insert into categorias (categoria) values(?)",(categoria,))
+    conn.commit()
+    conn.close()
+    
 def migrar_productos_a_formato_relacional(db_path='tienda_jfleong6_1.db'):
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
 
     print("1. Actualizando 'categoria' y 'unidad' en tabla productos con sus IDs...")
+    
+
 
     # Actualizar categoría (nombre → id)
     cursor.execute("SELECT categoria, id FROM categorias")
@@ -206,6 +219,7 @@ def actualizar_modulos_agregar_comportamiento(db_path='tienda_jfleong6_1.db'):
     print("✅ Tabla 'modulos' actualizada con columna 'comportamiento' y valores asignados.")
 
 # Ejecutar
-# migrar_productos_a_formato_relacional('tienda_jfleong6_1.db')  # ← Cambia esto por la ruta real
-# actualizar_estructura_cierre()
+# crear_categorias()
+migrar_productos_a_formato_relacional('tienda_jfleong6_1.db')  # ← Cambia esto por la ruta real
+actualizar_estructura_cierre()
 actualizar_modulos_agregar_comportamiento()

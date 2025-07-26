@@ -504,8 +504,6 @@ function nuevo_producto_1() {
 
                             // Verifica si hay imagen seleccionada
                             console.log(data)
-
-                            alert(data.id)
                             if (imagenFileSeleccionada && data.id) {
                                 const formData = new FormData();
                                 formData.append('imagen', imagenFileSeleccionada);
