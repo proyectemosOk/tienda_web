@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>Resumen de Calificaciones</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+
+</head>
+
+<body class="bg-gray-50 min-h-screen p-6 font-sans text-gray-800">
+  <div id="contenedor-resultados" class="opacity-0 transition-opacity duration-500">
+    <h1 class="text-4xl font-bold text-center mb-10 text-blue-700">Resumen de Calificaciones</h1>
+
+    <!-- Contenedor de tarjetas -->
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-12">
+
+      <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center hover:shadow-xl transition">
+        <div class="text-red-600 text-5xl font-extrabold mb-2" id="count-malo">0</div>
+        <div class="text-xl font-semibold">Malo</div>
+        <!-- <div class="text-sm text-gray-500 mt-1">Calificación 1</div> -->
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center hover:shadow-xl transition">
+        <div class="text-yellow-500 text-5xl font-extrabold mb-2" id="count-regular">0</div>
+        <div class="text-xl font-semibold">Regular</div>
+        <!-- <div class="text-sm text-gray-500 mt-1">Calificación 2</div> -->
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center hover:shadow-xl transition">
+        <div class="text-green-600 text-5xl font-extrabold mb-2" id="count-bueno">0</div>
+        <div class="text-xl font-semibold">Bueno</div>
+        <!-- <div class="text-sm text-gray-500 mt-1">Calificación 3</div> -->
+      </div>
+
+      <div class="bg-white rounded-xl shadow-md p-6 flex flex-col items-center hover:shadow-xl transition">
+        <div class="text-blue-600 text-5xl font-extrabold mb-2" id="count-excelente">0</div>
+        <div class="text-xl font-semibold">Excelente</div>
+        <!-- <div class="text-sm text-gray-500 mt-1">Calificación 4</div> -->
+      </div>
+
+    </div>
+
+    <!-- Tabla registros -->
+    <div class="max-w-6xl mx-auto bg-white rounded-xl shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-6 border-b pb-2">Últimos registros de votaciones</h2>
+      <div class="overflow-x-auto">
+        <table class="min-w-full table-auto">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="px-4 py-2 text-left font-medium text-gray-700">Fecha / Hora</th>
+              <th class="px-4 py-2 text-left font-medium text-gray-700">Calificación</th>
+            </tr>
+          </thead>
+          <tbody id="tabla-registros">
+            <!-- Aquí se insertan filas -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="/static/js/votaciones.js"></script>
+</body>
+
+</html>

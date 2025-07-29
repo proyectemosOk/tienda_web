@@ -346,13 +346,8 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 //         });
 //     }
 // });
-
-document.addEventListener('DOMContentLoaded', () => {
-  console.log(datos)
-  const clienteCombo = document.getElementById('clientes');
-
-  // Función para cargar los clientes desde la API
-  const cargarClientes = async () => {
+const clienteCombo = document.getElementById('clientes');
+const cargarClientes = async () => {
 
     try {
       const response = await fetch('/api/clientes');
@@ -375,6 +370,11 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error(error);
     }
   };
+document.addEventListener('DOMContentLoaded', () => {
+  console.log(datos)
+
+  // Función para cargar los clientes desde la API
+  
 
   // Llamar a la función para cargar los clientes al cargar la página
   cargarClientes();

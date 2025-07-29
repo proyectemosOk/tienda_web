@@ -39,6 +39,7 @@ def cargar_clientes():
 @clientes.route("/api/new_cliente", methods=["POST"])
 def new_cliente():
     datos = request.get_json()
+    print(datos)
     if not datos:
         return jsonify({"error": "No se recibieron datos"}), 400
 

@@ -112,8 +112,6 @@ class ConexionBase:
         consulta = f"INSERT INTO {tabla} ({columnas_sql}) VALUES ({placeholders_sql})"
         resultado = self.ejecutar_consulta(consulta, tuple(valores))
 
-        print(consulta, valores)
-        print(resultado)
 
         if isinstance(resultado, dict) and "error" in resultado:
             return None, resultado

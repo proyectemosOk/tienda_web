@@ -7,11 +7,16 @@
     <link rel="stylesheet" href="/static/css/productos.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/static/css/item.css" />
-    <link rel="stylesheet" href="/static/css/menu-global.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/estilos_new_cliente.css">
+
     <script src="/static/js/cargarDeafaul/cargar.js"></script>
-    <script src="/static/js/ventas/item.js" defer ></script>
-    <script src="/static/js/ventas/productos.js" defer ></script>
-    <script type="module" src="/static/js/cargarDeafaul/cargar.js" defer></script>
+    <script src="/static/js/plantilla_new_cliente.js" defer></script>
+    <script src="/static/js/ventas/item.js" defer></script>
+    <script src="/static/js/ventas/productos.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+
+
 
     <title>Vista del Producto</title>
 
@@ -32,28 +37,29 @@
                 <div class="ticket-container">
                     <!-- Encabezado con cliente -->
                     <div class="ticket-header">
-                        <input list="clientes" id="clienteSearch" placeholder="Buscar cliente" />
+                        <input class="inputCliente" list="clientes" id="clienteSearch" placeholder="Buscar cliente" />
                         <select class="cliente-combo" id="clienteCombo">
                             <option value="1">Cliente común</option>
                         </select>
                         <datalist id="clientes">
 
                         </datalist>
+                        <button id="new_cliente" class="btn-new" onclick="crear_formulario_new_cliente()"><i class="fas fa-user-plus fa-3x"></i></button>
 
 
-                    <!-- Lista de productos -->
+                        <!-- Lista de productos -->
                         <div class="items-container" id="itemsContainer">
-                        <!-- Los items se agregarán dinámicamente aquí -->
-                    </div>
+                            <!-- Los items se agregarán dinámicamente aquí -->
+                        </div>
 
-                    <!-- Métodos de pago -->
-        </div>
+                        <!-- Métodos de pago -->
+                    </div>
             </section>
             <section class="pagos-section">
                 <div class="payment-methods">
                     <!-- Botones existentes -->
                     <div class="payment-method-group">
-                    
+
                     </div>
                 </div>
 
@@ -61,8 +67,8 @@
                 <!-- Total y botón de vender -->
                 <div class="ticket-footer">
                     <button class="btn-btn-success" id="venderBtn">Vender <span><b>Total:</b></span>
-                    <span id="totalLabel"><b>$0</b></span>
-                </button>
+                        <span id="totalLabel"><b>$0</b></span>
+                    </button>
                 </div>
             </section>
         </div>
@@ -81,7 +87,7 @@
     </div>
 
     <!-- Incluye tu JavaScript aquí -->
-    
+
 </body>
 
 </html>

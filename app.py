@@ -1,4 +1,5 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
+from flask_socketio import SocketIO, emit
 import os
 from conexion_base import *
 from orden import Orden
@@ -22,6 +23,9 @@ from api_empresa import *
 from api_clientes import *
 from api_informes import *
 from api_nueva_venta import *
+from api_ordenes import *
+from api_calificar_servicios import *
+from socketio_app import socketio
 
 
 
@@ -33,6 +37,8 @@ import io
 
 
 app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio.init_app(app)
 app.register_blueprint(extras)  
 app.register_blueprint(facturas_bp)
 app.register_blueprint(cierre_caja)
@@ -40,6 +46,8 @@ app.register_blueprint(empresa_bp)
 app.register_blueprint(clientes)
 app.register_blueprint(informes)
 app.register_blueprint(nueva_venta)
+app.register_blueprint(ordenes)
+app.register_blueprint(calificar_servicio)
 
 
 UPLOAD_FOLDER = 'uploads'
@@ -138,6 +146,10 @@ def personal():
 def login_sesion():
     return render_template('login-sesion.html')
 
+@app.route('/pruebas')
+def pruebas():
+    return render_template('pruebas.html')
+
 @app.route('/ordenes')
 def orden():
     return render_template('/ordenes/gestor.html')
@@ -154,9 +166,14 @@ def empresa():
 def ventas():
     return render_template('vista_de_producto.html')
 
+@app.route('/configuraciones')
+def configuraciones():
+    return render_template('configuraciones.html')
+
 @app.route('/inventarios')
 def inventarios():
     return render_template('gestor_inventario.html')
+
 @app.route('/principal')
 def menu_global():
     return render_template('menu-global.html')
@@ -169,136 +186,6 @@ def monedero():
 def cierre_dia():
     return render_template('informe-cierre-dia.html')
 
-@app.route('/submit', methods=['POST'])
-def submit():
-    form = request.form
-    
-    try:
-        # --- Validación básica obligatoria ---
-        campos_obligatorios = ['cliente', 'tipo', 'marca', 'modelo', 'estado_entrada', 'perifericos', 'observaciones', 'total_servicio', 'tipo_pago']
-        for campo in campos_obligatorios:
-            if campo not in form or not form[campo].strip():
-                raise BadRequest(f"El campo '{campo}' es obligatorio.")
-        
-        for key in form:
-            print(key+":\t"+form[key])
-        # --- Procesar TIPO ---
-        tipo = form['tipo'].strip()
-        if tipo == "__nuevo__":
-            tipo = form.get('nuevo_tipo', '').strip()
-            if not tipo:
-                raise BadRequest("Debe ingresar un nombre para el nuevo tipo.")
-            if not conn_db.existe_registro("tipos", "nombre", tipo):
-                tipo = conn_db.insertar("tipos", {"nombre": tipo})[0]
-        tipo = obtener_id_por_nombre("tipos", tipo, "id")
-        if not tipo:
-            raise BadRequest("Tipo no válido o no encontrado.")
-
-        # --- Procesar TIPO DE PAGO ---
-        tipo_pago = form['tipo_pago'].strip()
-        if tipo_pago == "__nuevo__":
-            tipo_pago = form.get('nuevo_tipo_pago', '').strip()
-            if not tipo_pago:
-                raise BadRequest("Debe ingresar un nombre para el nuevo tipo de pago.")
-            if not conn_db.existe_registro("tipos_pago", "nombre", tipo_pago):
-                tipo_pago = conn_db.insertar("tipos_pago", {"nombre": tipo_pago, "descripcion": "Agregado desde formulario"})[0]
-        tipo_pago = obtener_id_por_nombre("tipos_pago", tipo_pago, "id")
-        if not tipo_pago:
-            raise BadRequest("Tipo de pago no válido o no encontrado.")
-
-        # --- Procesar SERVICIOS ---
-        servicios = form.getlist('servicios[]')
-        servicios_nuevos = form.getlist('servicios_nuevo[]')
-        
-        servicios_finales = []
-
-        for nuevos in servicios_nuevos:
-            nuevo = nuevos.strip()
-            if nuevo:
-                if not conn_db.existe_registro("servicios", "nombre", nuevo):
-                    conn_db.insertar("servicios", {"nombre": nuevo})
-                servicio_id = obtener_id_por_nombre("servicios", nuevo, "id")
-                if servicio_id:
-                    servicios_finales.append(servicio_id)
-
-        for servicio in servicios:
-            servicio_id = obtener_id_por_nombre("servicios", servicio.strip(), "id")
-            if servicio_id:
-                servicios_finales.append(servicio_id)
-
-        if not servicios_finales:
-            raise BadRequest("Debe seleccionar al menos un servicio válido.")
-        print(servicios_finales)
-        # --- Obtener ID del cliente ---
-        cliente_id = obtener_id_por_nombre("clientes", form['cliente'].strip(), "numero")
-        if not cliente_id:
-            raise BadRequest("Cliente no válido o no encontrado.")
-
-        # --- Convertir monto total del servicio ---
-        try:
-            total_servicio = float(form.get('total_servicio', "0").strip())
-        except ValueError:
-            raise BadRequest("El monto del servicio no es un número válido.")
-
-        # --- Crear objeto Orden ---
-        orden = Orden(
-            cliente=cliente_id,
-            usuario_id=form["usuario"],
-            tipo=tipo,
-            marca=form['marca'].strip(),
-            modelo=form['modelo'].strip(),
-            estado_entrada=form['estado_entrada'].strip(),
-            perifericos=form['perifericos'].strip(),
-            observaciones=form['observaciones'].strip(),
-            total_servicio=total_servicio
-        )
-        orden_dict = orden.a_dict()
-        orden_id = conn_db.insertar("ordenes", orden_dict)
-
-        # --- Insertar servicios relacionados ---
-        for servicio_id in servicios_finales:
-
-            conn_db.insertar("orden_servicios", {
-                "id_orden": int(orden_id[0]),
-                "servicio": int(servicio_id)
-            })
-
-        # --- Registrar pago ---
-        try:
-            monto_pago = float(form.get("pago", "0").strip())
-        except ValueError:
-            raise BadRequest("El monto del pago no es válido.")
-
-        conn_db.insertar("pagos_servicios", {
-            "id_orden": int(orden_id[0]),
-            "tipo_pago": tipo_pago,
-            "monto": monto_pago
-        })
-        
-        imagenes = request.files.getlist("imagenes")
-        for archivo in imagenes:
-            if archivo and archivo.filename != "":
-                imagen_redimensionada = redimensionar_imagen(archivo)
-                if imagen_redimensionada:
-                    conn_db.insertar("img_ordenes", {
-                        "id_orden": orden_id,
-                        "imagen": imagen_redimensionada
-                    })
-
-        # --- Respuesta de éxito ---
-        return jsonify({
-            "mensaje": "✅ Orden registrada correctamente.",
-            "orden_id": orden_id,
-            "orden": orden_dict
-        })
-
-    except BadRequest as e:
-        return jsonify({"error": str(e)}), 400
-
-    except Exception as e:
-        # Error inesperado del servidor
-        print("❌ Error interno:", e)
-        return jsonify({"error": "Error interno del servidor"}), 500
 
 @app.route('/api/tipos')
 def api_tipos():
@@ -1507,5 +1394,5 @@ def obtener_servicios():
         return jsonify({"error": "Error al obtener servicios"}), 500
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=5000,  debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
     

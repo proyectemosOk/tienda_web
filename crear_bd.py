@@ -687,6 +687,25 @@ def crear_tablas(base):
 ]
 
     cursor.executemany("INSERT OR IGNORE INTO tipos (id, nombre) VALUES (?, ?)", tipos_default)
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS conteo_calificaciones (
+        calificacion INTEGER PRIMARY KEY,
+        cantidad INTEGER DEFAULT 0
+    )
+    """)
+
+    # Insertar valores iniciales si no existen
+    for i in range(1, 5):
+        cursor.execute("INSERT OR IGNORE INTO conteo_calificaciones (calificacion, cantidad) VALUES (?, 0)", (i,))
+
+    # Tabla 2: Registro individual
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS registro_calificaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        calificacion INTEGER,
+        fecha TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
 
 
     # Confirmar los cambios y cerrar la conexión

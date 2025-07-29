@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Ajustes</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="/static/js/cargarDeafaul/cargar.js"></script>
+
+    <style>
+        .nav {
+            display: flex;
+            background-color: #1f2d3d00;
+            /* más contrastado que #2c3e50 */
+            padding: 0;
+            margin: 0;
+            list-style: none;
+            overflow-x: auto;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav li {
+            flex: 1;
+        }
+
+        .nav button {
+            width: 100%;
+            padding: 16px 20px;
+            background: none;
+            border: none;
+            color: #000000;
+            font-size: 17px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .nav button:hover {
+            background-color: #2a3b4d;
+            color: #ffffff;
+        }
+
+        .nav button.active {
+            background-color: #007bff;
+            color: #ffffff;
+        }
+
+        #iframe-ajuste {
+            width: 100%;
+            height: calc(100vh - 55px);
+            border: none;
+            opacity: 1;
+            transition: opacity 0.4s ease-in-out;
+        }
+
+        #iframe-ajuste.fade-out {
+            opacity: 0;
+        }
+    </style>
+
+</head>
+
+<body>
+  <ul class="nav">
+    <li><button id="empresa" class="tab-btn active" data-url="/empresa"><i class="fas fa-building"></i> Empresa</button></li>
+    <li><button id="personal" class="tab-btn" data-url="/personal"><i class="fas fa-users-cog"></i> Usuarios</button></li>
+    <li><button id="cliente" class="tab-btn" data-url="/cliente"><i class="fas fa-user-friends"></i> Clientes</button></li>
+  </ul>
+
+  <iframe id="iframe-ajuste" src="/empresa"></iframe>
+  <script src="/static/js/configuraciones.js"></script>
+</body>
+
+
+</html>

@@ -7,7 +7,9 @@
     <title>Orden de Entrada</title>
     <script src="/static/js/cargarDeafaul/cargar.js"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ordenes/orden.css') }}">
+    <link rel="stylesheet" href="/static/css/estilos_new_cliente.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="/static/js/plantilla_new_cliente.js"></script>
     
 </head>
 
@@ -36,6 +38,10 @@
             </div>
             <div class="step-indicator">
                 <div class="step-number">4</div>
+                <div class="step-label">Pagos</div>
+            </div>
+            <div class="step-indicator">
+                <div class="step-number">5</div>
                 <div class="step-label">Fotos</div>
             </div>
         </div>
@@ -214,6 +220,8 @@
 
     <script src="{{ url_for('static', filename='js/ordenes/orden.js') }}" defer></script>
     <script src="/static/js/ordenes/siguient-etapa.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 
 </body>
 

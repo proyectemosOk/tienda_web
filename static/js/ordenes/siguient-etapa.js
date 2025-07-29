@@ -1,13 +1,6 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const hamburgerBtn = document.getElementById('hamburger-btn');
-    const contMenu = document.getElementById('cont_menu');
-
-    hamburgerBtn.addEventListener('click', () => {
-        contMenu.classList.toggle('abierto');
-    });
-
+document.addEventListener('DOMContentLoaded', () => {  
     let currentStage = 1;
-    const totalStages = 4;
+    const totalStages = 5;
 
     const stages = document.querySelectorAll('.form-stage');
     const progressIndicators = document.querySelectorAll('.step-indicator');

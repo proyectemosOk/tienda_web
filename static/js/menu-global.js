@@ -7,15 +7,7 @@ function cargarPagina(ruta) {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  const rol = datos.rol;
-
-    if (rol !== "admin" && rol !== "superAdmin") {
-        const personal = document.getElementById("personal");
-        const empresa = document.getElementById("empresa");
-
-        if (personal) personal.style.display = "none";
-        if (empresa) empresa.style.display = "none";
-    }
+  
   const contMenu = document.getElementById("cont_menu");
   const iframe = document.getElementById("iframe-contenido");
 

@@ -18,7 +18,19 @@ body {
     max-height: 71vh;
     overflow-y: auto;
   }
-  
+  .btn-new{
+    margin-top: -1.3rem;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-new i {
+    color: #333;
+    transition: color 0.3s ease;
+  }
+  .btn-new:hover i {
+    color: #007bff; /* azul */
+  }
   .product {
     background-color: white;
     border: 1px solid #e0e0e0;

@@ -4,25 +4,6 @@ function cargarSelectConOpciones({ url, selectId, inputNuevoId }) {
         .then(data => {
             const select = document.getElementById(selectId);
             cargarOpcionesDesdeObjeto(data, select);
-
-            // Agregar opción "Otro..."
-            const otro = document.createElement("option");
-            otro.value = "__nuevo__";
-            otro.textContent = "Otro...";
-            select.appendChild(otro);
-            
-            // Mostrar/ocultar campo adicional si elige "Otro..."
-            select.addEventListener("change", () => {
-                
-                const inputNuevo = document.getElementById(inputNuevoId);
-                if (inputNuevo) {
-                    console.log("hola 56")
-                    // if(select.value === "__nuevo__"){
-                    //     inputNuevo.classList.remove("hidden")
-                    // }
-                    select.value === "__nuevo__" ? inputNuevo.classList.remove("hidden"): "";
-                }
-            });
         });
 }
 function cargarServicios(data, name, contenedor) {
@@ -46,78 +27,18 @@ function cargarServicios(data, name, contenedor) {
 
         div.appendChild(input);
         div.appendChild(label);
-        
-        
+
+
         // Agregar al contenedor principal
         contenedor.appendChild(div);
     });
-
-    // Checkbox "Otro..."
-    const otroId = `${name}_otro_checkbox`;
-    const otroDiv = document.createElement("div");
-    otroDiv.classList.add("checkbox-item");
-
-    const otroInput = document.createElement("input");
-    otroInput.type = "checkbox";
-    otroInput.id = otroId;
-    otroInput.value = "__nuevo__";
-    otroInput.name = name;
-
-    // Crear label
-    const otroLabel = document.createElement("label");
-    otroLabel.textContent = "Otro...";
-    otroLabel.htmlFor = otroId;
-
-    otroDiv.appendChild(otroInput);
-    otroDiv.appendChild(otroLabel);
-    contenedor.appendChild(otroDiv);
-    return otroId
-
 }
 function cargarCheckboxesConOtroMultiples({ url, contenedorId, inputNuevoId, name = "opciones" }) {
     fetch(url)
         .then(res => res.json())
         .then(data => {
             const contenedor = document.getElementById(contenedorId);
-
-           const otroId = cargarServicios(data, name, contenedor)
-
-            // Contenedor de campos nuevos dinámicos
-            const nuevoContainer = document.getElementById(inputNuevoId);
-            nuevoContainer.innerHTML = ''; // Asegura que esté limpio
-
-            const camposContainer = document.createElement("div");
-            camposContainer.id = `${inputNuevoId}-campos`;
-
-            const botonAgregar = document.createElement("button");
-            botonAgregar.type = "button";
-            botonAgregar.textContent = "+ Agregar otro";
-            botonAgregar.classList.add("agregar-otro-btn");
-
-            botonAgregar.addEventListener("click", () => {
-                const input = document.createElement("input");
-                input.type = "text";
-                input.name = `${name}_nuevo[]`;
-                input.placeholder = "Nuevo valor...";
-                input.classList.add("nuevo-campo");
-                camposContainer.appendChild(input);
-            });
-
-            // Mostrar/ocultar inputs dinámicos
-            document.getElementById(otroId).addEventListener("change", function () {
-                if (this.checked) {
-                    nuevoContainer.style.display = "block";
-                    camposContainer.innerHTML = ''; // Limpiar y agregar el primero
-                    botonAgregar.click(); // Agrega el primer campo automáticamente
-                } else {
-                    nuevoContainer.style.display = "none";
-                    camposContainer.innerHTML = '';
-                }
-            });
-
-            nuevoContainer.appendChild(camposContainer);
-            nuevoContainer.appendChild(botonAgregar);
-            nuevoContainer.style.display = "none"; // Oculto por defecto
+            cargarServicios(data, name, contenedor)
         });
 }
 
@@ -146,45 +67,6 @@ function cargarClientes() {
         });
 }
 
-function guardarClientes() {
-    const nombre = document.getElementById("nuevo_nombre").value.trim();
-    const tipo_documento = document.getElementById("nuevo_tipo_documento").value;
-    const numero = document.getElementById("nuevo_numero").value.trim();
-    const telefono = document.getElementById("nuevo_telefono").value.trim();
-    const email = document.getElementById("nuevo_email").value.trim();
-
-    if (!nombre || !numero) {
-        alert("Nombre y número de documento son obligatorios.");
-        return;
-    }
-
-    fetch("/api/clientes", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-            nombre,
-            tipo_document: tipo_documento,
-            numero,
-            telefono,
-            email
-        })
-    })
-        .then(res => {
-            if (!res.ok) throw new Error("No se pudo guardar el cliente");
-            return res.json();
-        })
-        .then(cliente => {
-            cargarClientes(); // recargar lista
-            document.getElementById("form-nuevo-cliente").style.display = "none";
-            document.getElementById("cliente-select").value = cliente.numero; // seleccionar nuevo
-        })
-        .catch(err => {
-            console.error(err);
-            alert("Error al guardar el cliente.");
-        });
-}
 
 function mostrarToast(mensaje, tipo = "info") {
     const toast = document.createElement("div");
@@ -251,12 +133,10 @@ document.addEventListener("DOMContentLoaded", () => {
     cargarClientes();
 
     // mostrar formulario nuevo cliente
-    document.getElementById("btn-nuevo-cliente").addEventListener("click", () => {
-        document.getElementById("form-nuevo-cliente").style.display = "block";
-    });
+    // Evento al dar clic en el botón para registrar un nuevo cliente
+    // 1. Agrega el listener al botón:
+    document.getElementById("btn-nuevo-cliente").addEventListener("click", crear_formulario_new_cliente);
 
-    // guardar nuevo cliente
-    document.getElementById("guardar-cliente").addEventListener("click", guardarClientes);
 
     // Cargar TIPOS
     cargarSelectConOpciones({

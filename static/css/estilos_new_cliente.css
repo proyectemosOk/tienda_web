@@ -1,0 +1,50 @@
+/* Estilos personalizados para modal Swal */
+.custom-swal-popup {
+  border-radius: 16px !important;
+  box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3) !important;
+  font-family: 'Inter', sans-serif !important;
+}
+
+.btn {
+  font-weight: 600;
+  font-size: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  transition: background-color 0.3s ease;
+  border: none;
+  cursor: pointer;
+  user-select: none;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #1d4ed8;
+}
+
+.btn-secondary {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.btn-secondary:hover {
+  background: #d1d5db;
+}
+
+.swal2-input, .swal2-select {
+  border-radius: 10px !important;
+  border: 2px solid #cbd5e1 !important;
+  padding: 0.75rem 1rem !important;
+  font-size: 1rem !important;
+  font-family: 'Inter', sans-serif !important;
+  transition: border-color 0.3s ease !important;
+}
+
+.swal2-input:focus, .swal2-select:focus {
+  outline: none !important;
+  border-color: #2563eb !important;
+  box-shadow: 0 0 8px rgba(37, 99, 235, 0.3) !important;
+}
