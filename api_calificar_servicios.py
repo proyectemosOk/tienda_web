@@ -21,7 +21,6 @@ def cargarDatosVotacion():
             order by fecha DESC
             limit 30"""
         )
-        print(registros)
         # Formatear votaciones como lista de tuplas [(1, cantidad), ...]
 
 

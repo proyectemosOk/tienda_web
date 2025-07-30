@@ -5,67 +5,53 @@
 #include "configuracion_wifi.h"
 #include "modo_configuracion.h"
 
-#define LED_CONFIG_PIN 21 // D21
+#define LED_CONFIG_PIN 21 // LED principal WiFi
 
-// Estados WiFi
-enum EstadoWiFi {WIFI_SIN_CONFIG, WIFI_CONECTANDO, WIFI_CONECTADO, WIFI_CONFIGURANDO};
+// Estados WiFi, incluye modo configuración explícito
+enum EstadoWiFi { WIFI_SIN_CONFIG, WIFI_CONECTANDO, WIFI_CONECTADO, WIFI_ERROR, WIFI_CONFIGURANDO };
 
-EstadoWiFi estadoWiFi = WIFI_CONECTANDO;
+extern EstadoWiFi estadoWiFi;
 
-const unsigned long INTERVALO_INTENTO_CONEXION = 10000; // 10 segundos
+const unsigned long INTERVALO_REINTENTO = 10000; // 10 seg
 unsigned long ultimoIntentoConexion = 0;
 int intentosConexion = 0;
 const int MAX_INTENTOS_CONEXION = 3;
 
-// Control del LED según estado WiFi
 void actualizarLedEstado() {
-    switch(estadoWiFi) {
-        case WIFI_CONECTADO:
-            digitalWrite(LED_CONFIG_PIN, LOW); // LED OFF: conectado
-            break;
-        case WIFI_CONECTANDO:
-            digitalWrite(LED_CONFIG_PIN, HIGH); // LED ON: conectando/mal config
-            break;
-        case WIFI_SIN_CONFIG:
-        case WIFI_CONFIGURANDO:
-            digitalWrite(LED_CONFIG_PIN, HIGH); // LED ON: modo configuración
-            break;
+    if (estadoWiFi == WIFI_CONECTADO) {
+        digitalWrite(LED_CONFIG_PIN, HIGH); // LED encendido = conectado
+    } else {
+        digitalWrite(LED_CONFIG_PIN, LOW);  // LED apagado = no conectado o modo config
     }
 }
 
-// Llama una vez en setup()
 void iniciarWiFi() {
     pinMode(LED_CONFIG_PIN, OUTPUT);
     if (!hayConfiguracionGuardada()) {
         estadoWiFi = WIFI_SIN_CONFIG;
         actualizarLedEstado();
-        iniciarModoConfiguracion();
-    } else {
-        estadoWiFi = WIFI_CONECTANDO;
-        intentosConexion = 0;
-        ultimoIntentoConexion = 0;
-        actualizarLedEstado();
+        return;
     }
+    estadoWiFi = WIFI_CONECTANDO;
+    intentosConexion = 0;
+    ultimoIntentoConexion = 0;
+    actualizarLedEstado();
 }
 
-// Llama frecuentemente en loop()
 void manejarWiFi() {
-    switch(estadoWiFi) {
+    switch (estadoWiFi) {
         case WIFI_SIN_CONFIG:
         case WIFI_CONFIGURANDO:
             actualizarLedEstado();
-            manejarServidor(); // Gestiona portal cautivo
             break;
-
         case WIFI_CONECTANDO:
             if (WiFi.status() == WL_CONNECTED) {
                 estadoWiFi = WIFI_CONECTADO;
-                Serial.println("\n✅ Conectado a WiFi. IP: " + WiFi.localIP().toString());
+                Serial.println("✅ WiFi conectado: " + WiFi.localIP().toString());
                 actualizarLedEstado();
                 break;
             }
-            // Manejar reintento no bloqueante
-            if (millis() - ultimoIntentoConexion > INTERVALO_INTENTO_CONEXION && intentosConexion < MAX_INTENTOS_CONEXION) {
+            if (millis() - ultimoIntentoConexion > INTERVALO_REINTENTO && intentosConexion < MAX_INTENTOS_CONEXION) {
                 ConfigWiFi config = cargarConfiguracion();
                 Serial.println("🔌 Intentando conectar a: " + config.ssid);
                 WiFi.begin(config.ssid.c_str(), config.password.c_str());
@@ -73,17 +59,13 @@ void manejarWiFi() {
                 intentosConexion++;
                 actualizarLedEstado();
             }
-            // Si agotó intentos, activa modo configuración
             if (intentosConexion >= MAX_INTENTOS_CONEXION && WiFi.status() != WL_CONNECTED) {
-                Serial.println("⚠️ No se pudo conectar. Activando modo configuración");
+                Serial.println("⚠️ No se pudo conectar. Cambiando a modo configuración");
                 estadoWiFi = WIFI_CONFIGURANDO;
                 actualizarLedEstado();
-                iniciarModoConfiguracion();
             }
             break;
-
         case WIFI_CONECTADO:
-            // Conexión se perdió
             if (WiFi.status() != WL_CONNECTED) {
                 Serial.println("❌ Se perdió la conexión WiFi");
                 estadoWiFi = WIFI_CONECTANDO;
@@ -92,10 +74,12 @@ void manejarWiFi() {
                 actualizarLedEstado();
             }
             break;
+        case WIFI_ERROR:
+            // Puede usarse para estados de error si quieres
+            break;
     }
 }
 
-// Función auxiliar para saber si estamos conectados
 bool wifiEstaConectado() {
     return (estadoWiFi == WIFI_CONECTADO && WiFi.status() == WL_CONNECTED);
 }

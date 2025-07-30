@@ -8,8 +8,9 @@
 void enviarCalificacion(int calificacion) {
     if (WiFi.status() == WL_CONNECTED) {
         ConfigWiFi config = cargarConfiguracion();
+
         if (config.servidor.length() == 0) {
-            Serial.println("❌ Servidor no configurado. No se enviará calificación.");
+            Serial.println("❌ Servidor no configurado. No se envía calificación.");
             return;
         }
 
@@ -18,18 +19,15 @@ void enviarCalificacion(int calificacion) {
         http.begin(url);
         http.addHeader("Content-Type", "application/json");
         String json = "{\"calificacion\": " + String(calificacion) + "}";
-
         int httpResponseCode = http.POST(json);
 
         if (httpResponseCode > 0) {
             Serial.println("📤 Calificación enviada: " + String(calificacion));
-            String payload = http.getString();
-            Serial.println("📩 Respuesta: " + payload);
+            Serial.println("📩 Respuesta: " + http.getString());
         } else {
-            Serial.println("❌ Error enviando calificación. Código HTTP: " + String(httpResponseCode));
+            Serial.println("❌ Error enviando calificación. Código: " + String(httpResponseCode));
         }
-
-        http.end(); // Siempre liberar recursos
+        http.end();
     } else {
         Serial.println("🚫 No conectado a WiFi. No se puede enviar calificación.");
     }
