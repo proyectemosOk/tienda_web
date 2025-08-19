@@ -1,44 +1,42 @@
 from flask import Flask, render_template, request, redirect, url_for, jsonify, send_from_directory
-from flask_socketio import SocketIO, emit
-import os
+
+from socketio_app import socketio, init_socketio
+
 from conexion_base import *
 from orden import Orden
 from firebase_config import ServicioFirebase
-from datetime import datetime, timedelta
-from datetime import date
-import json
-import socket
+from datetime import datetime, timedelta, date
 from werkzeug.utils import secure_filename
 from werkzeug.exceptions import BadRequest
 from tarjetas import *
 import bcrypt
 from PIL import Image
 from io import BytesIO
-from flask import request, jsonify
+import json
+import socket
 import math
+
+# Blueprints o rutas divididas por módulo
 from apis_factura import *
 from api_cierre_caja import *
-
 from api_empresa import *
 from api_clientes import *
 from api_informes import *
 from api_nueva_venta import *
 from api_ordenes import *
 from api_calificar_servicios import *
-from socketio_app import socketio
 
-
-
-import sys
+# Licenciamiento
 from licencia import validar_licencia, crear_licencia
-from PIL import Image
-import io
 
-
-
+# ⚙️ Inicialización de la app
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
-socketio.init_app(app)
+
+# ⚙️ Inicialización de SocketIO con threading
+init_socketio(app)
+
+# Registro de Blueprints
 app.register_blueprint(extras)  
 app.register_blueprint(facturas_bp)
 app.register_blueprint(cierre_caja)
@@ -48,7 +46,6 @@ app.register_blueprint(informes)
 app.register_blueprint(nueva_venta)
 app.register_blueprint(ordenes)
 app.register_blueprint(calificar_servicio)
-
 
 UPLOAD_FOLDER = 'uploads'
 
@@ -1394,5 +1391,5 @@ def obtener_servicios():
         return jsonify({"error": "Error al obtener servicios"}), 500
 
 if __name__ == '__main__':
-    socketio.run(app, host="0.0.0.0", port=5000, debug=True)
+    socketio.run(app, host="0.0.0.0", port=5000, debug=True, allow_unsafe_werkzeug=True)
     

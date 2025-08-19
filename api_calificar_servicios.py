@@ -38,6 +38,19 @@ def index():
     lista_paginas.append(ip)
     return render_template('calificaciones.html')
 
+@calificar_servicio.route('/api/heartbeat', methods=['POST'])
+def heartBeat():
+    # Puedes agregar aquí lógica adicional para registrar el latido
+    # Por ejemplo, almacenar la hora del último heartbeat recibido
+    print("Heartbeat recibido desde ESP32")
+    data = request.get_json(silent=True)
+    if data:
+        print("Datos recibidos:", data)
+        
+    # Responder con código 200 OK y json simple para confirmar
+    return jsonify({'status': 'ok', 'message': 'Heartbeat recibido'}), 200
+
+
 @calificar_servicio.route('/api/guardar_datos', methods=['POST'])
 def guardar_datos():
     data = request.get_json()

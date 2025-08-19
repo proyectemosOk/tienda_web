@@ -18,12 +18,12 @@ VSVersionInfo(
         [
           StringStruct('CompanyName', 'Proyectemos'),
           StringStruct('FileDescription', 'Aplicación de Gestión para Mi Tienda'),
-          StringStruct('FileVersion', '1.2.0'),
+          StringStruct('FileVersion', '1.2.1'),
           StringStruct('InternalName', 'mitienda'),
           StringStruct('LegalCopyright', '© 2025 Proyectemos. Todos los derechos reservados.'),
           StringStruct('OriginalFilename', 'app.exe'),
           StringStruct('ProductName', 'Mi Tienda Flask'),
-          StringStruct('ProductVersion', '1.2.0')
+          StringStruct('ProductVersion', '1.2.1')
         ]
       )
     ]),

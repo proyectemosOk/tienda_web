@@ -1,9 +1,14 @@
+rmdir /s /q build
+rmdir /s /q dist
+del app.spec
+
 pyinstaller ^
   --noconfirm ^
   --onefile ^
   --windowed ^
   --icon=logo.ico ^
   --version-file=version.txt ^
+  --hidden-import=socketio.async_drivers.threading ^
   --add-data "templates;templates" ^
   --add-data "static/css;static/css" ^
   --add-data "static/Iconos;static/Iconos" ^

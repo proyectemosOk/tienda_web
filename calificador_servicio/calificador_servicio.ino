@@ -1,56 +1,67 @@
+#include <Arduino.h>
 #include <WiFi.h>
 #include "wifi_config.h"
 #include "modo_configuracion.h"
 #include "calificacion.h"
-#include <WebServer.h>
+#include <esp_task_wdt.h>
 
 // Pines de botones
-const int BOTON_MALO      = 15;
-const int BOTON_REGULAR   = 2;
-const int BOTON_BUENO     = 4;
-const int BOTON_EXCELENTE = 5;
+const int BOTON_MALO = 5;
+const int BOTON_REGULAR = 4;
+const int BOTON_BUENO = 2;
+const int BOTON_EXCELENTE = 15;
 
 // Pines leds extra para estado
-const int LED_ERROR       = 22;  // LED si error WiFi o desconectado
-const int LED_CONFIG_MODE = 23;  // LED si modo configuración
+const int LED_ERROR = 21;
+const int LED_CONFIG_MODE = 23;
 
-// Variables debounce botones
-bool estadoPrevMalo      = HIGH;
-bool estadoPrevRegular   = HIGH;
-bool estadoPrevBueno     = HIGH;
+bool estadoPrevMalo = HIGH;
+bool estadoPrevRegular = HIGH;
+bool estadoPrevBueno = HIGH;
 bool estadoPrevExcelente = HIGH;
 
 unsigned long ultimoEnvio = 0;
-const unsigned long debounceDelay = 1000;
+const unsigned long debounceDelay = 1000; // 1 seg
 
-// Temporizador combinación para modo configuración
+unsigned long tiempoAnteriorBlink = 0;
+bool ledEncendido = false;
+
 unsigned long tiempoBotonInicio = 0;
-const unsigned long ESPERA_MODO_CONFIG = 7000; // 7 segundos
+const unsigned long ESPERA_MODO_CONFIG = 7000; // 7 segundos para activar modo config
 
-// Declaración global del estado WiFi (como en wifi_config.h)
-EstadoWiFi estadoWiFi = WIFI_SIN_CONFIG;
+const int WDT_TIMEOUT = 10; // segundos watchdog
+
+unsigned long tiempoInicioSalirModoConfig = 0;
+const unsigned long TIEMPO_SALIDA_MODO_CONFIG = 5000; // 5 segundos para salir modo config
 
 void setup() {
   Serial.begin(115200);
   delay(1000);
 
-  // Configurar pines botones
   pinMode(BOTON_MALO, INPUT_PULLUP);
   pinMode(BOTON_REGULAR, INPUT_PULLUP);
   pinMode(BOTON_BUENO, INPUT_PULLUP);
   pinMode(BOTON_EXCELENTE, INPUT_PULLUP);
 
-  // Configurar LEDs
   pinMode(LED_ERROR, OUTPUT);
-  pinMode(LED_CONFIG_PIN, OUTPUT);  // definido en wifi_config.h
+  pinMode(LED_CONFIG_PIN, OUTPUT);
   pinMode(LED_CONFIG_MODE, OUTPUT);
 
   digitalWrite(LED_ERROR, LOW);
   digitalWrite(LED_CONFIG_PIN, LOW);
   digitalWrite(LED_CONFIG_MODE, LOW);
 
-  iniciarWiFi(); // Del wifi_config.h activa conexión o estado inicial
-  Serial.println("Inicializado");
+  iniciarWiFi();
+
+  esp_task_wdt_config_t wdt_config = {
+    .timeout_ms = WDT_TIMEOUT * 1000,
+    .idle_core_mask = (1 << portNUM_PROCESSORS) - 1,
+    .trigger_panic = true
+  };
+  esp_task_wdt_init(&wdt_config);
+  esp_task_wdt_add(NULL);
+
+  Serial.println("🟢 Sistema iniciado.");
 }
 
 void checarBotonYEnviar(int pin, int calificacion, bool &estadoPrev) {
@@ -71,43 +82,94 @@ void actualizarLedsExtra() {
   digitalWrite(LED_CONFIG_MODE, (estadoWiFi == WIFI_CONFIGURANDO) ? HIGH : LOW);
 }
 
+unsigned long tiempoUltimaRevisionWiFi = 0;
+const unsigned long INTERVALO_REVISION_WIFI = 60000;
+
+void entrarModoConfiguracion() {
+  bool bueno = (digitalRead(BOTON_BUENO) == LOW);
+  bool excelente = (digitalRead(BOTON_EXCELENTE) == LOW);
+
+  if (bueno && excelente) {
+    if (tiempoBotonInicio == 0) {
+      tiempoBotonInicio = millis();
+    } else if (millis() - tiempoBotonInicio >= ESPERA_MODO_CONFIG) {
+      Serial.println("⚙️ Activando modo configuración por botones.");
+      estadoWiFi = WIFI_CONFIGURANDO;
+      actualizarLedEstado();
+      actualizarLedsExtra();
+      tiempoBotonInicio = 0;
+      iniciarModoConfiguracion();
+    }
+  } else {
+    tiempoBotonInicio = 0;
+  }
+}
+
+void checarSalirModoConfiguracion() {
+  if (estadoWiFi != WIFI_CONFIGURANDO) return;
+
+  bool excelente = (digitalRead(BOTON_EXCELENTE) == LOW);
+
+  if (excelente) {
+    if (tiempoInicioSalirModoConfig == 0) {
+      tiempoInicioSalirModoConfig = millis();
+    } else if (millis() - tiempoInicioSalirModoConfig > TIEMPO_SALIDA_MODO_CONFIG) {
+      Serial.println("🛑 Saliendo de modo configuración, reiniciando...");
+      server.close();
+      WiFi.softAPdisconnect(true);
+      estadoWiFi = WIFI_CONECTANDO;
+      ESP.restart();
+    }
+  } else {
+    tiempoInicioSalirModoConfig = 0;
+  }
+}
+
+void monitorWiFi() {
+  if (millis() - tiempoUltimaRevisionWiFi > INTERVALO_REVISION_WIFI) {
+    tiempoUltimaRevisionWiFi = millis();
+    if (WiFi.status() != WL_CONNECTED) {
+      Serial.println("⚠️ WiFi desconectado, intentando reconectar...");
+      iniciarWiFi();
+    }
+  }
+}
+
 void loop() {
-  
-  manejarWiFi();   // Control general de estado WiFi y LED principal
+  esp_task_wdt_reset();
+
+  manejarWiFi();
+  manejarModoConfiguracion();
 
   actualizarLedsExtra();
 
   if (estadoWiFi == WIFI_CONFIGURANDO) {
-    server.handleClient();
-    manejarServidor();  // Atiende portal cautivo de configuración WiFi
+    manejarModoConfiguracion();
+    checarSalirModoConfiguracion();
     return;
   }
 
   if (estadoWiFi == WIFI_SIN_CONFIG || estadoWiFi == WIFI_ERROR) {
-    bool bueno = (digitalRead(BOTON_BUENO) == LOW);
-    bool excelente = (digitalRead(BOTON_EXCELENTE) == LOW);
-
-    if (bueno && excelente) {
-      if (tiempoBotonInicio == 0) {
-        tiempoBotonInicio = millis();
-      } else if (millis() - tiempoBotonInicio >= ESPERA_MODO_CONFIG) {
-        Serial.println("⚙️ Activando modo configuración por botones.");
-        estadoWiFi = WIFI_CONFIGURANDO;
-        actualizarLedEstado();
-        actualizarLedsExtra();
-        iniciarModoConfiguracion();
-        tiempoBotonInicio = 0;
-      }
-    } else {
-      tiempoBotonInicio = 0;
-    }
-    return;
+    entrarModoConfiguracion();
   }
 
   if (estadoWiFi == WIFI_CONECTADO) {
-    checarBotonYEnviar(BOTON_MALO,      1, estadoPrevMalo);
-    checarBotonYEnviar(BOTON_REGULAR,   2, estadoPrevRegular);
-    checarBotonYEnviar(BOTON_BUENO,     3, estadoPrevBueno);
+    checarBotonYEnviar(BOTON_MALO, 1, estadoPrevMalo);
+    checarBotonYEnviar(BOTON_REGULAR, 2, estadoPrevRegular);
+    checarBotonYEnviar(BOTON_BUENO, 3, estadoPrevBueno);
     checarBotonYEnviar(BOTON_EXCELENTE, 4, estadoPrevExcelente);
+
+    monitorWiFi();
+    enviarHeartbeat();
+    entrarModoConfiguracion();
+  }
+
+  if (estadoWiFi == WIFI_CONECTANDO) {
+    unsigned long ahora = millis();
+    if (ahora - tiempoAnteriorBlink >= 500) {
+      ledEncendido = !ledEncendido;
+      digitalWrite(LED_CONFIG_PIN, ledEncendido ? HIGH : LOW);
+      tiempoAnteriorBlink = ahora;
+    }
   }
 }

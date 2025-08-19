@@ -7,7 +7,7 @@ socket.on('connect', () => {
 socket.on('nuevo_voto', (data) => {
     console.log('Nuevo voto recibido:', data);
     // Actualizar UI, tabla y tarjetas con el nuevo voto
-    cargarDatos();
+    agregarRegistroNuevo(data);
 
 });
 
@@ -55,18 +55,40 @@ function llenarTabla(registros) {
 function obtenerTextoYColor(calificacion) {
   switch (calificacion) {
     case 1:
-      return { texto: "Malo", colorClase: "text-red-600" };
+      
+      return { texto: "Malo", colorClase: "text-red-600", contenedor: "count-malo"};
     case 2:
-      return { texto: "Regular", colorClase: "text-yellow-500" };
+      return { texto: "Regular", colorClase: "text-yellow-500", contenedor: "count-regular" };
     case 3:
-      return { texto: "Bueno", colorClase: "text-green-700" };
+      return { texto: "Bueno", colorClase: "text-green-700", contenedor: "count-bueno" };
     case 4:
-      return { texto: "Excelente", colorClase: "text-blue-700" };
+      return { texto: "Excelente", colorClase: "text-blue-700", contenedor: "count-excelente" };
     default:
       return { texto: "Desconocido", colorClase: "text-gray-500" };
   }
 }
 
+function animarIncremento(id) {
+    const el = document.getElementById(id);
+    const inicio = parseInt(el.textContent);
+    const fin = inicio + 1;
+    const duracion = 400; // duración en milisegundos
+
+    let inicioTiempo = null;
+
+    function animar(tiempoActual) {
+        if (!inicioTiempo) inicioTiempo = tiempoActual;
+        const progreso = Math.min((tiempoActual - inicioTiempo) / duracion, 1);
+        const valor = Math.round(inicio + (fin - inicio) * progreso);
+        el.textContent = valor;
+
+        if (progreso < 1) {
+            requestAnimationFrame(animar);
+        }
+    }
+
+    requestAnimationFrame(animar);
+}
 
 function agregarRegistroNuevo(registro) {
   const tbody = document.getElementById('tabla-registros');
@@ -84,7 +106,9 @@ function agregarRegistroNuevo(registro) {
   const califTd = document.createElement('td');
   califTd.className = "px-4 py-2 font-semibold";
 
-  const { texto, colorClase } = obtenerTextoYColor(registro.calificacion);
+  const { texto, colorClase, contenedor } = obtenerTextoYColor(registro.calificacion);
+
+  animarIncremento(contenedor);
 
   califTd.textContent = texto;
   califTd.classList.add(colorClase);

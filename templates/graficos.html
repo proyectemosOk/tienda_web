@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gauge Medias Donas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f9fa;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      padding: 40px 20px;
+      flex-wrap: wrap;
+      min-height: 100vh;
+      margin: 0;
+    }
+
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .gauge {
+      width: 120px;
+      height: 60px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .gauge-bg {
+      width: 120px;
+      height: 120px;
+      border: 12px solid #e0e0e0;
+      border-radius: 50%;
+      position: absolute;
+      top: -60px;
+      left: 0;
+      border-bottom: none;
+    }
+
+    .gauge-fill {
+      width: 120px;
+      height: 120px;
+      border: 12px solid transparent;
+      border-radius: 50%;
+      position: absolute;
+      top: -60px;
+      left: 0;
+      border-bottom: none;
+      transform-origin: center bottom;
+    }
+
+    .gauge-malo .gauge-fill {
+      border-color: #f44336;
+      transform: rotate(-162deg); /* 10% de 180 grados = 18 grados, pero empezamos desde -180 */
+    }
+
+    .gauge-regular .gauge-fill {
+      border-color: #fdd835;
+      transform: rotate(-135deg); /* 25% de 180 grados = 45 grados desde -180 */
+    }
+
+    .gauge-bueno .gauge-fill {
+      border-color: #4caf50;
+      transform: rotate(-117deg); /* 35% de 180 grados = 63 grados desde -180 */
+    }
+
+    .gauge-excelente .gauge-fill {
+      border-color: #29b6f6;
+      transform: rotate(-126deg); /* 30% de 180 grados = 54 grados desde -180 */
+    }
+
+    .gauge-value {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 24px;
+      font-weight: bold;
+      color: #333;
+    }
+
+    .gauge-label {
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+      text-align: center;
+    }
+
+    /* Animación suave */
+    .gauge-fill {
+      transition: transform 1.5s ease-out;
+    }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      body {
+        gap: 20px;
+        padding: 20px 10px;
+      }
+      
+      .gauge {
+        width: 100px;
+        height: 50px;
+      }
+      
+      .gauge-bg, .gauge-fill {
+        width: 100px;
+        height: 100px;
+        border-width: 10px;
+        top: -50px;
+      }
+      
+      .gauge-value {
+        font-size: 20px;
+        top: 15px;
+      }
+      
+      .gauge-label {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="gauge-container gauge-malo">
+    <div class="gauge">
+      <div class="gauge-bg"></div>
+      <div class="gauge-fill"></div>
+      <div class="gauge-value">10</div>
+    </div>
+    <div class="gauge-label">Malo</div>
+  </div>
+
+  <div class="gauge-container gauge-regular">
+    <div class="gauge">
+      <div class="gauge-bg"></div>
+      <div class="gauge-fill"></div>
+      <div class="gauge-value">25</div>
+    </div>
+    <div class="gauge-label">Regular</div>
+  </div>
+
+  <div class="gauge-container gauge-bueno">
+    <div class="gauge">
+      <div class="gauge-bg"></div>
+      <div class="gauge-fill"></div>
+      <div class="gauge-value">35</div>
+    </div>
+    <div class="gauge-label">Bueno</div>
+  </div>
+
+  <div class="gauge-container gauge-excelente">
+    <div class="gauge">
+      <div class="gauge-bg"></div>
+      <div class="gauge-fill"></div>
+      <div class="gauge-value">30</div>
+    </div>
+    <div class="gauge-label">Excelente</div>
+  </div>
+
+  <script>
+    // Animación de entrada
+    window.addEventListener('load', () => {
+      const gauges = document.querySelectorAll('.gauge-fill');
+      gauges.forEach((gauge, index) => {
+        gauge.style.transform = 'rotate(-180deg)';
+        setTimeout(() => {
+          gauge.style.transform = gauge.style.transform || 'rotate(-180deg)';
+        }, index * 200);
+      });
+    });
+
+    // Función para actualizar valores dinámicamente
+    function actualizarGauge(categoria, nuevoValor) {
+      const container = document.querySelector(`.gauge-${categoria}`);
+      if (!container) return;
+      
+      const valueElement = container.querySelector('.gauge-value');
+      const fillElement = container.querySelector('.gauge-fill');
+      
+      valueElement.textContent = nuevoValor;
+      
+      // Calcular rotación (0-100% -> -180deg a 0deg)
+      const rotacion = -180 + (nuevoValor * 1.8);
+      fillElement.style.transform = `rotate(${rotacion}deg)`;
+    }
+
+    // Ejemplo de uso:
+    // actualizarGauge('malo', 15);
+    // actualizarGauge('regular', 30);
+  </script>
+
+</body>
+</html>
