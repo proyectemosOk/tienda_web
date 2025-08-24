@@ -1,20 +1,20 @@
 function cargarPagina(ruta) {
   if (ruta === "bienvenida") return;
-  if(ruta === "salir") return window.location.href = '/';
+  if (ruta === "salir") return window.location.href = '/';
   document.getElementById("iframe-contenido").src = ruta;
   document.getElementById("iframe-contenido").classList.add("alto")
 
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  
+
   const contMenu = document.getElementById("cont_menu");
   const iframe = document.getElementById("iframe-contenido");
 
   // Mapas de rutas
   const rutas = {
     monederos: "/monederos",
-    ventas: "/ventas",
+    ventas: "/panel_ventas",
     servicios: "/ordenes",
     inventario: "/inventarios",
     cuentas: "/cierre_dia",
@@ -23,9 +23,9 @@ document.addEventListener("DOMContentLoaded", () => {
     configuraciones: "/configuraciones",
     empresa: "/empresa",
     informes: "/informes",
-    cerrarCaja:"/cerrarCaja",
+    cerrarCaja: "/cerrarCaja",
     casa: "bienvenida",
-    salir:"salir"
+    salir: "salir"
   };
 
   // Hover expandido SOLO en modo-menu
@@ -43,14 +43,17 @@ document.addEventListener("DOMContentLoaded", () => {
   Object.keys(rutas).forEach(id => {
     const item = document.getElementById(id);
     if (item) {
-      item.addEventListener("click", () => {
+      item.addEventListener("click", () => {0.
         const ruta = rutas[id];
 
         // Si estamos en modo-inicial, cambiamos a modo-menu
         if (document.body.classList.contains("modo-inicial")) {
           document.body.classList.remove("modo-inicial");
           document.body.classList.add("modo-menu");
-
+          // Quitar clase "tarjeta" a todos los hijos de vista-inicial
+          document.querySelectorAll("#cont_menu .tarjeta").forEach(el => {
+            el.classList.remove("tarjeta");
+          });
           // Mostrar iframe
           iframe.classList.remove("oculto")
         }

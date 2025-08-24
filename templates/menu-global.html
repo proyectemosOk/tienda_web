@@ -10,6 +10,8 @@
     <script src="/static/js/cargarDeafaul/cargar.js" defer></script>
 
     <link rel="stylesheet" href="/static/css/menu-global.css">
+    <link rel="stylesheet" href="/static/css/body-menu-global.css">
+    <link rel="stylesheet" href="/static/css/pagina_principal.css">
 
 
     <link rel="icon" type="image/png" sizes="32x32" href="/static/Iconos/logo2.png">
@@ -18,83 +20,113 @@
 </head>
 
 <body class="modo-inicial">
-    <!-- menu-global.html -->
-    <button id="hamburger-btn" class="hamburger-btn">☰</button>
-    <div for="menu-toggle" class="vista-inicial" id="cont_menu">
-        <div id="casa" class="menu-item tarjeta " data-page="home">
-            <img src="/static/Iconos/app.png" alt="CASA" class="casa">
-            <br>
-            <div class="texto"><span><b>Menu</b></span></div>
+    <header>
+        <div class="onda-der">
+            <img src="/static/Iconos/App Tienda.svg" alt="logo">
+        </div>
+        <div class="logo">
+            <img src="/static/img_productos/logo.png" alt="logo">
+        </div>
+        <div class="header-der">
+            <h1>
+                <span class="mi">Mi</span><span>Tienda</span>
+            </h1>
+            <p>SISTEMA FACTURACION POS <span class="web">.web</span></p>
         </div>
 
-        <div id="monederos" class="menu-item tarjeta " data-page="monederos">
-            <img src="/static/Iconos/monedero.png" alt="MONEDERO">
-            <br>
-            <div class="texto"><span><b>Monederos</b></span></div>
-        </div>
+    </header>
+    <main>
+        <div for="menu-toggle" class="vista-inicial" id="cont_menu">
+            <!-- <div id="casa" class="menu-item tarjeta " data-page="home">
+                <img src="/static/Iconos/app.png" alt="CASA" class="casa">
+                <br>
+                <div class="texto"><span><b>Menu</b></span></div>
+            </div> -->
 
-        <div id="ventas" class="menu-item tarjeta " data-page="ventas">
-            <img src="/static/Iconos/ventas.png" alt="VENTAS">
-            <br>
-            <div class="texto"><span><b>Ventas</b></span></div>
-        </div>
 
-        <!-- <div id="servicios" class="menu-item tarjeta " data-page="servicios">
+
+            <div id="ventas" class="menu-item tarjeta " data-page="ventas">
+                <img src="/static/Iconos/ventas.png" alt="VENTAS">
+                <br>
+                <div class="texto"><span><b>Ventas</b></span></div>
+            </div>
+
+            <!-- <div id="servicios" class="menu-item tarjeta " data-page="servicios">
             <img src="/static/Iconos/mecanico.png" alt="SERVICIOS">
             <br>
             <div class="texto"><span><b>Servicios</b></span></div>
         </div> -->
 
-        <div id="inventario" class="menu-item tarjeta " data-page="inventario">
-            <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
-            <br>
-            <div class="texto"><span><b>Inventario</b></span></div>
-        </div>
+            <div id="inventario" class="menu-item tarjeta " data-page="inventario">
+                <img src="/static/Iconos/inventario.png" alt="INVENTARIO">
+                <br>
+                <div class="texto"><span><b>Inventario</b></span></div>
+            </div>
 
-        <!-- <div id="cuentas" class="menu-item tarjeta " data-page="cuentas">
+            <!-- <div id="cuentas" class="menu-item tarjeta " data-page="cuentas">
             <img src="/static/Iconos/cobro.png" alt="COBRO">
             <br>
             <div class="texto"><span><b>CXC/CXP</b></span></div>
         </div> -->
 
-        <!-- <div id="personal" class="menu-item tarjeta " data-page="personal">
+            <!-- <div id="personal" class="menu-item tarjeta " data-page="personal">
             <img src="/static/Iconos/personal.png" alt="PERSONAL">
             <br>
             <div class="texto"><span><b>Personal</b></span></div>
         </div> -->
-        <!-- <div id="cliente" class="menu-item tarjeta " data-page="cliente">
+            <!-- <div id="cliente" class="menu-item tarjeta " data-page="cliente">
             <img src="/static/Iconos/cliente.png" alt="CLIENTE">
             <br>
             <div class="texto"><span><b>Clientes</b></span></div>
         </div> -->
 
-        <div id="configuraciones" class="menu-item tarjeta " data-page="configuraciones">
-            <img src="/static/Iconos/configuracion.png" alt="CONFIG">
-            <br>
-            <div class="texto"><span><b>Ajustes</b></span></div>
-        </div>
+            <div id="informes" class="menu-item tarjeta " data-page="informes">
+                <img src="/static/Iconos/informes.png" alt="INFORMES">
+                <br>
+                <div class="texto"><span><b>Informes</b></span></div>
+            </div>
 
-        <!-- <div id="empresa" class="menu-item tarjeta " data-page="empresa">
+            <div id="monederos" class="menu-item tarjeta " data-page="monederos">
+                <img src="/static/Iconos/monedero.png" alt="MONEDERO">
+                <br>
+                <div class="texto"><span><b>Cierre de caja</b></span></div>
+            </div>
+
+            <div id="configuraciones" class="menu-item tarjeta " data-page="configuraciones">
+                <img src="/static/Iconos/configuracion.png" alt="CONFIG">
+                <br>
+                <div class="texto"><span><b>Ajustes</b></span></div>
+            </div>
+
+            <!-- <div id="empresa" class="menu-item tarjeta " data-page="empresa">
             <img src="/static/Iconos/empresa.png" alt="EMPRESA">
             <br>
             <div class="texto"><span><b>Empresa</b></span></div>
         </div> -->
 
-        <div id="informes" class="menu-item tarjeta " data-page="informes">
-            <img src="/static/Iconos/informes.png" alt="INFORMES">
-            <br>
-            <div class="texto"><span><b>Informes</b></span></div>
-        </div>
-        <div id="salir" class="menu-item tarjeta " data-page="informes">
-            <img src="/static/Iconos/salir.png" alt="SALIR">
-            <br>
-            <div class="texto"><span><b>Salir</b></span></div>
-        </div>
 
+            <div id="salir" class="menu-item tarjeta " data-page="informes">
+                <img src="/static/Iconos/salir.png" alt="SALIR">
+                <br>
+                <div class="texto"><span><b>Salir</b></span></div>
+            </div>
+
+        </div>
+        <iframe id="iframe-contenido" class="oculto"></iframe>
+    </main>
+    <img class="footer-imagen" src="/static/Iconos/footer.svg" alt="logo">
+    <div class="div-soporte">
+        <img class="footer-imagen-soporte" src="/static/Iconos/soporte.svg" alt="logo">
     </div>
+    <footer>
+        <div class="footer">
+            <div>
+            </div>
+            <div class="footer-der">
+            </div>
 
-    <iframe id="iframe-contenido" class="oculto"></iframe>
-
+        </div>
+    </footer>
 </body>
 <script src="/static/js/menu-global.js" defer></script>
 

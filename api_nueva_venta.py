@@ -1,9 +1,59 @@
 from flask import Blueprint, jsonify, current_app, request
 from conexion_base import *
 from datetime import datetime
+from crea_pdf.pdf_cotizacion import *
+
 
 nueva_venta = Blueprint('nueva_venta', __name__)
 conn_db = ConexionBase("tienda_jfleong6_1.db")
+
+def calcular_totales_y_guardar_detalles(id_registro, tabla_detalles, productos):
+    total_compra = 0
+    total_venta = 0
+
+    for prod in productos:
+        producto_id = prod["codigo"]
+        cantidad_pedir = int(prod["cantidad"])
+
+        # Obtener lotes FIFO sin modificar, solo para calcular costo
+        lotes = conn_db.seleccionar(
+            "lotes_productos",
+            "id, cantidad, precio_compra",
+            "id_producto = ? AND cantidad > 0 ORDER BY fecha_ingreso ASC, id ASC",
+            (producto_id,)
+        )
+
+        cantidad_restante = cantidad_pedir
+        total_compra_prod = 0
+
+        for lote_id, lote_cant, precio_lote in lotes:
+            if cantidad_restante <= 0:
+                break
+            descontar = min(lote_cant, cantidad_restante)
+            total_compra_prod += descontar * precio_lote
+            cantidad_restante -= descontar
+
+        if cantidad_restante > 0:
+            # print(conn_db.seleccionar("productos", "precio_compra", "id=?", (producto_id,)))
+            precio_prod = float(conn_db.seleccionar("productos", "precio_compra", "id=?", (producto_id,))[0][0])
+            total_compra_prod += cantidad_restante * precio_prod
+        # print(tabla_detalles[:-1])
+        # Guardar detalle (venta, cotización o apartado)
+        detalle = {
+            f"{tabla_detalles.replace("detalles_", "")}_id": id_registro,
+            "producto_id": producto_id,
+            "cantidad": cantidad_pedir,
+            "precio_unitario": prod["precio_unitario"],
+            "estado": 1
+        }
+        # print(detalle)
+        conn_db.insertar(tabla_detalles, detalle)
+
+        total_compra += total_compra_prod
+        total_venta += prod["precio_unitario"] * cantidad_pedir
+
+    utilidad = total_venta - total_compra
+    return total_compra, utilidad
 
 @nueva_venta.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
@@ -135,3 +185,308 @@ def crear_venta():
             "valido": False,
             "mensaje": f"Error: {str(e)}"
         }), 400
+
+@nueva_venta.route('/api/crear_cotizacion', methods=['POST'])
+def crear_cotizacion():
+    data = request.get_json()
+    
+    campos = ['vendedor_id', 'cliente_id', 'total_venta', 'productos']
+    if not all(c in data for c in campos):
+        return jsonify({"error": "Campos requeridos faltantes"}), 400
+    
+    try:
+        conn_db.iniciar_transaccion()
+
+        new_cotizacion = {
+            'vendedor_id': data['vendedor_id'],
+            'cliente_id': data['cliente_id'],
+            'fecha': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'total_venta': data['total_venta'],
+            'total_compra': 0,
+            'total_utilidad': 0,
+            'estado': 1
+        }
+        id_cotizacion, error = conn_db.insertar("cotizaciones", new_cotizacion)
+        if not id_cotizacion:
+            raise Exception("Cotización no registrada")
+        
+        
+        total_compra, utilidad = calcular_totales_y_guardar_detalles(id_cotizacion, "detalles_cotizaciones", data["productos"])
+        
+        conn_db.actualizar("cotizaciones", {
+            "total_compra": total_compra,
+            "total_utilidad": utilidad
+        }, "id = ?", (id_cotizacion,))
+
+        conn_db.confirmar_transaccion()
+        datos = conn_db.seleccionar("datos")
+        print(datos)
+        cliente = conn_db.ejecutar_personalizado_1("SELECT * FROM clientes WHERE id = ?", (data['cliente_id'],))
+        print(cliente)
+        
+        datos_cotizacion = obtener_cotizacion(id_cotizacion)
+        pdf = generar_cotizacion_pdf(datos_cotizacion,datos,cliente)
+        
+        return jsonify({
+            "valido": True,
+            "mensaje": f"Cotización creada {id_cotizacion}",
+            "id": id_cotizacion,
+            "pdf": pdf
+        }), 200
+
+    except Exception as e:
+        conn_db.revertir_transaccion()
+        return jsonify({
+            "valido": False,
+            "mensaje": f"Error: {str(e)}"
+        }), 400
+
+@nueva_venta.route('/api/crear_apartado', methods=['POST'])
+def crear_apartado():
+    data = request.get_json()
+    campos = ['vendedor_id', 'cliente_id', 'total_venta', 'productos', 'metodos_pago']
+    if not all(c in data for c in campos):
+        return jsonify({"error": "Campos requeridos faltantes"}), 400
+
+    try:
+        conn_db.iniciar_transaccion()
+
+        new_apartado = {
+            'vendedor_id': data['vendedor_id'],
+            'cliente_id': data['cliente_id'],
+            'fecha': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            'total_venta': data['total_venta'],
+            'total_compra': 0,
+            'total_utilidad': 0,
+            'estado': 1
+        }
+        id_apartado, error = conn_db.insertar("apartados", new_apartado)
+        if not id_apartado:
+            raise Exception("Apartado no registrado")
+
+        total_compra, utilidad = calcular_totales_y_guardar_detalles(id_apartado, "detalles_apartados", data["productos"])
+
+        conn_db.actualizar("apartados", {
+            "total_compra": total_compra,
+            "total_utilidad": utilidad
+        }, "id = ?", (id_apartado,))
+
+        # Procesar pagos parciales
+        for pago in data["metodos_pago"]:
+            row = conn_db.seleccionar("tipos_pago", "id", "nombre = ?", (pago["metodo"],))
+            if not row:
+                raise Exception(f"No existe el tipo de pago '{pago['metodo']}'")
+            metodo_pago_id = row[0][0]
+
+            if pago["valor"] <= 0:
+                raise Exception(f"Pago con valor inválido: {pago['valor']}")
+
+            conn_db.insertar("pagos_apartados", {
+                "apartados_id": id_apartado,
+                "metodo_pago": metodo_pago_id,
+                "valor": pago["valor"],
+                "usuario_id": data['vendedor_id'],
+                "estado": 1
+            })
+
+            conn_db.actualizar("tipos_pago", {
+                "actual": f"actual + {pago['valor']}"
+            }, "id = ?", (metodo_pago_id,), expresion_sql=True)
+
+        conn_db.confirmar_transaccion()
+
+        return jsonify({
+            "valido": True,
+            "mensaje": f"Apartado creado {id_apartado}",
+            "id": id_apartado
+        }), 200
+
+    except Exception as e:
+        conn_db.revertir_transaccion()
+        return jsonify({
+            "valido": False,
+            "mensaje": f"Error: {str(e)}"
+        }), 400
+
+@nueva_venta.route('/api/listar_documentos', methods=['GET'])
+def listar_documentos():
+    # Estados
+    # 1: Recibidas
+    # 2: Aprobadas
+    # 3: Pendientes
+    # 4: Rechazadas
+    tipo = request.args.get('tipo')  # 'cotizacion' o 'apartado'
+    if tipo not in ['cotizaciones', 'apartados']:
+        return jsonify({"error": "Parámetro tipo inválido, debe ser 'cotizaciones' o 'apartados'"}), 400
+
+    try:
+        query = f"""
+            SELECT d.id, d.vendedor_id, u.nombre AS vendedor_nombre,
+                   d.cliente_id, c.nombre AS cliente_nombre,
+                   d.fecha, d.total_venta, d.estado
+            FROM {tipo} d
+            LEFT JOIN usuarios u ON d.vendedor_id = u.id
+            LEFT JOIN clientes c ON d.cliente_id = c.id
+            ORDER BY d.fecha DESC
+        """
+
+        filas = conn_db.ejecutar_personalizado_1(query)  # Define un método que devuelva las filas con SELECT directo
+        query = f"""SELECT DISTINCT u.nombre AS Vendedor
+        FROM {tipo} c
+        JOIN usuarios u ON u.id = c.vendedor_id;
+        """
+        vendedores = conn_db.ejecutar_personalizado(query)
+        query = f"""SELECT DISTINCT cl.nombre AS Cliente
+        FROM {tipo} c
+        JOIN clientes cl ON cl.id = c.cliente_id;
+        """
+        clientes = conn_db.ejecutar_personalizado(query)
+        
+        query = f""" SELECT estado, COUNT(estado) Cantidad FROM {tipo} GROUP BY estado"""
+        estados = conn_db.ejecutar_personalizado_1(query)
+        
+        return jsonify({"valido": True, tipo: filas, "filtros":{"vendedores":vendedores, "clientes":clientes}, "Estados":estados}), 200
+
+    except Exception as e:
+        return jsonify({"valido": False, "mensaje": f"Error: {str(e)}"}), 500
+
+@nueva_venta.route('/api/detalles_documento', methods=['GET'])
+def detalles_documento():
+    tipo = request.args.get('tipo')  # 'cotizacion' o 'apartado'
+    id_doc = request.args.get('id')
+
+    if tipo not in ['cotizacion', 'apartado'] or not id_doc:
+        return jsonify({"error": "Parámetros inválidos"}), 400
+
+    try:
+        id_doc = int(id_doc)
+        detalles_list = []
+        pagos_list = []
+
+        # Obtener detalles con nombre de producto (suponiendo tabla productos con campo nombre)
+        if tipo == 'cotizacion':
+            query_det = """
+                SELECT dc.producto_id, p.nombre, dc.cantidad, dc.precio_unitario
+                FROM detalles_cotizaciones dc
+                LEFT JOIN productos p ON dc.producto_id = p.id
+                WHERE dc.cotizaciones_id = ? AND dc.estado = 1
+            """
+            detalles = conn_db.ejecutar_personalizado_1(query_det, (id_doc,))
+            detalles_list = [{
+                "producto_id": d[0], "producto_nombre": d, "cantidad": d, "precio_unitario": d
+            } for d in detalles]
+
+            return jsonify({
+                "valido": True,
+                "tipo": tipo,
+                "id": id_doc,
+                "detalles": detalles_list
+            }), 200
+
+        else:  # apartado
+            query_det = """
+                SELECT da.producto_id, p.nombre, da.cantidad, da.precio_unitario
+                FROM detalles_apartados da
+                LEFT JOIN productos p ON da.producto_id = p.id
+                WHERE da.apartados_id = ? AND da.estado = 1
+            """
+            detalles = conn_db.ejecutar_personalizado_1(query_det, (id_doc,))
+            detalles_list = [{
+                "producto_id": d[0], "producto_nombre": d, "cantidad": d, "precio_unitario": d
+            } for d in detalles]
+
+            # Pagos con nombre del método y nombre del usuario (vendedor)
+            query_pagos = """
+                SELECT pa.valor, tp.nombre AS metodo_pago, u.nombre AS usuario_nombre
+                FROM pagos_apartados pa
+                LEFT JOIN tipos_pago tp ON pa.metodo_pago = tp.id
+                LEFT JOIN usuarios u ON pa.usuario_id = u.id
+                WHERE pa.apartados_id = ? AND pa.estado = 1
+            """
+            pagos = conn_db.ejecutar_personalizado_1(query_pagos, (id_doc,))
+            pagos_list = [{
+                "valor": p[0],
+                "metodo_pago": p,
+                "usuario_nombre": p
+            } for p in pagos]
+
+            return jsonify({
+                "valido": True,
+                "tipo": tipo,
+                "id": id_doc,
+                "detalles": detalles_list,
+                "pagos": pagos_list
+            }), 200
+
+    except Exception as e:
+        return jsonify({"valido": False, "mensaje": f"Error: {str(e)}"}), 500
+
+
+@nueva_venta.route('/api/actualizar_estado_cotizacion', methods=['POST'])
+def actualizar_estado_cotizacion():
+    data = request.get_json()
+    id = data.get('id')
+    estado = data.get('estado')
+
+    if not id or estado not in [1, 2, 3, 4]:
+        return jsonify({"valido": False, "mensaje": "Parámetros inválidos"}), 400
+
+    try:
+        conn_db.actualizar("cotizaciones", {"estado": estado}, "id = ?", (id,))
+        return jsonify({"valido": True, "mensaje": "Estado actualizado"}), 200
+    except Exception as e:
+        return jsonify({"valido": False, "mensaje": str(e)}), 500
+
+@nueva_venta.route('/api/ver_cotizacion', methods=['GET'])
+def ver_cotizacion():
+    try:
+        id_cotizacion = request.args.get('id')
+        if not id_cotizacion:
+            return jsonify({"valido": False, "mensaje": "ID cotización requerido"}), 400
+        return jsonify(obtener_cotizacion(id_cotizacion)), 200
+    except Exception as e:
+            return jsonify({"valido": False, "mensaje": f"Error: {str(e)}"}), 500
+    
+def obtener_cotizacion(id_cotizacion):
+    id_cotizacion = int(id_cotizacion)
+
+    # Consulta principal de cotización con vendedor y cliente
+    query_main = """
+        SELECT c.id, c.fecha, c.total_venta, c.total_compra, c.total_utilidad, c.estado,
+                u.nombre as vendedor_nombre, cl.nombre as cliente_nombre
+        FROM cotizaciones c
+        LEFT JOIN usuarios u ON c.vendedor_id = u.id
+        LEFT JOIN clientes cl ON c.cliente_id = cl.id
+        WHERE c.id = ?
+    """
+    cotizacion = conn_db.ejecutar_personalizado_1(query_main, (id_cotizacion,))[0]
+    # print(cotizacion)
+    if not cotizacion:
+        return jsonify({"valido": False, "mensaje": "Cotización no encontrada"}), 404
+
+    # Consulta detalles productos con nombre producto
+    query_detalles = """
+        SELECT dc.producto_id, p.codigo, p.nombre as producto_nombre, dc.cantidad, dc.precio_unitario
+        FROM detalles_cotizaciones dc
+        LEFT JOIN productos p ON dc.producto_id = p.id
+        WHERE dc.cotizaciones_id = ? AND dc.estado = 1
+    """
+    detalles = conn_db.ejecutar_personalizado_1(query_detalles, (id_cotizacion,))
+
+    # Formatear resultados detalles
+    # detalles_list = [{
+    #     "producto_id": d[0],
+    #     "producto_nombre": d,
+    #     "cantidad": d,
+    #     "precio_unitario": d
+    # } for d in detalles]
+
+    # Preparar respuesta JSON
+    respuesta = {
+        "valido": True,
+        "cotizacion": {
+            "cotizacion":cotizacion,
+            "detalles": detalles
+        }
+    }
+    return respuesta

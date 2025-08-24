@@ -1,0 +1,19 @@
+.ticket-footer{
+    display: flex;
+    justify-content: center;
+    gap: auto;
+}
+.btn-aciones{
+    margin-left: 1vw;
+    /* margin-right: 2vw; */
+    width: 4rem;
+    background: transparent;
+    border: 0px;
+    gap: 1vw;
+    cursor: pointer;
+}
+.btn-aciones img{
+    width: 100%;
+    z-index: 2;
+    clip-path: path("");
+} 

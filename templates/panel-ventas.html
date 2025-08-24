@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Pestañas con iframe</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; width: 95vw; height: 80vh;}
+        .tabs { display: flex; margin-bottom: 20px; }
+        .tab {
+            padding: 10px 25px;
+            cursor: pointer;
+            border: 1px solid #007BFF;
+            background: #f4f9ff;
+            color: #007BFF;
+            margin-right: 5px;
+            border-radius: 6px 6px 0 0;
+            transition: background 0.2s;
+        }
+        .tab:hover{
+            background: #2b92ff;
+            color: white;
+        }
+        .active {
+            background: #007BFF;
+            color: #fff;
+            font-weight: bold;
+        }
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: 0px solid #007BFF;
+            border-radius: 0 0 8px 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="tabs">
+        <div class="tab active" onclick="cargarTab('venta')">Venta</div>
+        <div class="tab" onclick="cargarTab('cotizaciones')">Cotizaciones</div>
+        <div class="tab" onclick="cargarTab('apartados')">Apartados</div>
+    </div>
+    <iframe id="contenido" src="/ventas"></iframe>
+
+    <script>
+        const urls = {
+            venta: '/ventas',
+            cotizaciones: '/cotizaciones',
+            apartados: '/apartados'
+        };
+
+        function cargarTab(tab) {
+            // Cambiar clase activa
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            if(tab === 'venta') 
+                document.querySelectorAll('.tab')[0].classList.add('active');
+            else if(tab === 'cotizaciones') 
+                document.querySelectorAll('.tab')[1].classList.add('active');
+            else if(tab === 'apartados') 
+                document.querySelectorAll('.tab')[2].classList.add('active');
+            
+            // Cambiar source del iframe
+            document.getElementById('contenido').src = urls[tab];
+        }
+    </script>
+</body>
+</html>

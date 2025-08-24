@@ -81,6 +81,8 @@ class TicketDeVenta {
     this.itemsContainer = document.getElementById('itemsContainer');
     this.totalLabel = document.getElementById('totalLabel');
     this.venderBtn = document.getElementById('venderBtn');
+    this.cotizarBtn = document.getElementById('cotizarBtn');
+    this.apartarBtn = document.getElementById('apartarBtn');
     this.clienteCombo = document.getElementById('clienteCombo');
     this.nuevoClienteBtn = document.getElementById('nuevoClienteBtn');
 
@@ -96,7 +98,9 @@ class TicketDeVenta {
       btn.addEventListener('click', (e) => this.seleccionarMetodoPago(e.target.dataset.method));
     });
 
-    this.venderBtn.addEventListener('click', () => this.vender());
+    this.venderBtn.addEventListener('click', () => this.vender("Vender"));
+    this.cotizarBtn.addEventListener('click', () => this.vender("Cotizar"));
+    this.apartarBtn.addEventListener('click', () => this.vender("Apartar"));
     this.clienteCombo.addEventListener('keyup', () => this.filtrarClientes());
   }
 
@@ -148,7 +152,7 @@ class TicketDeVenta {
     console.log('Filtrando clientes...');
   }
 
-  vender() {
+  vender(accion = "Vender") {
     const clienteId = this.clienteCombo.value;
     const vendedorId = datos.id;
 
@@ -163,51 +167,82 @@ class TicketDeVenta {
       cantidad: item.cantidad,
       precio_unitario: item.precio
     }));
-    if(productos==[]){
-      return
-    }
-    // Obtener métodos de pago visibles con valor
-    let metodosPago = Array.from(document.querySelectorAll('.payment-input'))
-      .filter(input => input.value.trim() !== '')
-      .map(input => ({
-        metodo: input.dataset.method,
-        valor: parseFloat(input.value)
-      }));
-    let items = Array.from(document.querySelectorAll('.payment-input'))
-    for (let i = 0; i < items.length; i++) {
-      console.log(items[i].value);
-    }
-    // Si no hay ningún método de pago, usar efectivo por defecto con el total
-    if (metodosPago.length === 0) {
-      metodosPago = [{
-        metodo: 'Efectivo',
-        valor: this.total
-      }];
+    if (productos.length === 0) {
+      alert('Agrega productos');
+      return;
     }
 
+    let metodosPago = [];
+    // Solo para ventas y apartados tomamos métodos de pago
+    if (accion === "Vender" || accion === "Apartar") {
+      metodosPago = Array.from(document.querySelectorAll('.payment-input'))
+        .filter(input => input.value.trim() !== '')
+        .map(input => ({
+          metodo: input.dataset.method,
+          valor: parseFloat(input.value)
+        }));
+      if (metodosPago.length === 0 && accion === "Vender") {
+        metodosPago = [{
+          metodo: 'Efectivo',
+          valor: this.total
+        }];
+      }
+    }
 
-
-    // Total
     const totalVenta = this.total;
-    if (!validarYProcesarPago(metodosPago, totalVenta)) {
-      return; // ⚠️ no continuar si la validación falla
+
+    // Validar pagos solo para venta y apartado
+    if (accion === "Vender") {
+      // Para venta: pagos deben cubrir exactamente el total
+      if (!validarYProcesarPago(metodosPago, totalVenta)) {
+        alert('El/los pagos no cubren el total de la venta.');
+        return;
+      }
+    } else if (accion === "Apartar") {
+      // Validación para apartado: al menos un pago > 0 y la suma menor al total
+      const sumaPagos = metodosPago.reduce((acc, pago) => acc + (parseFloat(pago.valor) || 0), 0);
+      const tienePagoMayorCero = metodosPago.some(pago => parseFloat(pago.valor) > 0);
+
+      if (!tienePagoMayorCero) {
+        alert('Agrega al menos un pago mayor a $0.');
+        return;
+      }
+      if (sumaPagos >= totalVenta) {
+        alert('El total de pagos debe ser menor que el total del apartado.');
+        return;
+      }
     }
-    const jsonVenta = {
+
+
+    // Construir objeto para API según acción
+    let jsonData = {
       vendedor_id: vendedorId,
       cliente_id: clienteId,
       total_venta: totalVenta,
-      metodos_pago: metodosPago,
       productos: productos
     };
 
-    // console.log("🧾 JSON enviado:", JSON.stringify(jsonVenta, null, 2));
+    let apiUrl = "";
+    if (accion === "Vender") {
+      jsonData['metodos_pago'] = metodosPago;
+      apiUrl = 'api/crear_venta';
+    } else if (accion === "Cotizar") {
+      // Aquí no necesitas métodos de pago
+      apiUrl = 'api/crear_cotizacion';
+    } else if (accion === "Apartar") {
+      jsonData['metodos_pago'] = metodosPago;
+      apiUrl = 'api/crear_apartado';
+    } else {
+      alert("Acción inválida");
+      return;
+    }
 
-    fetch('api/crear_venta', {
+    fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(jsonVenta)
+      body: JSON.stringify(jsonData)
     })
       .then(async res => {
         const responseText = await res.text();
@@ -218,31 +253,39 @@ class TicketDeVenta {
         }
 
         const data = JSON.parse(responseText);
-
-        alert('✅ Venta registrada correctamente');
-
+        console.log(data)
+        if (accion === "Cotizar"){
+          alert("hola")
+          mostrarPDF(data.pdf)          
+        }
+        alert('✅ Operación registrada correctamente');
 
         this.items = {};
         this.total = 0;
         this.totalLabel.textContent = '$0.00';
         this.itemsContainer.innerHTML = '';
 
+        // Limpiar inputs de métodos de pago (solo para apartados y ventas)
+        if (accion === "Vender" || accion === "Apartar") {
+          document.querySelectorAll('.payment-input').forEach(input => {
+            input.value = '';
+          });
+        }
 
-        // Limpiar inputs de métodos de pago
-        document.querySelectorAll('.payment-input').forEach(input => {
-          input.value = '';
-        })
-        // Actualizar visual del total (ajusta según cómo lo estés mostrando)
-        console.log(data, +"hola");
-        await imprimirTicket(data.id);
+        // Imprimir ticket si es venta
+        if (accion === "Vender") {
+          await imprimirTicket(data.id);
+        }
       })
       .catch(err => {
-        console.error("❌ Fallo al registrar venta:", err.message);
-        alert(`Error al registrar venta:\n${err.message}`);
+        console.error("❌ Fallo al registrar operación:", err.message);
+        alert(`Error al registrar operación:\n${err.message}`);
       });
   }
 
+
 }
+
 async function cargarMetodosPago() {
   try {
     const response = await fetch('/api/metodos_pago');
@@ -349,32 +392,32 @@ document.addEventListener('DOMContentLoaded', cargarMetodosPago);
 const clienteCombo = document.getElementById('clientes');
 const cargarClientes = async () => {
 
-    try {
-      const response = await fetch('/api/clientes');
-      if (!response.ok) {
-        throw new Error('Error al cargar los clientes');
-      }
-      const clientes = await response.json();
-
-      // Limpiar el combo antes de llenarlo
-      clienteCombo.innerHTML = '<option value="">Seleccionar cliente</option>';
-
-      // Llenar el combo con los clientes
-      clientes.forEach(cliente => {
-        const option = document.createElement('option');
-        option.value = cliente.nombre;
-        option.textContent = cliente.documento;
-        clienteCombo.appendChild(option);
-      });
-    } catch (error) {
-      console.error(error);
+  try {
+    const response = await fetch('/api/clientes');
+    if (!response.ok) {
+      throw new Error('Error al cargar los clientes');
     }
-  };
+    const clientes = await response.json();
+
+    // Limpiar el combo antes de llenarlo
+    clienteCombo.innerHTML = '<option value="">Seleccionar cliente</option>';
+
+    // Llenar el combo con los clientes
+    clientes.forEach(cliente => {
+      const option = document.createElement('option');
+      option.value = cliente.nombre;
+      option.textContent = cliente.documento;
+      clienteCombo.appendChild(option);
+    });
+  } catch (error) {
+    console.error(error);
+  }
+};
 document.addEventListener('DOMContentLoaded', () => {
   console.log(datos)
 
   // Función para cargar los clientes desde la API
-  
+
 
   // Llamar a la función para cargar los clientes al cargar la página
   cargarClientes();
@@ -499,7 +542,7 @@ async function obtenerDatosJSONVentasPorID(id) {
 }
 
 function validarYProcesarPago(metodos_pago, totalVenta) {
-  if(!totalVenta){
+  if (!totalVenta) {
     return
   }
   const sumaPagos = metodos_pago.reduce((sum, item) => sum + item.valor, 0);

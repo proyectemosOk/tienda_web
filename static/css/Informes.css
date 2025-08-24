@@ -25,7 +25,7 @@
 
 /* Reset y base */
 body {
-  background-color: #f4f7fa;
+  background-color: transparent;
   font-family: var(--font-family);
   margin: 0;
   padding: 0;

@@ -98,8 +98,6 @@ def activar_licencia():
     crear_licencia()
     return redirect("/")
 
-    
-    
 @app.route('/img_productos/<path:filename>')
 def serve_img_productos(filename):
     ruta_imagen = os.path.join(IMAGES_FOLDER, filename)
@@ -162,6 +160,18 @@ def empresa():
 @app.route('/ventas')
 def ventas():
     return render_template('vista_de_producto.html')
+
+@app.route('/cotizaciones')
+def cotizaciones():
+    return render_template('cotizaciones.html')
+
+@app.route('/apartados')
+def apartados():
+    return render_template('apartados.html')
+
+@app.route('/panel_ventas')
+def panel_ventas():
+    return render_template('panel-ventas.html')
 
 @app.route('/configuraciones')
 def configuraciones():

@@ -7,10 +7,14 @@
     <link rel="stylesheet" href="/static/css/productos.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="/static/css/item.css" />
+    <link rel="stylesheet" href="/static/css/cotizaciones-apartar.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/css/estilos_new_cliente.css">
+    <link rel="stylesheet" href="/static/css/pdfViewer.css">
+
 
     <script src="/static/js/cargarDeafaul/cargar.js"></script>
+    <script src="/static/js/pdfViewer.js"></script>
     <script src="/static/js/plantilla_new_cliente.js" defer></script>
     <script src="/static/js/ventas/item.js" defer></script>
     <script src="/static/js/ventas/productos.js" defer></script>
@@ -44,7 +48,8 @@
                         <datalist id="clientes">
 
                         </datalist>
-                        <button id="new_cliente" class="btn-new" onclick="crear_formulario_new_cliente()"><i class="fas fa-user-plus fa-3x"></i></button>
+                        <button id="new_cliente" class="btn-new" onclick="crear_formulario_new_cliente()"><i
+                                class="fas fa-user-plus fa-3x"></i></button>
 
 
                         <!-- Lista de productos -->
@@ -69,6 +74,13 @@
                     <button class="btn-btn-success" id="venderBtn">Vender <span><b>Total:</b></span>
                         <span id="totalLabel"><b>$0</b></span>
                     </button>
+                    <button class="btn-aciones" id="cotizarBtn">
+                        <img src="/static/Iconos/cotizaciones.png" alt="Cotizar">
+                    </button>
+                    <button class="btn-aciones" id="apartarBtn">
+                        <img src="/static/Iconos/apartar.png" alt="Apartar">
+                    </button>
+
                 </div>
             </section>
         </div>
@@ -86,7 +98,14 @@
         </div>
     </div>
 
-    <!-- Incluye tu JavaScript aquí -->
+    <div id="modalPDF" class="modal-pdf">
+        <div class="modal-content-pdf">
+            <span class="close-pdf" onclick="cerrarModalPDF()">&times;</span>
+            <iframe id="pdfFrame" width="100%" height="90%" style="border:none;"></iframe>
+        </div>
+    </div>
+
+
 
 </body>
 

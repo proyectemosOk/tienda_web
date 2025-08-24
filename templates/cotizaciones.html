@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Panel de Cotizaciones</title>
+  <link rel="stylesheet" href="/static/css/panel-ventas/cotizaciones.css">
+  <link rel="stylesheet" href="/static/css/panel-ventas/modal-cotizaciones.css">
+  <script src="/static/js/ventas/listar_cotizaciones_apartados.js" defer></script>
+</head>
+
+<body>
+  <!-- FILTROS -->
+  <div class="filtros">
+    <div>
+      <label>Clientes:</label>
+      <select id="lista-clientes-cotizacioones">
+        <option>Todos</option>
+      </select>
+    </div>
+    <div>
+      <label>Vendedor:</label>
+      <select id="lista-vendedores-cotizacioones">
+        <option>Todos</option>
+
+      </select>
+    </div>
+    <div>
+      <label>Fecha inicio:</label>
+      <input type="date" id="fecha-inicio-cotizaciones">
+    </div>
+    <div>
+      <label>Fecha Fin:</label>
+      <input type="date" id="fecha-fin-cotizaciones">
+    </div>
+    <div>
+      <label>Estado:</label>
+      <select>
+        <option>Todos</option>
+        <option>Pendiente</option>
+        <option>Aprobada</option>
+        <option>Rechazada</option>
+        <option>Convertida</option>
+        <option>Vencida</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- PANEL PRINCIPAL -->
+  <div class="panel">
+
+    <!-- TABLA DE COTIZACIONES -->
+    <div class="tabla">
+      <h2>Lista de Cotizaciones</h2>
+      <table id="tabla-cotizaciones">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Cliente</th>
+            <th>Fecha</th>
+            <th>Vendedor</th>
+            <th>Monto</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- RESUMEN Y MÉTRICAS -->
+    <div class="resumen">
+      <h3>Resumen de cotizaciones <a id="cambiar-lista-bloque"><img src="/static/Iconos/bloques.svg" alt="lista"
+            width="24px"></a></h3>
+      <div id="contenedor-metricas" class="metricas">
+        <div class="card-metrica">
+          <span>Recibidas:</span> <span id="cant-Cotizaciones">0</span>
+        </div>
+        <div class="card-metrica">
+          <span>Aprobadas:</span> <span id="cant-Aprobadas">0</span>
+        </div>
+        <div class="card-metrica">
+          <span>Pendientes:</span> <span id="cant-Pendientes">0</span>
+        </div>
+        <div class="card-metrica">
+          <span>Rechazadas:</span> <span id="cant-Rechazadas">0</span>
+        </div>
+        <!-- <div class="card-metrica">
+          <span>Ejecutadas:</span> <span id = "cant-Convertidas">0</span>
+        </div> -->
+      </div>
+    </div>
+
+  </div>
+  <!-- Modal -->
+  <div id="modalCotizacion" class="modal"></div>
+</body>
+<script src="/static/js/panel-ventas/cotizaciones.js"></script>
+
+</html>

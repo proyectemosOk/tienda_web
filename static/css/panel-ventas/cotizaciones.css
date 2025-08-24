@@ -1,0 +1,193 @@
+   * {
+       box-sizing: border-box;
+   }
+
+   body {
+       margin: 0;
+       font-family: Arial, sans-serif;
+       background: transparent;
+       color: #333;
+       overflow: hidden;
+   }
+
+   /* ====== Layout general ====== */
+   .panel {
+       display: grid;
+       grid-template-columns: 3fr 1fr;
+       gap: 15px;
+       padding: 15px;
+       margin: 0 20px;
+       transition: grid-template-columns 1s ease-in-out;
+
+   }
+
+   /* Estado expandido: tabla ocupa todo, resumen colapsa */
+   .panel.expandido {
+       grid-template-columns: 1fr 0fr;
+       /* Tabla 100%, resumen 0 */
+   }
+
+   /* ====== Filtros ====== */
+   .filtros {
+       background: #fff;
+       padding: 15px;
+       margin: 0 20px;
+       border-radius: 10px;
+       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+       display: flex;
+       flex-wrap: wrap;
+       gap: 15px;
+       justify-content: space-around;
+   }
+
+   .filtros select,
+   .filtros input {
+       padding: 8px;
+       border: 1px solid #ccc;
+       border-radius: 6px;
+   }
+
+   /* ====== Tabla ====== */
+   .tabla {
+
+       background: #fff;
+       padding: 15px;
+       border-radius: 10px;
+       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+   }
+
+   table {
+       width: 100%;
+       border-collapse: collapse;
+       font-size: 14px;
+   }
+
+   table th,
+   table td {
+       padding: 10px;
+       border-bottom: 1px solid #eee;
+       text-align: left;
+   }
+
+   table th {
+       background: #f0f0f0;
+   }
+
+   /* Colores de estado */
+   .estado {
+       padding: 5px 10px;
+       border-radius: 6px;
+       font-weight: bold;
+       text-align: center;
+       display: inline-block;
+   }
+
+   .recibida {
+       color: #0050fc;
+
+   }
+
+   .pendiente {
+       /* background: #f39c12; */
+       color: #f39c12;
+   }
+
+   .aprobada {
+       /* background: #27ae60; */
+       color: #27ae60;
+   }
+
+   .rechazada {
+       /* background: #e74c3c; */
+       color: #e74c3c;
+   }
+
+
+   /* ====== Resumen/Métricas ====== */
+   .resumen {
+       width: max-content;
+       display: block;
+       background: #fff;
+       padding: 15px;
+       border-radius: 10px;
+       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+       transition: width 500ms ease-in-out;
+   }
+
+   .resumen h3 {
+       display: flex;
+       justify-content: space-between;
+       align-content: center;
+       align-items: center;
+       margin-top: 0;
+       font-size: 16px;
+       margin-bottom: 15px;
+       gap: 2vw;
+   }
+
+   .metricas-lista {
+       display: flex;
+       flex-direction: column;
+       gap: 10px;
+   }
+
+   .metricas {
+       display: grid;
+       grid-template-columns: repeat(3, 1fr);
+       gap: 10px;
+       grid-template-areas:
+           "total total aprobadas"
+           "pendientes rechazadas convertidas";
+   }
+
+   .metricas .card-metrica:nth-child(1) {
+       grid-area: total;
+   }
+
+   .metricas .card-metrica:nth-child(2) {
+       grid-area: aprobadas;
+   }
+
+   .metricas .card-metrica:nth-child(3) {
+       grid-area: pendientes;
+   }
+
+   .metricas .card-metrica:nth-child(4) {
+       grid-area: rechazadas;
+   }
+
+   .metricas .card-metrica:nth-child(5) {
+       grid-area: convertidas;
+   }
+
+
+   .card-metrica {
+       justify-content: center;
+       /* text-align: center; */
+       /* align-items: center; */
+       padding: 10px;
+       border-radius: 8px;
+       background: #f7f9fb;
+       border-left: 4px solid #2980b9;
+   }
+
+   .card-metrica span {
+       font-weight: bold;
+       display: block;
+   }
+
+   button {
+       background: transparent;
+       border: 0px;
+       cursor: pointer;
+       transition: bbackground 500ms ease-in-out;
+
+   }
+
+   button:hover {
+       background-color: #ccc;
+   }
+
+   button img {
+       width: 24px;
+   }

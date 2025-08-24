@@ -312,7 +312,6 @@ def crear_tablas(base):
         valor REAL NOT NULL,
         usuario_id INTEGER NOT NULL,
         estado INTEGER DEFAULT 1,
-        
         FOREIGN KEY (venta_id) REFERENCES ventas(id),
         FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id),
         FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
@@ -706,8 +705,72 @@ def crear_tablas(base):
         fecha TEXT DEFAULT CURRENT_TIMESTAMP
     )
     """)
+    
+    cursor.execute("""CREATE TABLE IF NOT EXISTS cotizaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vendedor_id TEXT NOT NULL,
+        cliente_id INTEGER NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_DATE,
+        total_venta REAL NOT NULL,
+        total_compra REAL,
+        total_utilidad REAL,
+        estado INTEGER DEFAULT 1,
+        FOREIGN KEY (cliente_id) REFERENCES clientes (id),
+        FOREIGN KEY (vendedor_id) REFERENCES usuarios (id)
+    )
+    """)
+    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS detalles_cotizaciones (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        cotizaciones_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio_unitario REAL NOT NULL,
+        estado INTEGER DEFAULT 1,
+        FOREIGN KEY (cotizaciones_id) REFERENCES cotizaciones (id),
+        FOREIGN KEY (producto_id) REFERENCES productos (id)
+    )
+    ''')
+    
+    cursor.execute("""CREATE TABLE IF NOT EXISTS apartados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        vendedor_id TEXT NOT NULL,
+        cliente_id INTEGER NOT NULL,
+        fecha DATETIME NOT NULL DEFAULT CURRENT_DATE,
+        total_venta REAL NOT NULL,
+        total_compra REAL,
+        total_utilidad REAL,
+        estado INTEGER DEFAULT 1,
+        FOREIGN KEY (cliente_id) REFERENCES clientes (id),
+        FOREIGN KEY (vendedor_id) REFERENCES usuarios (id)
+    )
+    """)
+    
+    cursor.execute('''CREATE TABLE IF NOT EXISTS detalles_apartados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        apartados_id INTEGER NOT NULL,
+        producto_id INTEGER NOT NULL,
+        cantidad INTEGER NOT NULL,
+        precio_unitario REAL NOT NULL,
+        estado INTEGER DEFAULT 1,
+        FOREIGN KEY (apartados_id) REFERENCES apartados (id),
+        FOREIGN KEY (producto_id) REFERENCES productos (id)
+    )
+    ''')
 
-
+    cursor.execute('''CREATE TABLE IF NOT EXISTS pagos_apartados (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        apartados_id INTEGER NOT NULL,
+        metodo_pago INTEGER NOT NULL,
+        valor REAL NOT NULL,
+        usuario_id INTEGER NOT NULL,
+        estado INTEGER DEFAULT 1,
+        FOREIGN KEY (apartados_id) REFERENCES apartados(id),
+        FOREIGN KEY (metodo_pago) REFERENCES tipos_pago(id),
+        FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+    );
+    ''')
+    
     # Confirmar los cambios y cerrar la conexión
     conexion.commit()
     conexion.close()
