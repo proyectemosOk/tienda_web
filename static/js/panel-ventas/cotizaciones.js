@@ -87,8 +87,12 @@ function cargarCotizaciones() {
                     <td class="${estadoClase}">${estadoTexto.charAt(0).toUpperCase() + estadoTexto.slice(1)}</td>
                     <td>
                         <button class="updtate" onclick="UpdateCotizacion(${cot.id})"><img src="/static/svg/update.svg"></button>
-                        <button class="ver" onclick="verCotizacion(${cot.id})"><img src="/static/svg/eye-solid.svg"></button>
-                        <button class="edit" onclick="editCotizacion(${cot.id})"><img src="/static/svg/edit.svg"></button>
+                        <button class="ver" onclick="cargarCotizacion(${cot.id}, 'ver')">
+                            <img src="/static/svg/eye-solid.svg">
+                        </button>
+                        <button class='edit' onclick="cargarCotizacion(${cot.id}, 'editar')">
+                            <img src="/static/svg/edit.svg">
+                        </button>
                         <button class="vender" onclick="venderCotizacion(${cot.id})"><img src="/static/svg/vender.svg"></button>
                         <button class="imprimir" onclick="imprimirCotizacion(${cot.id})"><img src="/static/svg/imprimir.svg"></button>
                     </td>
@@ -157,7 +161,7 @@ function UpdateCotizacion(id) {
         });
 }
 
-function verCotizacion(id) {
+function cargarCotizacion(id, modo) {
     fetch(`/api/ver_cotizacion?id=${id}`)
         .then(res => res.json())
         .then(data => {
@@ -165,85 +169,20 @@ function verCotizacion(id) {
                 alert("Error: " + data.mensaje);
                 return;
             }
-            mostrarModalCotizacion(data);
+
+            if (modo === "editar") {                
+                mostrarModalCotizacionEditar(data);
+            } else {
+                mostrarModalCotizacionVer(data);
+            }
         })
         .catch(err => {
             alert("Error al cargar cotización: " + err.message);
         });
 }
 
-function mostrarModalCotizacion(data) {
-    const cotizacion = data.cotizacion.cotizacion; // Datos generales
-    const detalles = data.cotizacion.detalles;     // Array de detalles
-    // Crear contenido HTML del modal
-    const modal = document.getElementById("modalCotizacion");
-    modal.innerHTML = `
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <span class="close" onclick="cerrarModal()">&times;</span>
-                        <h2>Cotización</h2>
-                        <div class="cotization-id">#${cotizacion.id}</div>
-                    </div>
-                    <div class="modal-body">
-                        <div class="info-grid">
-                            <div class="info-card">
-                                <div class="info-label">Cliente</div>
-                                <div class="info-value">${cotizacion.cliente_nombre}</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="info-label">Vendedor</div>
-                                <div class="info-value">${cotizacion.vendedor_nombre}</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="info-label">Fecha</div>
-                                <div class="info-value">${cotizacion.fecha}</div>
-                            </div>
-                            <div class="info-card">
-                                <div class="info-label">Estado</div>
-                                <div class="info-value">
-                                    <span class="status-badge ${estadoTextoCotizacion(cotizacion.estado)}">
-                                        ${estadoTextoCotizacion(cotizacion.estado)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="products-section">
-                            <h3 class="section-title">Productos</h3>
-                            <div class="products-table">
-                                <table>
-                                    <thead>
-                                        <tr>
-                                            <th>Producto</th>
-                                            <th>Cantidad</th>
-                                            <th>Precio Unitario</th>
-                                            <th>Subtotal</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        ${detalles.map(d => `
-                                            <tr>
-                                                <td>${d.producto_nombre}</td>
-                                                <td>${d.cantidad}</td>
-                                                <td class="price">$${d.precio_unitario.toFixed(2)}</td>
-                                                <td class="price">$${(d.precio_unitario * d.cantidad).toFixed(2)}</td>
-                                            </tr>
-                                        `).join('')}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
 
-                        <div class="total-section">
-                            <div class="total-label">Total de la Venta</div>
-                            <div class="total-amount">$${cotizacion.total_venta.toFixed(2)}</div>
-                        </div>
-                    </div>
-                </div>
-            `;
-    modal.style.display = 'flex';
-    modal.classList.add('show');
-}
 function cerrarModal() {
     const modal = document.getElementById('modalCotizacion');
     
@@ -256,6 +195,7 @@ function cerrarModal() {
         modal.classList.remove('show');
     }, 500);
 }
+
 // Función para mostrar el texto del estado según su número
 function estadoTextoCotizacion(estado) {
     const estadosTexto = {
@@ -265,13 +205,6 @@ function estadoTextoCotizacion(estado) {
         4: "Rechazada"
     };
     return estadosTexto[estado] || "Desconocido";
-}
-
-
-function editCotizacion(id) {
-    const cot = cotizacionesSimuladas.find(c => c.id === id);
-    alert(`Editar cotización ID ${id} - Cliente: ${cot.cliente}`);
-    // Aquí la lógica para abrir formulario con datos para editar
 }
 
 function venderCotizacion(id) {

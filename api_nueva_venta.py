@@ -1,11 +1,41 @@
 from flask import Blueprint, jsonify, current_app, request
 from conexion_base import *
-from datetime import datetime
+from datetime import datetime, date, timedelta
 from crea_pdf.pdf_cotizacion import *
 
 
 nueva_venta = Blueprint('nueva_venta', __name__)
 conn_db = ConexionBase("tienda_jfleong6_1.db")
+
+def obtener_id_por_nombre(tabla, buscar, columna):
+    resultado = conn_db.seleccionar(tabla, "id", f"{columna} = ?", (buscar,))
+
+    return resultado[0][0] if resultado else None
+
+def validar_campos(data, requiere_metodos_pago=False):
+    """
+    Valida los campos requeridos para registrar una venta.
+    Si 'requiere_metodos_pago' es True, también valida ese campo.
+    """
+
+    # Definir campos base
+    campos_requeridos = ['vendedor_id', 'cliente_id', 'total_venta', 'productos']
+
+    # Agregar metodos_pago si es obligatorio
+    if requiere_metodos_pago:
+        campos_requeridos.append('metodos_pago')
+
+    # Validar que todos los campos existan
+    if not all(c in data for c in campos_requeridos):
+        raise ValueError(f"Campos requeridos faltantes: {', '.join(campos_requeridos)}")
+
+    # Validar cliente
+    cliente_id = obtener_id_por_nombre("clientes", data["cliente_id"], "numero")
+    if not cliente_id:
+        raise LookupError("Cliente no encontrado")
+    data["cliente_id"] = cliente_id
+
+    return data
 
 def calcular_totales_y_guardar_detalles(id_registro, tabla_detalles, productos):
     total_compra = 0
@@ -58,10 +88,8 @@ def calcular_totales_y_guardar_detalles(id_registro, tabla_detalles, productos):
 @nueva_venta.route('/api/crear_venta', methods=['POST'])
 def crear_venta():
     data = request.get_json()
-    campos = ['vendedor_id', 'cliente_id', 'total_venta', 'metodos_pago', 'productos']
-    if not all(c in data for c in campos):
-        return jsonify({"error": "Campos requeridos faltantes"}), 400
-
+    validar_campos(data, requiere_metodos_pago=True)
+    
     try:
         conn_db.iniciar_transaccion()  # BEGIN
 
@@ -189,10 +217,7 @@ def crear_venta():
 @nueva_venta.route('/api/crear_cotizacion', methods=['POST'])
 def crear_cotizacion():
     data = request.get_json()
-    
-    campos = ['vendedor_id', 'cliente_id', 'total_venta', 'productos']
-    if not all(c in data for c in campos):
-        return jsonify({"error": "Campos requeridos faltantes"}), 400
+    validar_campos(data, requiere_metodos_pago=False)
     
     try:
         conn_db.iniciar_transaccion()
@@ -244,10 +269,8 @@ def crear_cotizacion():
 @nueva_venta.route('/api/crear_apartado', methods=['POST'])
 def crear_apartado():
     data = request.get_json()
-    campos = ['vendedor_id', 'cliente_id', 'total_venta', 'productos', 'metodos_pago']
-    if not all(c in data for c in campos):
-        return jsonify({"error": "Campos requeridos faltantes"}), 400
-
+    validar_campos(data, requiere_metodos_pago=True)
+    
     try:
         conn_db.iniciar_transaccion()
 
@@ -310,16 +333,26 @@ def crear_apartado():
 
 @nueva_venta.route('/api/listar_documentos', methods=['GET'])
 def listar_documentos():
-    # Estados
-    # 1: Recibidas
-    # 2: Aprobadas
-    # 3: Pendientes
-    # 4: Rechazadas
-    tipo = request.args.get('tipo')  # 'cotizacion' o 'apartado'
+    tipo = request.args.get('tipo')  # 'cotizaciones' o 'apartados'
     if tipo not in ['cotizaciones', 'apartados']:
         return jsonify({"error": "Parámetro tipo inválido, debe ser 'cotizaciones' o 'apartados'"}), 400
 
+    # Fechas recibidas por parámetro
+    fecha_inicio = request.args.get("fecha_inicio")
+    fecha_fin = request.args.get("fecha_fin")
+
     try:
+        if not fecha_inicio or not fecha_fin:
+            # Si no vienen fechas -> mes actual
+            hoy = date.today()
+            fecha_inicio = hoy.replace(day=1).strftime("%Y-%m-%d")
+            # último día del mes
+            if hoy.month == 12:
+                siguiente_mes = hoy.replace(year=hoy.year+1, month=1, day=1)
+            else:
+                siguiente_mes = hoy.replace(month=hoy.month+1, day=1)
+            fecha_fin = (siguiente_mes - timedelta(days=1)).strftime("%Y-%m-%d")
+
         query = f"""
             SELECT d.id, d.vendedor_id, u.nombre AS vendedor_nombre,
                    d.cliente_id, c.nombre AS cliente_nombre,
@@ -327,28 +360,41 @@ def listar_documentos():
             FROM {tipo} d
             LEFT JOIN usuarios u ON d.vendedor_id = u.id
             LEFT JOIN clientes c ON d.cliente_id = c.id
+            WHERE DATE(d.fecha) BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
             ORDER BY d.fecha DESC
         """
 
-        filas = conn_db.ejecutar_personalizado_1(query)  # Define un método que devuelva las filas con SELECT directo
+        filas = conn_db.ejecutar_personalizado_1(query)
+
         query = f"""SELECT DISTINCT u.nombre AS Vendedor
         FROM {tipo} c
         JOIN usuarios u ON u.id = c.vendedor_id;
         """
         vendedores = conn_db.ejecutar_personalizado(query)
+
         query = f"""SELECT DISTINCT cl.nombre AS Cliente
         FROM {tipo} c
         JOIN clientes cl ON cl.id = c.cliente_id;
         """
         clientes = conn_db.ejecutar_personalizado(query)
         
-        query = f""" SELECT estado, COUNT(estado) Cantidad FROM {tipo} GROUP BY estado"""
+        query = f"""SELECT estado, COUNT(estado) Cantidad 
+                    FROM {tipo} 
+                    WHERE DATE(fecha) BETWEEN '{fecha_inicio}' AND '{fecha_fin}'
+                    GROUP BY estado"""
         estados = conn_db.ejecutar_personalizado_1(query)
         
-        return jsonify({"valido": True, tipo: filas, "filtros":{"vendedores":vendedores, "clientes":clientes}, "Estados":estados}), 200
+        return jsonify({
+            "valido": True,
+            tipo: filas,
+            "filtros": {"vendedores": vendedores, "clientes": clientes},
+            "Estados": estados,
+            "rango_fechas": {"inicio": fecha_inicio, "fin": fecha_fin}
+        }), 200
 
     except Exception as e:
         return jsonify({"valido": False, "mensaje": f"Error: {str(e)}"}), 500
+
 
 @nueva_venta.route('/api/detalles_documento', methods=['GET'])
 def detalles_documento():

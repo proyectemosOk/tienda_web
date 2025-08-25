@@ -83,7 +83,7 @@ class TicketDeVenta {
     this.venderBtn = document.getElementById('venderBtn');
     this.cotizarBtn = document.getElementById('cotizarBtn');
     this.apartarBtn = document.getElementById('apartarBtn');
-    this.clienteCombo = document.getElementById('clienteCombo');
+    this.clienteCombo = document.getElementById('clienteSearch');
     this.nuevoClienteBtn = document.getElementById('nuevoClienteBtn');
 
     // Métodos de pago
@@ -154,6 +154,7 @@ class TicketDeVenta {
 
   vender(accion = "Vender") {
     const clienteId = this.clienteCombo.value;
+    alert(clienteId)
     const vendedorId = datos.id;
 
     if (!clienteId) {
@@ -405,8 +406,8 @@ const cargarClientes = async () => {
     // Llenar el combo con los clientes
     clientes.forEach(cliente => {
       const option = document.createElement('option');
-      option.value = cliente.nombre;
-      option.textContent = cliente.documento;
+      option.value = cliente.documento;
+      option.textContent = cliente.nombre;
       clienteCombo.appendChild(option);
     });
   } catch (error) {

@@ -1,0 +1,52 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+header{
+    display: flex;
+    justify-content:space-between;
+    padding-left: 20px;
+    padding-right: 20px;    
+    background-image: url("https://wallpaperbat.com/img/738885-simple-background-youtube-banner-background-youtube-banner-design-youtube-banner-template.jpg");
+    background-repeat: no-repeat;
+    background-size:cover;
+    color: white;
+    align-items: center;
+}
+a{
+    font-size: 2rem;
+    color: white;
+    text-decoration: none;
+    transition: color 1000ms ease-in-out;
+}
+
+a:hover{
+    cursor: pointer;
+    color: brown;
+
+}
+
+.logo{
+    width: 200px;
+    height: 75px;
+}
+
+.usuario{
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+}
+ul{
+    display: flex;
+    gap: 50px;
+}
+li{
+    list-style: none;   
+}
+
+.contenedor-usuario{
+    display: flex;
+    gap: 25px;
+    align-items: center;
+}

@@ -19,13 +19,8 @@
 }
 
 @keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-
-    to {
-        opacity: 1;
-    }
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 @keyframes slideIn {
@@ -33,7 +28,6 @@
         opacity: 0;
         transform: scale(0.7) translateY(-50px);
     }
-
     to {
         opacity: 1;
         transform: scale(1) translateY(0);
@@ -48,7 +42,8 @@
     width: 90%;
     max-width: 700px;
     max-height: 90vh;
-    overflow-y: auto;
+    /* quitamos scroll del modal */
+    overflow: hidden;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
     border: 1px solid rgba(255, 255, 255, 0.2);
     animation: slideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -67,10 +62,7 @@
 .modal-header::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="75" cy="75" r="0.5" fill="rgba(255,255,255,0.05)"/><circle cx="50" cy="10" r="0.8" fill="rgba(255,255,255,0.08)"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
     opacity: 0.3;
 }
@@ -211,14 +203,19 @@
     border-radius: 16px;
     overflow: hidden;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+
+    /* 👇 scroll solo en esta tabla */
+    max-height: 250px; /* aprox 5 filas */
+    overflow-y: auto;
+    display: block;
 }
 
-table {
+.products-table table {
     width: 100%;
     border-collapse: collapse;
 }
 
-th {
+.products-table th {
     background: linear-gradient(135deg, #f8fafc, #e2e8f0);
     padding: 20px 16px;
     text-align: left;
@@ -227,19 +224,25 @@ th {
     font-size: 14px;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+
+    /* 👇 sticky header */
+    position: sticky;
+    top: 0;
+    z-index: 2;
 }
 
-td {
+.products-table td {
     padding: 20px 16px;
     border-bottom: 1px solid #f1f5f9;
     color: #1f2937;
+    background: white;
 }
 
-tr:last-child td {
+.products-table tr:last-child td {
     border-bottom: none;
 }
 
-tr:hover td {
+.products-table tr:hover td {
     background: #f8fafc;
 }
 
@@ -295,23 +298,22 @@ tr:hover td {
         font-size: 14px;
     }
 
-    th,
-    td {
+    th, td {
         padding: 12px 8px;
     }
 }
 
-/* Scrollbar personalizado */
-.modal-content::-webkit-scrollbar {
+/* Scrollbar personalizado solo para tabla */
+.products-table::-webkit-scrollbar {
     width: 8px;
 }
 
-.modal-content::-webkit-scrollbar-track {
+.products-table::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 10px;
 }
 
-.modal-content::-webkit-scrollbar-thumb {
+.products-table::-webkit-scrollbar-thumb {
     background: linear-gradient(135deg, #667eea, #764ba2);
     border-radius: 10px;
 }
